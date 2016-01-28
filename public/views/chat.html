@@ -1,0 +1,25 @@
+<div class="jumbotron text-center" ng-controller="chatController">
+  <h1>Chat room</h1>
+  
+  <label ng-show="user" ng-model="user"><strong>User Name:</strong> {{user.email}}</label>
+  <div id="messages">
+    <ul id="chat_log">
+
+      <li class="mess" ng-repeat="msg in messages">
+        {{msg.postedby}}: {{msg.message}}
+        <!-- {{msg}} -->
+      </li>
+    </ul>
+
+  </div>
+  <!-- <form method="POST" action='' name="chat_form" role="form" ng-submit="sendChatMessage()">
+    <input type="text" name="question_box" value="" id="messageInput" placeholder="Chat text" />
+    <button type="submit" class="btn btn-primary">Send</button>
+  </form> -->
+  
+  <div class="chat-input">
+    <input type="text" class="form-control" placeholder="Send Message" ng-model="message" ng-keypress="sendMessage($event)" autofocus>
+  </div>
+
+</div>
+

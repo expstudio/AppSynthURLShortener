@@ -1,0 +1,991 @@
+@theme-color: #009E0F;
+
+a {
+  text-decoration: none !important;
+}
+/*ready-made layout*/
+.promo.section {
+  h2.title{
+    margin-top: 100px;
+  }
+}
+
+.main-nav.navbar-right {
+  float: none !important;
+}
+
+.rotate-1 {
+  .jcrop-holder {
+    -ms-transform: rotate(90deg); /* IE 9 */
+    -webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+    transform: rotate(90deg);
+  }
+}
+/*******************/
+.error-messages.ng-active {
+  background:maroon;
+  color:white;
+  padding:5px;
+  border-radius:5px;
+  margin-top:15px;
+  position:relative;
+}
+.error-messages.ng-active:after {
+  position:absolute;
+  top:-10px;
+  content:"";
+  left:20px;
+  border-style:solid;
+  border-color:transparent transparent maroon;
+  border-width:5px;
+}
+
+#header {
+  background: #000;
+}
+
+.langSelection {
+  position: absolute;
+  top: 20px;
+  right: 70px;
+  button {
+    background: transparent;
+  }
+  ul {
+    li {
+      color: #000;
+      padding: 5px 10px;
+
+      &:hover {
+        background-color: @theme-color;
+        color: #fff;
+      }
+    }
+  }
+}
+.signup-page {
+  .access-section .divider {
+    right: 0px;
+    left: auto;
+
+    span {
+      top: 50%;
+    }
+  }
+
+  .form-container {
+    padding-right: 80px;
+  }
+
+  .social-btns {
+    position: absolute;
+    right: 0;
+    margin-right: 80px;
+    top: 50%;
+  }
+
+  .groupCode span {
+    position: absolute;
+    right: -25px;
+    margin-top: -30px;
+  }
+}
+
+
+.section-wrapper {
+  min-height: 400px;
+  background: rgba(0, 158, 15, 0.51);
+}
+
+.center {
+  text-align: center;
+  margin-top: 120px;
+  color: #fff;
+  h1 {
+    font-size: 30pt;
+  }
+
+  .parent a, .teacher a {
+    color: #fff;
+  }
+}
+
+.submenu {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  .subitem {
+    text-align: center;
+    list-style-type: none;
+
+    li.item {
+      display: inline-block;
+      margin: 0 5px;
+      a {
+        font-size: 15pt;
+        text-decoration: none;
+        display: block;
+        cursor: pointer;
+
+        i {
+          font-size: 25pt;
+        }
+
+        span:not(.badge) {
+          display: block;
+        }
+        span.badge {
+          position: absolute;
+          margin-left: 15px;
+          margin-top: -10px;
+          background-color: #1B8F9E;
+        }
+      }
+    }
+  }
+}
+
+.avatar-holder {
+  display: block;
+  width: 75px;
+  height: 75px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: auto;
+  img {
+    width: 100%;
+  }
+}
+.content {
+  overflow: auto;
+  margin-bottom: 30px;
+  position: relative;
+
+  .template {
+    .delete {
+      padding: 5px 10px;
+    }
+  }
+  .no-template {
+    padding-top: 15px;
+  }
+  .calendarEvents.parent {
+    padding: 0 50px;
+  }
+
+  .studentInfo {
+    padding-bottom: 150px;
+  }
+
+  .studentList {
+    overflow: auto;
+    padding-bottom: 150px;
+
+    .student {
+      padding-bottom: 30px;
+      &:nth-child(4n+1) {
+        clear: both;
+      }
+      .image {
+        text-align: center;
+        a {
+          text-decoration: none;
+          color: #444;
+
+          i.fa-user {
+            font-size: 50pt;
+            color: rgba(73, 124, 128, 0.56);
+          }
+          h5 {
+            font-size: 16px;
+          }
+        }
+        .dropdown-menu {
+          width: 100%;
+        }
+      }
+
+      &.incare {
+        .image {
+          i.fa-user {
+            color: @theme-color;
+          }
+        }
+      }
+    }
+  }
+
+  /*create student form*/
+  .delete {
+    position: absolute;
+    right: 0;
+    margin-top: -30px;
+    color: #ff0000;
+    cursor: pointer;
+  }
+/*event calendar*/
+  .addEventArea, #editEventModal {
+    padding-bottom: 200px;
+
+    .form-group {
+      .timelabel {
+        line-height: 97px;
+      }
+      .dropdown-menu {
+        table:focus {
+          outline: none;
+        }
+      }
+
+      .actions {
+        .btn {
+          margin-left: 10px;
+        }
+      }
+    }
+  }
+
+  .calendar {
+    .fc-day-grid-container.fc-scroller {
+      height: auto !important;
+    }
+    .fc-toolbar button:focus {
+      z-index: 1;
+    }
+    .fc-event {
+      .deleteEvent {
+        position: absolute;
+        right: 0px;
+        margin-top: -27px;
+        color: #ff6d6f;
+        z-index: 999;
+
+        &:hover {
+          color: red;
+        }
+      }
+    }
+
+    > .btn-group {
+      margin-bottom: 15px;
+    }
+
+    .popover {
+      z-index: 99;
+    }
+  }
+
+  .eventMenu {
+    ul {
+      padding: 0px;
+      list-style-type: none;
+
+      li {
+        display: inline-block;
+        padding: 3px 15px;
+        margin-right: 7px;
+        font-size: 18px;
+        border-radius: 4px;
+
+        &.editEventBtn {
+          color: @theme-color;
+          &:hover {
+            background: @theme-color;
+            color: #fff;
+          }
+        }
+        &.deleteEvent {
+          color: #E52525;
+          &:hover {
+            background: #E52525;
+            color: #fff;
+          }
+        }
+      }
+    }
+  }
+
+  #editEventModal {
+    .modal-header {
+      background: #2297D3;
+      color: #fff;
+
+      .close {
+        color: #fff;
+        opacity: 0.6;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+  }
+  .status {
+    overflow: auto;
+
+    .statusItem {
+      margin-left: -14px;
+      .panel {
+        border: 1px solid @theme-color;
+        border-radius: 0px;
+        .heading {
+          padding: 5px 10px;
+          background: @theme-color;
+          color: #fff;
+        }
+      }
+    }
+  }
+
+  .childProfile {
+    padding: 15px 0px;
+
+    .avatar {
+      .pic-holder {
+        display: block;
+        width: 50px;
+        height: 50px;
+        border: 1px solid transparent;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: auto;
+
+        img {
+          width: 100%;
+        }
+      }
+      span.name {
+        display: block;
+      }
+    }
+  }
+}
+.dropdown-menu.childStatus, .statusIndicator {
+  .item {
+    cursor: pointer;
+    a:hover {
+      background: rgba(0, 158, 15, 0.61);
+    }
+  }
+
+  i {
+    margin-right: 7px;
+  }
+  .sick i {
+    color: #e72326;
+  }
+
+  .away i {
+    color: #D7D738;
+  }
+
+  .late i {
+    color: #C004C0;
+  }
+
+  .vacation i {
+    color: #247DF2;
+  }
+
+  .incare i {
+    color: @theme-color;
+  }
+
+  .outcare i {
+    color: #8B8A8A;
+  }
+}
+
+.statusIndicator {
+  padding: 0px;
+  position: absolute;
+  width: 100%;
+  margin-top: -10px;
+  .item {
+    list-style-type: none;
+    display: inline-block;
+
+    i {
+      font-size: 10px;
+      margin: 0px 3px;
+    }
+  }
+}
+.appFooter {
+  position: relative;
+  &.teacherHome {
+    margin-top: -120px;
+  }
+  .actions {
+    ul.actionMenu {
+      text-align: center;
+      padding-left: 0px;
+      li {
+        list-style-top: none;
+        display: inline-block;
+        padding: 10px 15px;
+        text-align: center;
+        a {
+          text-decoration: none;
+          cursor: pointer;
+          i {
+            font-size: 25pt;
+            display: block;
+          }
+        }
+      }
+    }
+  }
+}
+.profileForm, .editableForm {
+  .profilePicture {
+    text-align: center;
+  }
+
+  .form-group {
+    .addmore {
+      margin-bottom: 15px;
+    }
+    .item {
+      margin-bottom: 10px;
+    }
+  }
+  .block {
+    padding-top: 10px;
+    background: rgba(27, 128, 128, 0.22);
+    border: 1px solid rgba(27, 128, 128, 0.4);
+    border-radius: 4px;
+    position: relative;
+
+    .delete {
+      margin-top: -13px;
+      margin-right: -5px;
+      top: 0px;
+    }
+  }
+
+  .img-container {
+    float: left;
+  }
+  /* Apply these styles only when #preview-pane has
+       been placed within the Jcrop widget */
+
+  #preview-pane {
+//    position: absolute;
+    float: right;
+    z-index: 2000;
+    top: 300px;
+    right: 80px;
+    padding: 6px;
+    border: 1px rgba(0,0,0,.4) solid;
+    background-color: white;
+
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+
+    -webkit-box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* The Javascript code will set the aspect ratio of the crop
+     area based on the size of the thumbnail preview,
+     specified here */
+  #preview-pane .preview-container {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .progress {
+    display: inline-block;
+    width: 100px;
+    border: 3px groove #CCC;
+  }
+
+  .progress div {
+    font-size: smaller;
+    background: orange;
+    width: 0;
+  }
+
+}
+.editableForm, .profile {
+  overflow: auto;
+
+  .form-group {
+    clear: both;
+    .editable-wrap {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+  }
+  .profilePicture {
+    text-align: center;
+
+    .statusArea {
+
+      margin-top: 20px;
+      ul {
+        list-style-type: none;
+        text-align: left;
+        padding-left: 15px;
+        background: #F5F5F5;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 0px;
+      }
+    }
+  }
+}
+/*send Message*/
+#cke_messageBodyDesktop {
+  box-sizing: border-box;
+}
+
+#cke_messageBodyMobile {
+  box-sizing: border-box;
+  display: none;
+}
+
+.btn-group.template {
+  display: block;
+
+  .input-group-addon {
+    background: rgba(0, 158, 15, 0.6);
+  }
+
+  ul.dropdown-menu {
+    width: 100%;
+
+    li {
+      a {
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+        &:hover {
+          background: rgba(0, 158, 15, 0.6)
+        }
+      }
+    }
+  }
+}
+.recipientInput {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #555;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+  -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+  -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+
+  ul {
+    width: 100%;
+    padding-left: 0px;
+    margin-bottom: 0px;
+    display: inline-block;
+
+    li {
+      list-style-type: none;
+      float: left;
+      padding: 0px 10px;
+
+
+      &.input {
+        float: none;
+        overflow: hidden;
+        min-width: 150px;
+
+        input {
+          width: 100%;
+          border: none;
+          &:focus {
+            outline-style: none;
+          }
+        }
+      }
+    }
+  }
+}
+.messageReceiver {
+  display: block;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.65);
+  width: 100%;
+  margin-top: 15px;
+  padding: 10px;
+  color: #fff;
+  z-index: 100;
+
+  &:before {
+    content: "";
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 15px solid rgba(0, 0, 0, 0.65);
+    position: absolute;
+    margin-top: -25px;
+    left: 20px;
+  }
+  .checkbox {
+    padding-left: 20px;
+  }
+  ul.recipientList {
+    padding-left: 20px;
+    li {
+      list-style-type: none;
+      display: inline-block;
+      padding: 10px 15px;
+      margin-right: 5px;
+      text-align: center;
+
+      i {
+        color: @theme-color;
+      }
+    }
+  }
+
+  .closeBtn {
+    background: #606061;
+    color: #FFFFFF;
+    line-height: 25px;
+    position: absolute;
+    margin-top: -25px;
+    right: 0px;
+    text-align: center;
+    width: 24px;
+    text-decoration: none;
+    font-weight: bold;
+    -webkit-border-radius: 12px;
+    -moz-border-radius: 12px;
+    border-radius: 12px;
+    -moz-box-shadow: 1px 1px 3px #000;
+    -webkit-box-shadow: 1px 1px 3px #000;
+    box-shadow: 1px 1px 3px #000;
+    cursor: pointer;
+
+    &:hover {
+      background: @theme-color;
+    }
+  }
+}
+
+.profileToCreate {
+  .item {
+    padding: 10px 20px;
+    border: 2px solid #000;
+    margin-bottom: 5px;
+    background: @theme-color;
+    opacity: 0.7;
+    a, i {
+      color: #fff;
+      text-decoration: none;
+      transition: none;
+    }
+
+    &:hover {
+      //      background: rgba(red(@theme-color), green(@theme-color), blue(@theme-color), 0.6);
+      //      background: @theme-color;
+      opacity: 1;
+      a, i {
+        color: #fff;
+      }
+    }
+  }
+}
+
+/*messages*/
+.messageList {
+  ul {
+    overflow: hidden;
+  }
+}
+.tabBody {
+  margin-top: 15px;
+  overflow: hidden;
+}
+.messageItem {
+  overflow: auto;
+  margin-bottom: 10px;
+  .recipientList {
+    height: 40px;
+    overflow: hidden;
+
+    ul li {
+      display: inline-block;
+      &:after {
+        content: ', ';
+        margin-right: 3px;
+      }
+    }
+  }
+  .panel-heading {
+    a {
+      text-decoration: none;
+      outline: none;
+      .sentTime {
+        float: right;
+        font-size: 12px;
+      }
+      &:hover {
+        color: @theme-color;
+      }
+    }
+  }
+
+  .actions {
+    float: right;
+    right: 40px;
+    bottom: 10px;
+    ul {
+      list-style-type: none;
+      padding: 0px;
+      li {
+        display: inline-block;
+        margin-left: 5px;
+        background: #DDD;
+        border: 1px solid darken(#DDD, 10%);
+        border-radius: 4px;
+        a {
+          padding: 7px 10px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+
+  .unseen:not(.clicked) {
+    .panel-heading {
+      background-color: #d6e9c6;
+    }
+  }
+}
+.draftMessage {
+  margin-bottom: 10px;
+  .messageBody {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    height: 35px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 5px 10px;
+  }
+}
+/* teacher homepage*/
+.content {
+  .notification {
+    ul.notiList {
+      padding: 0px 30px;
+      li {
+        list-style-type: none;
+        padding: 18px 10px 2px;
+        border-bottom: 1px solid #d6e9c6;
+
+        a {
+          color: #28A2BE;
+          text-decoration: none;
+        }
+      }
+    }
+  }
+
+  .checkinBtn {
+    margin-bottom: 30px;
+    .btn {
+      min-width: 140px;
+    }
+  }
+}
+
+.helppage {
+  .content {
+    color: #444;
+
+    a {
+      display: block;
+      width: 250px;
+      margin: auto;
+      text-align: left;
+      text-decoration: none;
+
+      i {
+        width: 30px;
+        text-align: center;
+      }
+    }
+  }
+}
+
+.filter {
+  .form-control {
+    height: 34px;
+  }
+}
+
+.statusReport .content {
+  min-height: 400px;
+  overflow: initial;
+}
+
+.groupList:not(:last-child):after {
+  content: ', ';
+}
+/*in-app navigation*/
+@media (min-width: 768px) {
+  .main-nav {
+    .navbar-header {
+      .toggleInApp {
+        display: block;
+        right: 20px;
+      }
+    }
+
+    .navbar-collapse.menuInApp {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      display: none !important;
+      &:before {
+        content: "";
+        display: block;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid #253340;
+        position: absolute;
+        right: 22px;
+        top: -10px;
+      }
+      &.off {
+        height: 0px !important;
+        overflow: hidden !important;
+      }
+
+      &.in {
+        display: block !important;
+      }
+      ul.navbar-nav {
+        background: #253340;
+        width: 250px;
+        li {
+          float: none;
+
+          a {
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+}
+/*******************/
+@media (max-width: 992px) {
+  .signup-page {
+    .access-section .divider {
+      text-align: center;
+      &:before {
+        top: auto;
+        margin-top: 12px;
+      }
+    }
+    .social-btns {
+      position: relative;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .submenu {
+    .subitem {
+      margin-bottom: 10px;
+    }
+  }
+  .content {
+    .calendarEvents.parent {
+      padding: 0;
+    }
+    .addEventArea, #editEventModal {
+      padding-bottom: 0px;
+      margin-bottom: 10px;
+      margin-left: -15px;
+      >.btn {
+        margin-bottom: 10px;
+      }
+
+      .form-group {
+        .timelabel {
+          line-height: 22px;
+        }
+      }
+    }
+
+    #cke_messageBodyDesktop {
+      box-sizing: border-box;
+      display: none;
+    }
+
+    #cke_messageBodyMobile {
+      box-sizing: border-box;
+      display: block;
+    }
+  }
+
+  .signup-page .form-container {
+    padding-right: 15px;
+  }
+}
+@media (max-width: 500px) {
+  .langSelection {
+    left: 2px;
+  }
+}
+
+@media (max-width: 400px) {
+  .submenu {
+    .subitem {
+      li.item {
+        a {
+          span:not(.badge) {
+            display: none !important;
+          }
+
+          span.badge {
+            margin-left: -25px;
+            margin-top: -15px;
+          }
+        }
+      }
+    }
+  }
+  .actions {
+    ul.actionMenu {
+      .item {
+        &:nth-child(2n+1) {
+          clear: both;
+        }
+        i {
+          font-size: 18pt;
+        }
+      }
+    }
+  }
+
+  .calendar {
+    .fc button .fc-icon {
+      top: 0;
+    }
+    .fc-icon {
+      font-size: 1em;
+    }
+  }
+}

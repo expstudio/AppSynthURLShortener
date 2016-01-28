@@ -1,0 +1,46 @@
+<header id="header" class="header" ng-controller="userController" ng-init="menuOn = false">
+
+    <div class="container">
+        <div class="langSelection btn-group" dropdown ng-controller="translateController">
+            <button type="button" class="btn btn-info dropdown-toggle" dropdown-toggle>
+                {{currentLang | translate}} <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                <li ng-click="changeLanguage('en')" translate="LANG_TEXT_EN"></li>
+                <li ng-click="changeLanguage('fi')" translate="LANG_TEXT_FI"></li>
+            </ul>
+        </div>
+        <h1 class="logo">
+            <a ui-sref="/" ng-hide="identity.isAuthenticated()"><span class="text">TinyApp</span></a>
+            <a ui-sref="home" ng-show="identity.isAuthenticated()"><span class="text">TinyApp</span></a>
+        </h1><!--//logo-->
+
+        <nav class="main-nav navbar-right" role="navigation" ng-click="menuOn = !menuOn">
+            <div class="navbar-header">
+                <button class="navbar-toggle" ng-class="{toggleInApp: identity.isAuthenticated()}" type="button">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button><!--//nav-toggle-->
+            </div><!--//navbar-header-->
+            <div id="navbar-collapse" class="navbar-collapse collapse" ng-class="{menuInApp: identity.isAuthenticated(), in: menuOn}">
+                <ul class="nav navbar-nav">
+                    <li class="nav-item" ui-sref-active="active"><a ui-sref='/'>{{'HOMEPAGE' | translate}}</a></li>
+                    <li class="nav-item" ui-sref-active="active"><a ui-sref="tinyapp">TinyApp</a></li>
+                    <li class="nav-item" ui-sref-active="active"><a ui-sref="contact">{{'CONTACT_US' | translate}}</a></li>
+                    <li class="nav-item" ui-sref-active="active"><a ui-sref="eng">English</a></li>
+                    <li class="nav-item" ui-sref-active="active" ng-hide="identity.isAuthenticated()"><a ui-sref="login">{{'LOG_IN' | translate}}</a></li>
+                    <li class="nav-item" ui-sref-active="active" ng-show="identity.isAuthenticated()" ng-click="logoutUser()"><a ui-sref="login">{{'LOG_OUT' | translate}}</a></li>
+                    <li class="nav-item nav-item-cta last" ui-sref-active="active" ng-hide="identity.isAuthenticated()"><a class="btn btn-cta btn-cta-secondary" ui-sref="signup">{{'SIGNUP' | translate}}</a></li>
+                    <li class="nav-item" ng-if="identity.isAuthenticated()">
+                        <a data-toggle="modal" data-target="#deleteAccountModal">
+                            <span>{{'Remove account' | translate}}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" ui-sref-active="active"><a>{{identity.currentUser.fullName}}</a></li>
+                </ul><!--//nav-->
+            </div><!--//navabr-collapse-->
+        </nav><!--//main-nav-->
+    </div><!--//container-->
+</header><!--//header-->

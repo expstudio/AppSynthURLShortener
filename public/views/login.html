@@ -1,0 +1,66 @@
+<div class="login-page access-page has-full-screen-bg" ng-hide="identity.isAuthenticated()">
+    <div class="upper-wrapper">
+        <section class="login-section access-section section">
+            <div class="container">
+                <div class="row">
+                    <div class="form-box col-md-8 col-sm-12 col-xs-12 col-md-offset-2 col-sm-offset-0 xs-offset-0">
+                        <div class="form-box-inner">
+                            <h2 class="title text-center">{{'LOGIN_TO_TINYAPP' | translate}}</h2>
+                            <div class="row">
+                                <div class="form-container col-md-5 col-sm-12 col-xs-12">
+                                    <form class="login-form" ng-submit="loginUser()">
+                                        <div class="form-group email">
+                                            <label class="sr-only" for="login-email">{{'EMAIL' | translate}}</label>
+                                            <input id="login-email" type="email" class="form-control login-email" placeholder="{{'EMAIL' | translate}}" ng-model="userInfo.email" required>
+                                        </div><!--//form-group-->
+                                        <div class="form-group password">
+                                            <label class="sr-only" for="login-password">{{'PASSWORD' | translate}}</label>
+                                            <input id="login-password" type="password" class="form-control login-password" placeholder="{{'PASSWORD' | translate}}" ng-model="userInfo.password" required>
+                                        </div><!--//form-group-->
+                                        <button type="submit" class="btn btn-block btn-cta-primary">{{'LOG_IN' | translate}}</button>
+                                        <div class="checkbox remember">
+                                            <label>
+                                                <input type="checkbox"> {{'REMEMBER_ME' | translate}}
+                                            </label>
+                                        </div><!--//checkbox-->
+                                        <p class="forgot-password"><a href="#" data-toggle="modal" data-target="#forgotPwModal">{{'FORGOT_PWD' | translate}}?</a></p>
+                                        <p class="lead"> {{'NO_ACCOUNT' | translate}} <br /><a class="signup-link" ui-sref="signup">{{'CREATE_NOW' | translate}}</a></p>
+                                    </form>
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="forgotPwModal" tabindex="-1" role="dialog" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    <h4 class="modal-title">{{'EMAIL_TO_RESET_PASSWORD' | translate}}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <input type="text" class="form-control" ng-model="retrieveEmail" required/>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">{{'CANCEL' | translate}}</button>
+                                                    <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="requestForgotPassword(retrieveEmail)">{{'SUBMIT' | translate}}</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div><!--//form-container-->
+                                <div class="social-btns col-md-5 col-sm-12 col-xs-12 col-md-offset-1 col-sm-offset-0 col-sm-offset-0">
+                                    <div class="divider"><span>{{'OR' | translate}}</span></div>
+                                    <ul class="list-unstyled social-login">
+                                        <li><button class="twitter-btn btn" type="button" disabled><i class="fa fa-twitter"></i>Log in with Twitter</button></li>
+                                        <li><button class="facebook-btn btn" type="button" disabled><i class="fa fa-facebook"></i>Log in with Facebook</button></li>
+                                        <li><button class="google-btn btn" type="button" disabled><i class="fa fa-google-plus"></i>Log in with Google</button></li>
+                                    </ul>
+                                    <p class="note">{{'SIGN_IN_SOCIAL' | translate}}</p>
+                                </div><!--//social-btns-->
+                            </div><!--//row-->
+                        </div><!--//form-box-inner-->
+                    </div><!--//form-box-->
+                </div><!--//row-->
+            </div><!--//container-->
+        </section><!--//contact-section-->
+    </div>
+
+</div>

@@ -1,0 +1,113 @@
+<div class="messages">
+    <div class="container">
+        <div class="row">
+            <div ng-include="'../../common/views/appHeader.html'"></div>
+        </div>
+
+        <div class="content">
+            <div class="messageList">
+                <tabset>
+                    <tab heading="{{'INBOX' | translate}}">
+                        <accordion>
+                            <div class="tabBody">
+
+                                <div class="messageItem row" ng-repeat="message in messages | orderBy : ['-seen', 'sentAtTime']: true">
+                                    <div class="col-xs-3 text-center">
+                                        <i class="fa fa-user"></i>
+                                        <div>{{message.senderDetails.fullName}}</div>
+                                    </div>
+
+                                    <div class="col-xs-9" ng-model="isSeen" ng-class="{seen: message.seen, unseen: !message.seen, clicked: message.seenTemporary}" ng-click="updateSeenBy(message)">
+                                        <accordion-group class="messageItem" id="{{$index}}">
+                                            <accordion-heading>
+                                                <div class="sentTime">{{message.sentAtTime | date: 'medium'}}</div>
+                                                <div class="title">{{message.title || '(no subject)'}}</div>
+                                            </accordion-heading>
+                                            <!--<div ng-bind-html="message.body"></div>-->
+                                            <dir-bind-html content="message.body"></dir-bind-html>
+                                            <div class="actions">
+                                                <ul>
+                                                    <li class="item">
+                                                        <a ng-click="reply(message)"><i class="fa fa-reply"></i></a>
+                                                        <!--<a ng-click="isReplied = true"><i class="fa fa-reply"></i></a>-->
+                                                    </li>
+                                                    <!--<li class="item">
+                                                        <a href=""><i class="fa fa-reply-all"></i></a>
+                                                    </li>-->
+                                                </ul>
+                                            </div>
+                                        </accordion-group>
+                                        <div class="ckeditor-wrapper" ng-repeat="ckeditor in message.ckEditors">
+                                            <form name="replyForm" ng-submit="sendReply(replyMessage, message)">
+                                                <!--<div class="recipientInput">
+                                                    <ul>
+                                                        <li ng-repeat="receiver in replyMessage.receivers">
+                                                            <i class="fa fa-times"></i>
+                                                            {{receiver
+                                                    </ul>
+                                                </div>-->
+                                                <textarea name="body" id="messageBody" ckeditor="editorOptions" ng-model="replyMessage.body"></textarea>
+                                                <div class="actions text-right">
+                                                    <!--<button type="submit" class="btn btn-primary" ng-click="replyMessage.draft=true">Save draft</button>-->
+                                                    <button type="button" class="btn btn-danger" ng-click="cancelReply(message)">{{'CANCEL' | translate}}</button>
+                                                    <button type="submit" class="btn btn-info submit" ng-click="replyMessage.draft=false">{{'SEND' | translate}}</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </accordion>
+                    </tab>
+                    <!--<tab heading="Calendar messages"></tab>-->
+                    <tab heading="{{'SENT' | translate}}">
+                        <accordion>
+                            <div class="tabBody">
+
+                                <div class="messageItem row" ng-repeat="sentMessage in sentMessages | orderBy : 'sentAtTime'">
+                                    <div class="col-xs-3 text-center recipientList">
+                                        <ul>To:
+                                            <li ng-repeat="child in sentMessage.toChildren">
+                                                {{child}}
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="col-xs-9">
+                                        <accordion-group class="messageItem">
+                                            <accordion-heading>
+                                                <div class="sentTime">{{sentMessage.sentAtTime | date: 'medium'}}</div>
+                                                <div class="title">{{sentMessage.title || '(no subject)'}}</div>
+                                            </accordion-heading>
+                                            <!--<div ng-bind-html="message.body"></div>-->
+                                            <dir-bind-html content="sentMessage.body"></dir-bind-html>
+                                        </accordion-group>
+                                    </div>
+                                </div>
+                            </div>
+                        </accordion>
+                    </tab>
+                    <tab heading="{{'DRAFT' | translate}}">
+                        <div class="tabBody">
+                            <div class="draftMessage row" ng-repeat="draftMessage in draftMessages | orderBy : 'sentAtTime'">
+                                <div class="col-xs-3">{{draftMessage.title}}</div>
+                                <div class="col-xs-9">
+                                    <div class="messageBody">
+                                        <a ui-sref="sendMessage({draftMessage: draftMessage, 'index': $index})">
+                                            <dir-bind-html content="draftMessage.body"></dir-bind-html>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </tab>
+                </tabset>
+
+            </div>
+        </div>
+        <div class="appFooter">
+            <div ng-include="'../../common/views/appFooter.html'"></div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,73 @@
+<div class="actions">
+    <ul class="actionMenu" ng-if="identity.isAuthorized('teacher')">
+
+        <!--<li class="item">
+            <a ui-sref="sendReminder">
+                <i class="fa fa-flag"></i>
+                Reminder
+            </a>
+
+        </li>
+
+        <li class="item">
+            <a ui-sref="sendInvitaion">
+                <i class="fa fa-paper-plane"></i>
+                Invitation
+            </a>
+
+        </li>
+
+        <li class="item">
+            <a ui-sref="draftMails">
+                <i class="fa fa-file-text"></i>
+                Draft
+            </a>
+
+        </li>-->
+
+        <li class="item">
+            <a ui-sref="addstudent">
+                <i class="fa fa-user-plus"></i>
+                <span>{{'ADD_CHILD' | translate}}</span>
+            </a>
+        </li>
+        <li class="item">
+            <a ui-sref="statusreport">
+                <i class="fa fa-file-text"></i>
+                <span>{{'STT_REPORT' | translate}}</span>
+            </a>
+        </li>
+
+        <li class="item">
+            <a ui-sref="help">
+                <i class="fa fa-info"></i>
+                <span>{{'HELP' | translate}}</span>
+            </a>
+        </li>
+    </ul>
+
+    <ul class="actionMenu" ng-if="identity.isAuthorized('parent')">
+        <li class="item">
+            <a ui-sref="createProfile">
+                <i class="fa fa-pencil"></i>
+                <span>{{'CREATE_PROFILE' | translate}}</span>
+            </a>
+
+        </li>
+
+        <li class="item">
+            <a ui-sref="joinGroup">
+                <i class="fa fa-ticket"></i>
+                <span>{{'JOIN_GROUP' | translate}}</span>
+            </a>
+        </li>
+
+        <li class="item">
+            <a ui-sref="help">
+                <i class="fa fa-info"></i>
+                <span>{{'HELP' | translate}}</span>
+            </a>
+        </li>
+
+    </ul>
+</div>

@@ -1,0 +1,26 @@
+@media screen {
+    #printSection {
+        display: none;
+    }
+}
+@media print {
+    body * {
+        visibility:hidden;
+    }
+    .row, .footer, .btn {
+        visibility: hidden;
+        display: none;
+    }
+    #printSection, #printSection * {
+        visibility:visible;
+    }
+    #printSection, #cke_1_contents {
+        position:absolute;
+        left:0;
+        top:0;
+        display: block;
+    }
+    #cke_1_contents {
+        display: block;
+    }
+}

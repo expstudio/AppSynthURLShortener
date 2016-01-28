@@ -1,0 +1,101 @@
+<div class="signup-page access-page has-full-screen-bg">
+    <div class="upper-wrapper">
+        <!-- ******Login Section****** -->
+        <section class="signup-section access-section section">
+            <div class="container">
+                <div class="row">
+                    <div class="form-box col-md-8 col-sm-12 col-xs-12 col-md-offset-2 col-sm-offset-0 xs-offset-0">
+                        <div class="form-box-inner">
+                            <h2 class="title text-center">{{'SIGN_UP_NOW' | translate}}</h2>
+                            <p class="intro text-center">{{'ONLY_2MINS' | translate}}</p>
+                            <div class="row">
+                                <div class="form-container col-md-6 col-sm-12 col-xs-12">
+
+                                    <h3>{{submittedMessage}}</h3>
+                                    <form id="parentForm" class="signup-form" name="parentForm" ng-submit="signUpUser(parentForm.$valid)" ng-init="userInfo.role='parent'">
+                                        <div class="form-group fullname">
+                                            <input type="text" class="form-control" name="fullname"
+                                                   placeholder="{{'FULL_NAME' | translate}}" required autofocus="" ng-model="userInfo.fullName"
+                                                   ng-minlength="4" ng-maxlength="35">
+                                            <div class="error-messages" ng-if="interacted(parentForm.fullname) || submittedMessage" ng-messages="parentForm.fullname.$error" ng-messages-include="common/views/errorMessages.html">
+                                                <div ng-message="required">You did not enter your name</div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group email">
+                                            <input type="email" class="form-control" name="email" id="email" placeholder="{{'EMAIL' | translate}}" ng-model="userInfo.email" required autofocus="">
+                                            <div class="error-messages" ng-if="interacted(parentForm.email) || submittedMessage" ng-messages="parentForm.email.$error" ng-messages-include="common/views/errorMessages.html">
+                                                <div ng-message="required">You did not enter your email</div>
+                                            </div>
+                                        </div><!--//form-group-->
+                                        <div class="form-group password">
+                                            <input type="password" class="form-control" required name="password" placeholder="{{'PASSWORD' | translate}}"
+                                                   ng-model="userInfo.password" ng-minlength="4">
+                                            <div class="error-messages" ng-if="interacted(parentForm.password) || submittedMessage" ng-messages="parentForm.password.$error" ng-messages-include="common/views/errorMessages.html">
+                                                <div ng-message="required">You did not enter your password</div>
+                                            </div>
+                                        </div><!--//form-group-->
+
+                                        <div class="form-group confirmPassword">
+                                            <input type="password" class="form-control" required name="confirmpassword" placeholder="{{'CONFIRM_PWD' | translate}}" ng-model="confirmPassword" check-confirm-pwd="userInfo.password">
+                                            <div class="error-messages" ng-if="interacted(parentForm.confirmpassword) || submittedMessage" ng-messages="parentForm.confirmpassword.$error" ng-messages-include="common/views/errorMessages.html">
+                                                <div ng-message="required">You did not confirm your password</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group groupCode">
+                                            <input type="text" class="form-control" name="code" placeholder ="{{'GROUP_CODE'  | translate}}" ng-model="userInfo.groupCode" required>
+                                            <div class="error-messages" ng-if="interacted(parentForm.code) || submittedMessage" ng-messages="parentForm.code.$error" ng-messages-include="common/views/errorMessages.html">
+                                                <div ng-message="required">You did not enter group code</div>
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-block btn-cta-primary">{{'SIGNUP' | translate}}</button>
+
+                                        <p class="note">{{'AGREE_TERMS_FIRST_HALF' | translate}} <a href="#" data-toggle="modal" data-target="#termsOfService">{{'AGREE_TERMS_SECOND_HALF' | translate}}</a></p>
+                                        <p class="lead">{{'HAVE_ACCOUNT' | translate}}? <a class="login-link" id="login-link" ui-sref="login">{{'LOG_IN' | translate}}</a></p>
+                                    </form>
+                                    <div class="divider"><span>Or</span></div>
+                                </div><!--//form-container-->
+                                <div class="social-btns col-md-5 col-sm-12 col-xs-12">
+                                    <ul class="list-unstyled social-login">
+                                        <li><button class="twitter-btn btn" type="button" disabled><i class="fa fa-twitter"></i>Sign up with Twitter</button></li>
+                                        <li><button class="facebook-btn btn" type="button" disabled><i class="fa fa-facebook"></i>Sign up with Facebook</button></li>
+                                        <li><button class="google-btn btn" type="button" disabled><i class="fa fa-google-plus"></i>Sign up with Google</button></li>
+                                    </ul>
+                                    <p class="note">{{'SIGNUP_SOCIALS' | translate}}</p>
+                                </div><!--//social-login-->
+
+                                <div class="modal fade" id="termsOfService" tabindex="-1" role="dialog" aria-labelledby="TOSLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                <h4 class="modal-title" id="TOSLabel">{{'TERMS_CONDITIONS' | translate}}</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>{{'WARM_WELCOME_TC' | translate}}</p>
+                                                <p>{{'CONTACT_EMAIL' | translate}} <a href="mailto: hello@tinyapp.biz">hello@tinyapp.biz</a></p>
+                                                <ul>
+                                                    <li>{{'FIRST_ITEM_TC' | translate}}</li>
+                                                    <li>{{'SECOND_ITEM_TC' | translate}}</li>
+                                                    <li>{{'THIRD_ITEM_TC' | translate}}</li>
+                                                    <li>{{'FOURTH_ITEM_TC' | translate}}</li>
+                                                    <li>{{'FIFTH_ITEM_TC' | translate}}</li>
+                                                    <li>{{'SIXTH_ITEM_TC' | translate}}</li>
+                                                    <li>{{'SEVENTH_ITEM_TC' | translate}}</li>
+                                                </ul>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!--//row-->
+                        </div><!--//form-box-inner-->
+                    </div><!--//form-box-->
+                </div><!--//row-->
+            </div><!--//container-->
+        </section><!--//contact-section-->
+    </div><!--//upper-wrapper-->
+</div>

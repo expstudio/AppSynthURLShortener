@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <base href="/">
+
+    <title>Tiny App</title>
+
+    <!-- CSS -->
+    <!--<link rel="shortcut icon" type='image/png' href="favicon-16x16.png"/>-->
+    <!--<link rel="shortcut icon" type='image/x-icon' href="/assets/images/favicon.ico"/>-->
+    <link href='//fonts.googleapis.com/css?family=Roboto:400,400italic,500,500italic,700,700italic,900,900italic,300italic,300'
+          rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Roboto+Slab:400,700,300,100' rel='stylesheet' type='text/css'>
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="assets/plugins/bootstrap/css/bootstrap.min.css">
+    <!-- Plugins CSS -->
+    <link rel="stylesheet" href="bower_components/fullcalendar/dist/fullcalendar.css"/>
+    <link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="assets/plugins/flexslider/flexslider.css">
+    <link rel="stylesheet" href="/bower_components/angular-toastr/dist/angular-toastr.css"/>
+    <link rel="stylesheet" href="/bower_components/angular-xeditable/dist/css/xeditable.css">
+    <link rel="stylesheet" href="/bower_components/ng-ckeditor/ng-ckeditor.css">
+    <link rel="stylesheet" href="/assets/plugins/Jcrop/css/jquery.Jcrop.min.css"/>
+
+    <!-- Theme CSS -->
+    <!--<link id="theme-style" rel="stylesheet" href="assets/css/styles.css">-->
+    <link rel="stylesheet" href="assets/default/styles.css"/>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- custom styles -->
+    <link rel="stylesheet" href="assets/css/print.css">
+    <!-- custom styles -->
+
+
+    <!-- JS -->
+    <!--<script type="text/javascript" src="assets/plugins/jquery-1.11.1.min.js"></script>-->
+    <script src="/bower_components/jquery/dist/jquery.js"></script>
+    <!--<script type="text/javascript" src="bower_components/jquery-ui/ui/jquery-ui.js"></script>-->
+    <script type="text/javascript" src="assets/plugins/jquery-migrate-1.2.1.min.js"></script>
+    <script type="text/javascript" src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/plugins/bootstrap-hover-dropdown.min.js"></script>
+    <script type="text/javascript" src="assets/plugins/back-to-top.js"></script>
+    <script type="text/javascript" src="assets/plugins/jquery-placeholder/jquery.placeholder.js"></script>
+    <script type="text/javascript" src="assets/plugins/FitVids/jquery.fitvids.js"></script>
+    <script type="text/javascript" src="assets/plugins/flexslider/jquery.flexslider-min.js"></script>
+    <script type="text/javascript" src="assets/plugins/Jcrop/js/jquery.Jcrop.min.js"></script>
+
+    <!--<script type="text/javascript" src="assets/js/main.js"></script> -->
+
+    <script src="/bower_components/underscore/underscore-min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- ANGULAR -->
+    <script src="/bower_components/angular/angular.min.js"></script>
+    <script src="/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
+    <script src="/bower_components/angular-messages/angular-messages.min.js"></script>
+    <script src="/bower_components/angular-resource/angular-resource.js"></script>
+    <script src="/bower_components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="/bower_components/angular-translate/angular-translate.min.js"></script>
+    <script src="/bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="/bower_components/angular-toastr/dist/angular-toastr.js"></script>
+    <script src="/bower_components/angular-xeditable/dist/js/xeditable.js"></script>
+    <script src="/bower_components/angular-socket-io/socket.min.js"></script>
+    <script src="/bower_components/firebase/firebase.js"></script>
+    <script src="/bower_components/angularfire/dist/angularfire.js"></script>
+    <script src="bower_components/angular-ui-calendar/src/calendar.js"></script>
+    <script src="bower_components/moment/moment.js"></script>
+    <script src="bower_components/fullcalendar/dist/fullcalendar.js"></script>
+    <script src="bower_components/fullcalendar/dist/lang-all.js"></script>
+    <script src="bower_components/fullcalendar/dist/gcal.js"></script>
+    <script src="bower_components/ng-file-upload-shim/angular-file-upload-shim.js"></script>
+    <script src="bower_components/ng-file-upload/angular-file-upload.js"></script>
+    <!--<script src="bower_components/ng-ckeditor/libs/ckeditor/ckeditor.js"></script>-->
+    <script src="bower_components/ckeditor/ckeditor.js"></script>
+    <script src="bower_components/ng-ckeditor/ng-ckeditor.js"></script>
+    <script src="bower_components/angular-ui-utils/jq.js"></script>
+    <script src="bower_components/angular-local-storage/dist/angular-local-storage.min.js"></script>
+    <script src="bower_components/tableExport/tableExport.js"></script>
+    <script src="bower_components/tableExport/jquery.base64.js"></script>
+
+    <!-- ANGULAR CUSTOM -->
+
+    <script src="js/app.js"></script>
+    <script src="user/services/userService.js"></script>
+    <script src="user/services/identityService.js"></script>
+    <script src="user/services/userLogic.js"></script>
+    <script src="group/services/groupService.js"></script>
+    <script src="student/services/studentService.js"></script>
+    <script src="common/services/getGroup.js"></script>
+    <script src="message/services/getMessages.js"></script>
+    <script src="message/services/messageSocket.js"></script>
+    <script src="common/services/getStudents.js"></script>
+    <script src="calendar/services/eventService.js"></script>
+    <script src="teacher/services/getStatusReport.js"></script>
+    <script src="common/services/underscore.js"></script>
+    <script src="user/services/authClient.js"></script>
+    <script src="common/services/updateService.js"></script>
+    <script src="common/directives/directives.js"></script>
+    <script src="common/directives/printDirective.js"></script>
+
+    <!--controller-->
+    <script src="common/controllers/mainCtrl.js"></script>
+    <script src="common/controllers/feedbackCtrl.js"></script>
+    <script src="translation/controllers/translateCtrl.js"></script>
+    <script src="common/controllers/uploadCtrl.js"></script>
+    <script src="message/controllers/sendMessageCtrl.js"></script>
+    <script src="user/controllers/userCtrl.js"></script>
+    <script src="student/controllers/studentCtrl.js"></script>
+    <script src="teacher/controllers/teacherCtrl.js"></script>
+    <script src="teacher/controllers/statusReportCtrl.js"></script>
+    <script src="parent/controllers/parentCtrl.js"></script>
+    <script src="calendar/controllers/calendarCtrl.js"></script>
+    <script src="user/directives/checkConfirmPwd.js"></script>
+    <script src="js/controllers/chatCtrl.js"></script>
+
+
+</head>
+<body ng-app="TinyApp" ng-controller="mainController">
+
+<script type="text/javascript">
+    window.user = <%- (!!currentUser ? JSON.stringify(currentUser) : "null") %>;
+</script>
+
+<div ng-include="'/layout/header.html'"></div>
+
+<!-- ANGULAR DYNAMIC CONTENT -->
+<div ui-view>
+
+</div>
+
+<!-- Modal -->
+<div ng-controller="feedbackController" ng-if="identity.isAuthenticated()" class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                <h3 class="modal-title title text-center" id="feedbackModalLabel">{{'Feedback and Wishes!' |
+                    translate }}</h3>
+            </div>
+            <div class="modal-body">
+                <div class="intro text-center">
+                    <p>{{'Praise, ask, wish or critisize.' | translate }}</p>
+
+                    <p>{{'We appreciate your feedback and improve TinyApp service continously.' | translate
+                        }}</p>
+                </div>
+
+                <form id="contact-form" class="contact-form" name="feedbackForm">
+                    <div class="row text-center">
+                        <div class="contact-form-inner col-md-8 col-sm-12 col-xs-12 col-md-offset-2 col-sm-offset-0 xs-offset-0">
+                            <div class="row">
+
+                                <div class="col-md-6 col-sm-6 col-xs-12 form-group">
+                                    <label class="sr-only" for="cname">Title</label>
+                                    <input type="text" class="form-control" id="ctitle" name="title"
+                                           placeholder="{{'TITLE' | translate}} *"
+                                           required ng-model="feedback.title">
+                                </div>
+                                <div class="col-md-6 col-sm-6 col-xs-12 form-group">
+                                    <label class="sr-only" for="cemail">Email address</label>
+                                    <input type="email" class="form-control" id="cemail" name="email"
+                                           placeholder="{{'Your email address' | translate }}"
+                                           ng-model="feedback.email">
+                                </div>
+                                <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+                                    <label class="sr-only" for="cmessage">Feedback</label>
+                                                <textarea class="form-control" id="cmessage" name="message"
+                                                          placeholder="{{'Enter your message' | translate }} *"
+                                                          rows="5" required
+                                                          ng-model="feedback.message"></textarea>
+                                </div>
+                                <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+                                    <button type="submit"
+                                            data-dismiss="{{feedbackForm.$valid ? 'modal' : '' }}"
+                                            ng-click="sendFeedback(feedback, feedbackForm.$valid)"
+                                            class="btn btn-block btn-cta btn-cta-primary">
+                                        {{'Send' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div ng-include="'/layout/footer.html'"></div>
+
+</body>
+
+</html>
