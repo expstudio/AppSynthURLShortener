@@ -5,7 +5,7 @@ tmp
 .idea
 .DS_Store
 
-config/aws.json
+
 public/velocity/
 
 public/assets/Iconr
