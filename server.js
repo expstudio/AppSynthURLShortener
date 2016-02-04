@@ -43,8 +43,6 @@ var passport        = require('passport'),
                     io.to(listener).emit('newMessage', {message: "New Notification"});
                 });
             });
-
-            //socket.removeAllListeners('connection', function(){});
         });
 
         /******/
@@ -58,6 +56,7 @@ var passport        = require('passport'),
             .disable('x-powered-by')
             // get all data/stuff of the body (POST) parameters
             .use('/api', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
+            .use('/updateProfile', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use(bodyParser.json()) // parse application/json
             .use(bodyParser.json({ type: 'application/vnd.api+json' })) // parse application/vnd.api+json as json
             .use(bodyParser.urlencoded({ extended: true })) // parse application/x-www-form-urlencoded
@@ -104,4 +103,4 @@ var passport        = require('passport'),
     });
 
 
-exports = module.exports = app;             // expose app
+exports = module.exports = app; // expose app

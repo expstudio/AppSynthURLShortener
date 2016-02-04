@@ -63,6 +63,7 @@ function addRepresentative (db, sender, child, callback) {
 exports.updateProfile = function(db) {
     return function(req, res) {
         var data = req.body.data;
+        console.log(req.user);
         var userID = new ObjectID(req.user._id);
         var sentTo = new Array();
 

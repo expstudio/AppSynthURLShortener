@@ -21,7 +21,7 @@
             <div class="panel">
                 <div class="heading text-center" ng-if="status === 'incare'">{{status + '_STATUS' | uppercase | translate}}</div>
                 <div class="heading text-center" ng-if="status !== 'incare'">{{status | uppercase | translate}}</div>
-                <div class="amount text-center">{{who.length}}</div>
+                <div class="amount text-center">{{who.length}}{{status}}</div>
             </div>
         </div>
     </div>
