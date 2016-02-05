@@ -84,7 +84,7 @@ exports.updateProfile = function(db) {
             });
 
         }, function(callback) {
-            data._id = new ObjectID(data._id);
+            data._id = new ObjectID("" + data._id);
             /*add req.user as child's parent, add child as req.user's child*/
             db.collection('students').update({_id: data._id}, data, function (err, response) {
                 if (err)
