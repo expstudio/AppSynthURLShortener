@@ -281,7 +281,53 @@ exports.getMessages = function (db) {
               }
               obj.senderDetails = doc;
               collection[index].senderDetails = doc[0];
-              done(); //important: have to call the callback function done() [or callback()] when
+
+              if(obj.receivers.length > 0) {
+
+                var receiverID = null;
+                if(typeof obj.receivers === 'string')
+                  receiverID = new ObjectID(''+ obj.receivers);
+                else 
+                  receiverID = new ObjectID(''+ obj.receivers[0]);
+
+                db.collection('user').find({_id: receiverID}, {fullName: 1}).toArray(function (err, doc) {
+                  if (err) {
+                    done(err);
+                  }
+                  obj.receiverDetails = doc;
+                  collection[index].receiverDetails = doc[0];
+                  
+                  if(obj.toGroup && obj.toGroup.length > 0) {
+                    var groupID = new ObjectID(obj.toGroup[0]);
+                    db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
+                      if (err) {
+                        done(err);
+                      }
+                      obj.groupDetails = doc;
+                      collection[index].groupDetails = doc[0];
+
+                
+                      done();
+                    });
+                  } else {
+                    done();
+                  }
+                  
+                });
+              } 
+              else if(obj.toGroup && obj.toGroup.length > 0) {
+                var groupID = new ObjectID(obj.toGroup[0]);
+                db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
+                  if (err) {
+                    done(err);
+                  }
+                  obj.groupDetails = doc;
+                  collection[index].groupDetails = doc[0];
+                  done();
+                });
+              } else {
+                done();
+              }
             })
           }, function (err) {
             if (err) {
@@ -311,13 +357,82 @@ exports.getDraftMessages = function (db) {
 
 exports.getSentMessages = function (db) {
   return function (req, res) {
-    db.collection('messages').find({sender: req.user._id.toString()}).toArray(function (err, doc) {
+    db.collection('messages').find({sender: req.user._id.toString()}).toArray(function (err, collection) {
       if (err) {
         throw err;
       }
+      if (collection) {
+        async.each(collection, function (obj, done) {
+          var objID = new ObjectID(obj.sender);
+          var index = collection.indexOf(obj);
+          db.collection('user').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
+            if (err) {
+              done(err);
+            }
+            obj.userDetails = [];
+            
+            obj.senderDetails = doc;
+            collection[index].senderDetails = doc[0];
 
-      res.send(doc);
+            if(obj.receivers.length > 0) {
+
+              var receiverID = null;
+              if(typeof obj.receivers === 'string')
+                receiverID = new ObjectID(''+ obj.receivers);
+              else 
+                receiverID = new ObjectID(''+ obj.receivers[0]);
+
+              db.collection('user').find({_id: receiverID}, {fullName: 1}).toArray(function (err, doc) {
+                if (err) {
+                  done(err);
+                }
+                obj.receiverDetails = doc;
+                collection[index].receiverDetails = doc[0];
+                
+                if(obj.toGroup && obj.toGroup.length > 0) {
+                  var groupID = new ObjectID(obj.toGroup[0]);
+                  db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
+                    if (err) {
+                      done(err);
+                    }
+                    obj.groupDetails = doc;
+                    collection[index].groupDetails = doc[0];
+
+              
+                    done();
+                  });
+                } else {
+                  done();
+                }
+                
+              });
+            } 
+            else if(obj.toGroup && obj.toGroup.length > 0) {
+              var groupID = new ObjectID(obj.toGroup[0]);
+              db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
+                if (err) {
+                  done(err);
+                }
+                obj.groupDetails = doc;
+                collection[index].groupDetails = doc[0];
+                done();
+              });
+            } else {
+              done();
+            }
+          });
+        }, function (err) {
+          if (err) {
+            throw err;
+          }
+          res.send(collection);
+        });
+      } else {
+          res.send(collection);
+      }
+      //res.send(collection);
     });
+
   };
 };
 
