@@ -12,7 +12,9 @@ module.exports = function(app, passport, db) {
     app.get('/api/groups', userCtrl.getGroups(db));
 
     app.get('/api/messages', userCtrl.getMessages(db));
+    app.get('/api/chatmessages', userCtrl.getChatMessages(db));
     app.put('/api/messages', userCtrl.updateMessage(db));
+    app.put('/api/chatmessages', userCtrl.updateMessage(db));
 
     app.get('/api/students', userCtrl.getStudents(db));
     app.put('/api/students', parentCtrl.updateChildProfile(db));

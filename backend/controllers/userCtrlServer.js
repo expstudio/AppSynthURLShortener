@@ -176,8 +176,8 @@ exports.getGroups = function (db) {
   return function (req, res) {
     var query = {};
 
-    console.log(util.inspect(req.query, false, null));
-    console.log(util.inspect(req.user, false, null));
+    console.log("GetGroup query:" + util.inspect(req.query, false, null));
+    console.log("GetGroup user:" + util.inspect(req.user, false, null));
 
     if (req.query._id) {
       query._id = new ObjectID(req.query._id);
@@ -281,51 +281,113 @@ exports.getMessages = function (db) {
               }
               obj.senderDetails = doc;
               collection[index].senderDetails = doc[0];
+              done(); //important: have to call the callback function done() [or callback()] when
+            })
+          }, function (err) {
+            if (err) {
+              throw err;
+            }
+            res.send(collection);
+          });
+        } else {
+          res.send(collection);
+        }
+        //res.send(collection);
+      });
 
-              if(obj.receivers.length > 0) {
+  }
+};
 
-                var receiverID = null;
-                if(typeof obj.receivers === 'string')
-                  receiverID = new ObjectID(''+ obj.receivers);
-                else 
-                  receiverID = new ObjectID(''+ obj.receivers[0]);
+exports.getChatMessages = function (db) {
+  return function (req, res) {
+    var query = {};
+    //db.collection('messages').find({ $or: [ {receivers: req.user.role}, {receivers: req.user._id}]})
+    //req.user._id.toHexString() => need to use toHexString because save as toHexString in parentCtrServer
+    //db.collection('messages').find({ $or: [ {receivers: {$in: req.user.roles}}, {receivers: {$in: req.user.myChildren}},
+    //{receivers: req.user._id.toHexString()}]})
+    var myChildren = new Array();
+    if (!!req.user.myChildren) {
+      myChildren = req.user.myChildren;
+    }
+    if (req.user.roles.indexOf('teacher') > -1) {
+      query = {
+        $or: [
+          //{receivers: {$in: req.user.roles}, toGroup: req.user.groupID.toHexString()},
+          {receivers: {$in: req.user.roles}, toGroup: req.user.groupID[0]},
+          {receivers: req.user._id.toString()},
+          {sender: req.user._id.toString(), conversationID: {$exists: true}},
+          {sender: req.user._id.toString()}
+        ]
+      };
+    } else {
+      query = {
+        $or: [
+          {receivers: {$in: myChildren}},
+          {receivers: req.user._id.toString()},
+          {receivers: {$in: [req.user._id.toString()]}},
+          {sender: req.user._id.toString(), conversationID: {$exists: true}},
+          {sender: req.user._id.toString()}
+        ]
+      };
+    }
+    db.collection('messages').find(query)
+      .toArray(function (err, collection) {
+        if (err) throw err;
 
-                db.collection('user').find({_id: receiverID}, {fullName: 1}).toArray(function (err, doc) {
-                  if (err) {
-                    done(err);
-                  }
-                  obj.receiverDetails = doc;
-                  collection[index].receiverDetails = doc[0];
-                  
-                  if(obj.toGroup && obj.toGroup.length > 0) {
-                    var groupID = new ObjectID(obj.toGroup[0]);
-                    db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
-                      if (err) {
-                        done(err);
-                      }
-                      obj.groupDetails = doc;
-                      collection[index].groupDetails = doc[0];
+        if (collection) {
+          async.each(collection, function (obj, done) {
+            var objID = new ObjectID(obj.sender);
+            var index = collection.indexOf(obj);
+            var error = null;
 
-                
-                      done();
-                    });
-                  } else {
+            db.collection('user').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
+              if (err){
+                done(err);
+              }
+
+              obj.senderDetails = doc;
+              collection[index].senderDetails = doc[0];   
+              
+              obj.contactDetails = {};
+              
+              if ("" + obj.sender == "" + req.user._id) {
+                if (obj.toGroup && obj.toGroup.length > 0) {
+                  obj.contactDetails.id = obj.toGroup[0];
+                  obj.contactDetails.type = "group";
+                  var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
+
+                  db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
+                    if (err){
+                      done(err);
+                    }
+
+                    if (groups) {
+                      obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
+                      collection[index].contactDetails = obj.contactDetails;   
+                    }
+
+                    done();   
+                  });
+
+                } else {
+                  obj.contactDetails.id = obj.receivers[0];
+                  obj.contactDetails.type = "receiver";
+                  var receiverID = new ObjectID(obj.receivers[0]);
+                  db.collection('user').findOne({_id: receiverID}, function (err, usr) {
+                    if (err){
+                      done(err);
+                    }
+
+                     obj.contactDetails.name = usr.fullName;
+                    collection[index].contactDetails = obj.contactDetails;   
                     done();
-                  }
-                  
-                });
-              } 
-              else if(obj.toGroup && obj.toGroup.length > 0) {
-                var groupID = new ObjectID(obj.toGroup[0]);
-                db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
-                  if (err) {
-                    done(err);
-                  }
-                  obj.groupDetails = doc;
-                  collection[index].groupDetails = doc[0];
-                  done();
-                });
+                  });
+                }
               } else {
+                obj.contactDetails.id = obj.sender;
+                obj.contactDetails.type = "sender";
+                obj.contactDetails.name = obj.senderDetails.fullName;
+                collection[index].contactDetails = obj.contactDetails;      
                 done();
               }
             })
@@ -333,6 +395,7 @@ exports.getMessages = function (db) {
             if (err) {
               throw err;
             }
+
             res.send(collection);
           });
         } else {
@@ -357,82 +420,13 @@ exports.getDraftMessages = function (db) {
 
 exports.getSentMessages = function (db) {
   return function (req, res) {
-    db.collection('messages').find({sender: req.user._id.toString()}).toArray(function (err, collection) {
+    db.collection('messages').find({sender: req.user._id.toString()}).toArray(function (err, doc) {
       if (err) {
         throw err;
       }
-      if (collection) {
-        async.each(collection, function (obj, done) {
-          var objID = new ObjectID(obj.sender);
-          var index = collection.indexOf(obj);
-          db.collection('user').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
-            if (err) {
-              done(err);
-            }
-            obj.userDetails = [];
-            
-            obj.senderDetails = doc;
-            collection[index].senderDetails = doc[0];
 
-            if(obj.receivers.length > 0) {
-
-              var receiverID = null;
-              if(typeof obj.receivers === 'string')
-                receiverID = new ObjectID(''+ obj.receivers);
-              else 
-                receiverID = new ObjectID(''+ obj.receivers[0]);
-
-              db.collection('user').find({_id: receiverID}, {fullName: 1}).toArray(function (err, doc) {
-                if (err) {
-                  done(err);
-                }
-                obj.receiverDetails = doc;
-                collection[index].receiverDetails = doc[0];
-                
-                if(obj.toGroup && obj.toGroup.length > 0) {
-                  var groupID = new ObjectID(obj.toGroup[0]);
-                  db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
-                    if (err) {
-                      done(err);
-                    }
-                    obj.groupDetails = doc;
-                    collection[index].groupDetails = doc[0];
-
-              
-                    done();
-                  });
-                } else {
-                  done();
-                }
-                
-              });
-            } 
-            else if(obj.toGroup && obj.toGroup.length > 0) {
-              var groupID = new ObjectID(obj.toGroup[0]);
-              db.collection('groups').find({_id: groupID}, {name: 1}).toArray(function (err, doc) {
-                if (err) {
-                  done(err);
-                }
-                obj.groupDetails = doc;
-                collection[index].groupDetails = doc[0];
-                done();
-              });
-            } else {
-              done();
-            }
-          });
-        }, function (err) {
-          if (err) {
-            throw err;
-          }
-          res.send(collection);
-        });
-      } else {
-          res.send(collection);
-      }
-      //res.send(collection);
+      res.send(doc);
     });
-
   };
 };
 
