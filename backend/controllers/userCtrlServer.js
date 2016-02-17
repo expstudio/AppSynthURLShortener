@@ -554,6 +554,19 @@ exports.deleteTemplate = function (db) {
   }
 };
 
+exports.deleteMessage = function (db) {
+  return function (req, res) {
+    var messageID = new ObjectID(req.query._id);
+
+    db.collection('messages').remove({_id: messageID}, function (err, result) {
+      if (err) {
+        res.send(500, err);
+      }
+      res.send(200);
+    })
+  }
+};
+
 exports.updateMessage = function (db) {
   return function (req, res) {
     var message = req.body;
