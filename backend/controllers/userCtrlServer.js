@@ -557,8 +557,8 @@ exports.deleteTemplate = function (db) {
 exports.deleteMessage = function (db) {
   return function (req, res) {
     var messageID = new ObjectID(req.query._id);
-
-    db.collection('messages').remove({_id: messageID}, function (err, result) {
+    
+    db.collection('messages').remove({_id: messageID, sender: req.user._id}, function (err, result) {
       if (err) {
         res.send(500, err);
       }
