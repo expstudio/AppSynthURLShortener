@@ -90,11 +90,6 @@ var passport        = require('passport'),
             res.send(200);
         });
         
-        /*.get(/^\/$|(index)(\.html?)?$/i,function(req,res){
-         res.render('index.ejs', {currentUser: req.user});
-         console.log(req.user);
-         });*/
-
         require('./backend/routes.js')(app, passport, db);
         // var io = require('socket.io').listen(app);
         server.listen(port, function () {

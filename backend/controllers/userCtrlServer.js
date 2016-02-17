@@ -464,7 +464,7 @@ exports.sendMessage = function (db) {
         if (err)
           throw err;
         console.log(sendFromDraft, req.body.message._id, message._id);
-        res.json({success: true, _id: doc._id})
+        res.json({success: true, message: doc[0]})
       });
     }
   }
@@ -557,13 +557,47 @@ exports.deleteTemplate = function (db) {
 exports.deleteMessage = function (db) {
   return function (req, res) {
     var messageID = new ObjectID(req.query._id);
-    
-    db.collection('messages').remove({_id: messageID, sender: req.user._id}, function (err, result) {
-      if (err) {
+
+    db.collection('messages').findOne({'_id': messageID}, function (err, message) {
+
+      if(message && message.sender === req.user._id) {             
+        if(message.attachment) {
+          var fileKey = message.attachment.split('attachmentFiles').pop();
+          var params = {
+            Bucket: config.bucket,
+            Delete: {
+              Objects: [{
+                        Key: 'attachmentFiles' +fileKey
+                      }]
+            }
+          };
+
+          var s3 = new AWS.S3({
+            apiVersion: '2006-03-01',
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
+            region: config.region,
+            signatureVersion: 'v4'
+          });
+
+          s3.deleteObjects(params, function(err, data) {
+            if (err) return console.log(err);
+
+            return console.log(data.Deleted.length);
+          });
+        }
+
+        db.collection('messages').remove({_id: messageID}, function (err, result) {
+          if (err) {
+            res.send(500, err);
+          }
+
+          res.send(200);
+        });
+      } else {
         res.send(500, err);
       }
-      res.send(200);
-    })
+    });
   }
 };
 
