@@ -38,6 +38,7 @@ module.exports = function(app, passport, db) {
 
     app.post('/login', userCtrl.loginUser);
     app.post('/signup', userCtrl.signupUser);
+    app.post('/attachment/upload', userCtrl.uploadAttachment(db));
     app.post('/images/upload', userCtrl.uploadFile(db));
 
     app.get('/layout/*', function(req, res) {

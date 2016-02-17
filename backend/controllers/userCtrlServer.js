@@ -753,57 +753,111 @@ exports.uploadFile = function (db) {
                   });
               });
           });
-
-          /*newImage.batch()
-           .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
-           .resize(150, 150)
-           .toBuffer('jpg', function (err, buffer) {
-           params.Key = 'thumb-' + fileName;
-           params.Body = buffer;
-           s3.upload(params)
-           .on('httpUploadProgress', function(evt) { console.log(evt); })
-           .send(function(err, data) { console.log(err, data) });
-           });
-           */
         })
       });
-      /*
-       mv(tmpPath, destPath, function(err) {
-       if (err) {
-       throw err;
-       //return res.status(400).send('Image is not saved:');
-       };
-       var dataFields = JSON.parse(fields.data[0]);
-       var coords = dataFields.cropCoords;
-       lwip.open(destPath, function (err, image) {
-       console.log('crop ok', image.width());
-       var ratio = 1;
-       var biggestWidth = 500;
-       var imgWidth = image.width();
-       if (imgWidth > biggestWidth) {
-       ratio = biggestWidth / imgWidth;
-       };
-       image.scale(ratio, ratio, function(err, newImage) {
-       newImage.batch().writeFile(destPath, function (err) {
-       newImage.batch()
-       .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
-       .resize(150, 150)
-       .writeFile(thumbnailPath, function (err) {
-       //can create an array of profile pictures here
-       var objID = new ObjectID(dataFields.profileOwner);
-       var newPic = {thumb: 'images/' + 'thumb-'+ fileName, original: 'images/' + fileName};
-       db.collection('students').update({_id: objID}, {$set: {'personalInfo.profilePicture': newPic}}, function (err, count) {
-       if (err) {
-       throw err;
-       };
-       return res.json(newPic);
-       })
-       });
-       });
-       });
-       });
+    });
 
-       });*/
+  }
+};
+
+
+function sendAttachmentMessage(db, res, data) {
+  db.collection('messages').insert(data.message, function (err, doc) {
+      if (err)
+        throw err;
+
+      res.json({success: true, message: doc})
+    });
+}
+
+exports.uploadAttachment = function (db) {
+  return function (req, res) {
+    var form = new multiparty.Form();
+    form.parse(req, function (err, fields, files) {
+
+      var grid = new Grid(db, 'fs');
+      var file = files.attachmentFile[0];
+
+      /* using file system */
+      var contentType = file.headers['content-type'];
+      var tmpPath = file.path;
+      var extIndex = tmpPath.lastIndexOf('.');
+      var extension = (extIndex < 0) ? '' : tmpPath.substr(extIndex);
+      // uuid is for generating unique filenames.
+      var fileName = file.originalFilename;
+      var destPath = rootPath + 'images/' + fileName;
+      var thumbnailPath = rootPath + 'images/' + 'thumb-' + fileName;
+
+      // Server side file type checker.
+      if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'application/pdf' && contentType !== 'text/plain') {
+        fs.unlink(tmpPath);
+        return res.status(400).send('Unsupported file type.');
+      }
+
+      var folder = uuid.v4();
+      var s3 = new AWS.S3({
+        apiVersion: '2006-03-01',
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
+        region: config.region,
+        signatureVersion: 'v4'
+      });
+
+      var params = {
+        Bucket: config.bucket,
+        Key: 'attachmentFiles/' + folder + '/' + fileName,
+        ACL: 'public-read'
+      };
+      var body = fs.createReadStream(tmpPath);
+
+      if (contentType !== 'application/pdf' && contentType !== 'text/plain') {
+        lwip.open(tmpPath, function (err, image) {
+
+          var dataFields = JSON.parse(fields.data[0]);
+          var coords = dataFields.cropCoords;
+          var ratio = 1;
+          var biggestWidth = 500;
+          var imgWidth = image.width();
+          if (imgWidth > biggestWidth) {
+            ratio = biggestWidth / imgWidth;
+          }
+          
+          image.scale(ratio, ratio, function (err, newImage) {
+
+            newImage.toBuffer('jpg', function (err, buffer) {
+              params.Body = buffer;
+              s3.upload(params)
+                .on('httpUploadProgress', function (evt) {
+                  // console.log(evt);
+                })
+                .send(function (err, data) {
+                  var attachmentLocation = data.Location;
+                  dataFields.message.attachment = attachmentLocation;
+                  dataFields.message.attachment_type = "image";
+                  sendAttachmentMessage(db, res, dataFields);
+                });
+            });
+          })
+        });
+      } else {
+        fs.readFile(file.path, function (err, data) {
+          if (err) throw err; // Something went wrong!
+          
+          var dataFields = JSON.parse(fields.data[0]);
+          params.Body = data;
+          s3.upload(params)
+            .on('httpUploadProgress', function (evt) {
+              console.log(evt);
+            })
+            .send(function (err, data) {
+              console.log(err, data);
+              var attachmentLocation = data.Location;
+              dataFields.message.attachment = attachmentLocation;
+              dataFields.message.attachment_type = "file";
+              sendAttachmentMessage(db, res, dataFields);
+            });
+        });
+      }
     });
 
   }
