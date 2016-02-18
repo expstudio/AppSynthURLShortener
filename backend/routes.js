@@ -52,6 +52,7 @@ module.exports = function(app, passport, db) {
     app.get('/api/message/template', userCtrl.getMessageTemplates(db));
     app.delete('/api/message/template', userCtrl.deleteTemplate(db));
     app.delete('/api/chatmessages', userCtrl.deleteMessage(db));
+    app.post('/api/deleteMssages', userCtrl.deleteMessage(db));
     app.post('/api/message/template', userCtrl.saveMessageTemplate(db));
     app.post('/updateProfile', parentCtrl.updateProfile(db));
     app.post('/addParent', parentCtrl.addParent(db));
