@@ -557,14 +557,14 @@ exports.deleteTemplate = function (db) {
 exports.deleteMessage = function (db) {
   return function (req, res) {
     var messageID = req.body._id  ? new ObjectID(req.body._id) : new ObjectID(req.query._id);
-    console.log("delete message: " + req.body, req.query);    
+    console.log("delete message: " + req.body._id, req.query, messageID);    
 
     db.collection('messages').findOne({'_id': messageID}, function (err, message) {
 
       if(message && message.sender === req.user._id) {    
 
         console.log(message);    
-         
+
         if(message.attachment) {
           var fileKey = message.attachment.split('attachmentFiles').pop();
           var params = {
@@ -599,7 +599,7 @@ exports.deleteMessage = function (db) {
           res.send(200);
         });
       } else {
-    console.log(err);     
+        console.log("error delete " + messageID);     
         res.send(500, err);
       }
     });
