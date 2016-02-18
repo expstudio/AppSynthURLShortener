@@ -561,7 +561,7 @@ exports.deleteMessage = function (db) {
 
     db.collection('messages').findOne({'_id': messageID}, function (err, message) {
       console.log("Delete Message ", req.user)
-      if(message && (message.sender === req.user._id || !req.user._id)) {    
+      if(message) {    
 
         console.log(message);    
 
