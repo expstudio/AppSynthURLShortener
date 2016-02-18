@@ -556,14 +556,15 @@ exports.deleteTemplate = function (db) {
 
 exports.deleteMessage = function (db) {
   return function (req, res) {
-    var messageID = req.query._id ? new ObjectID(req.query._id) : new ObjectID(req.body._id);
-    console.log("delete message: " + req.body._id, req.query);    
+    var messageID = req.body._id  ? new ObjectID(req.body._id) : new ObjectID(req.query._id);
+    console.log("delete message: " + req.body, req.query);    
 
     db.collection('messages').findOne({'_id': messageID}, function (err, message) {
 
       if(message && message.sender === req.user._id) {    
 
-    console.log(message);     
+        console.log(message);    
+         
         if(message.attachment) {
           var fileKey = message.attachment.split('attachmentFiles').pop();
           var params = {
