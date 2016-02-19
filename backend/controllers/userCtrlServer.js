@@ -387,11 +387,31 @@ exports.getChatMessages = function (db) {
                   });
                 }
               } else {
-                obj.contactDetails.id = obj.sender;
-                obj.contactDetails.type = "sender";
-                obj.contactDetails.name = obj.senderDetails.fullName;
-                collection[index].contactDetails = obj.contactDetails;      
-                done();
+                if (obj.toGroup && obj.toGroup.length > 0) {
+                  obj.contactDetails.id = obj.toGroup[0];
+                  obj.contactDetails.type = "group";
+                  var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
+
+                  db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
+                    if (err){
+                      done(err);
+                    }
+
+                    if (groups) {
+                      obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
+                      collection[index].contactDetails = obj.contactDetails;   
+                    }
+
+                    done();   
+                  });
+
+                } else {
+                  obj.contactDetails.id = obj.sender;
+                  obj.contactDetails.type = "sender";
+                  obj.contactDetails.name = obj.senderDetails.fullName;
+                  collection[index].contactDetails = obj.contactDetails;      
+                  done();
+                }
               }
             })
           }, function (err) {
