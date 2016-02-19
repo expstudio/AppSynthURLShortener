@@ -250,6 +250,7 @@ exports.getMessages = function (db) {
     }
 
     if (req.user.roles.indexOf('teacher') > -1) {
+      console.log(req.user.groupID);
       query = {
         $or: [
           //{receivers: {$in: req.user.roles}, toGroup: req.user.groupID.toHexString()},
@@ -316,6 +317,7 @@ exports.getChatMessages = function (db) {
           //{receivers: {$in: req.user.roles}, toGroup: req.user.groupID.toHexString()},
           {receivers: {$in: req.user.roles}, toGroup: req.user.groupID[0]},
           {receivers: req.user._id.toString()},
+          {toGroup: {$elemMatch: {$in: req.user.groupID}}},
           {sender: req.user._id.toString(), conversationID: {$exists: true}},
           {sender: req.user._id.toString()}
         ]
