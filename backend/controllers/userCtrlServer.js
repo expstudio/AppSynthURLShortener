@@ -254,6 +254,7 @@ exports.getMessages = function (db) {
         $or: [
           //{receivers: {$in: req.user.roles}, toGroup: req.user.groupID.toHexString()},
           {receivers: {$in: req.user.roles}, toGroup: req.user.groupID[0]},
+          {toGroup: {$elemMatch: {$in: req.user.groupID}}},
           {receivers: req.user._id.toString()},
           {sender: req.user._id.toString(), conversationID: {$exists: true}}
         ]
