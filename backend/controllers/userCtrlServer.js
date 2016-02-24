@@ -136,7 +136,7 @@ exports.loginUser = function (req, res, next) {
         redirect = '/calendar-events';
       }
 
-      var token = jwt.sign(req.user, secret, { expiresIn: 60*5*60 });
+      var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
 
       res.send({
         redirect: redirect,

@@ -5,7 +5,7 @@
 		</div>
 
 		<div class="content">
-			<h2 class="text-center">{{'WELCOME_TO' | translate}} {{group.name}}</h2>
+			<h2 class="text-center">{{'WELCOME_TO' | translate}} {{group.name ? group.name : group.code}}</h2>
 			<h3 class="text-center">{{'CREATE_YOUR_GROUP' | translate}}</h3>
 			<div class="form-box col-md-8 col-sm-12 col-xs-12 col-md-offset-2 col-sm-offset-0 xs-offset-0">
 				<h4>{{formMessage}}</h4>

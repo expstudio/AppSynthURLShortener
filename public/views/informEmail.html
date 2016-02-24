@@ -3,11 +3,11 @@
 		<h2 class="text-center title">{{'THANK_SIGNUP_HEADER' | translate}}</h2>
 		<p class="text-center intro">{{'THANK_SIGNUP_BODY' | translate}}</p>
 	</div>
-	<div ng-controller="userController" ng-show="identity.isAuthenticated()">
+	<div ng-controller="userController" ng-show="identity.isAuthenticated()" class="text-center">
 		<h3 class="text-center title">{{'ACTIVATED_MESS' | translate}}</h3>
-		<p class="text-center intro">
-            <a ui-sref="addstudent" ng-show="identity.currentUser.roles.indexOf('teacher') > -1">{{'CLICK_HERE' | translate}}</a>
-            <a ui-sref="createProfile" ng-show="identity.currentUser.roles.indexOf('parent') > -1">{{'CLICK_HERE' | translate}}</a>
-            {{'TO_DISCOVER' | translate}}</p>
+		<br>
+		<img src="assets/images/TinyApp.png" />
+		<br>
+		<br>
 	</div>
 </div>
