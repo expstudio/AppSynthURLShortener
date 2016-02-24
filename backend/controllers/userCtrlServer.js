@@ -719,31 +719,9 @@ exports.uploadFile = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      //res.writeHead(200, {'content-type': 'text/plain'});
-      //res.write('received upload:\n\n');
-      //res.end(util.inspect({fields: fields, files: files}));
       var grid = new Grid(db, 'fs');
       var file = files.myFile[0];
 
-      /*using GridStore*
-       var fileId = new ObjectID();
-       var gridStore = new GridStore(db, fileId, 'w');
-       var fileSize = file.size;
-       var data = fs.readFileSync(file.path);
-
-       gridStore.open(function(err, gridStore) {
-
-       // Write the file to gridFS
-       gridStore.writeFile(file.path, function(err, doc) {
-
-       // Read back all the written content and verify the correctness
-       GridStore.read(db, fileId, function(err, fileData) {
-       assert.equal(data.toString('base64'), fileData.toString('base64'));
-       assert.equal(fileSize, fileData.length);
-       res.json(fileData.toString('base64'));
-       });
-       });
-       });
        /*****************/
       /* using file system */
       var contentType = file.headers['content-type'];
@@ -754,7 +732,7 @@ exports.uploadFile = function (db) {
       var fileName = uuid.v4() + extension;
       var destPath = rootPath + 'images/' + fileName;
       var thumbnailPath = rootPath + 'images/' + 'thumb-' + fileName;
-
+      console.log(destPath, thumbnailPath, contentType);
       // Server side file type checker.
       if (contentType !== 'image/png' && contentType !== 'image/jpeg') {
         fs.unlink(tmpPath);
@@ -782,7 +760,14 @@ exports.uploadFile = function (db) {
        .on('httpUploadProgress', function(evt) { console.log(evt); })
        .send(function(err, data) { console.log(err, data) });
        */
+
+       
+
       lwip.open(tmpPath, function (err, image) {
+        console.log(err);
+        if(!image) {
+          return res.json(err);
+        }
         var dataFields = JSON.parse(fields.data[0]);
         var coords = dataFields.cropCoords;
         var ratio = 1;
@@ -791,7 +776,7 @@ exports.uploadFile = function (db) {
         if (imgWidth > biggestWidth) {
           ratio = biggestWidth / imgWidth;
         }
-        ;
+        
         image.scale(ratio, ratio, function (err, newImage) {
 
           newImage.toBuffer('jpg', function (err, buffer) {
