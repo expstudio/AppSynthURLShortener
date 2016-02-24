@@ -344,7 +344,7 @@ exports.getChatMessages = function (db) {
             var index = collection.indexOf(obj);
             var error = null;
 
-            db.collection('user').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
+            db.collection('user').find({_id: objID}, {fullName: 1, roles: 1}).toArray(function (err, doc) {
               if (err){
                 done(err);
               }
@@ -421,6 +421,12 @@ exports.getChatMessages = function (db) {
           }, function (err) {
             if (err) {
               throw err;
+            }
+
+            if (req.user.roles.indexOf('parent') > -1) {
+              collection = collection.filter(function(item) {
+                return item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString();
+              });
             }
             
             console.log(collection);
