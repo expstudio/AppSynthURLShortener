@@ -328,6 +328,7 @@ exports.getChatMessages = function (db) {
           {receivers: {$in: myChildren}},
           {receivers: req.user._id.toString()},
           {receivers: {$in: [req.user._id.toString()]}},
+          {toGroup: {$elemMatch: {$in: req.user.groupID}}},
           {sender: req.user._id.toString(), conversationID: {$exists: true}},
           {sender: req.user._id.toString()}
         ]
@@ -377,13 +378,16 @@ exports.getChatMessages = function (db) {
                   obj.contactDetails.type = "receiver";
                   var receiverID = new ObjectID(obj.receivers[0]);
                   db.collection('user').findOne({_id: receiverID}, function (err, usr) {
-                    if (err){
+                    if (err || usr == null){
+                      console.log("Not found user ******  ", obj);
                       done(err);
-                    }
+                    } else {
 
-                     obj.contactDetails.name = usr.fullName;
-                    collection[index].contactDetails = obj.contactDetails;   
-                    done();
+                       obj.contactDetails.name = usr.fullName;
+                      collection[index].contactDetails = obj.contactDetails;   
+                      done();
+
+                    }
                   });
                 }
               } else {
@@ -418,7 +422,8 @@ exports.getChatMessages = function (db) {
             if (err) {
               throw err;
             }
-
+            
+            console.log(collection);
             res.send(collection);
           });
         } else {
