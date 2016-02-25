@@ -372,69 +372,69 @@ exports.getChatMessages = function (db) {
               obj.senderDetails = doc;
               collection[index].senderDetails = doc[0];   
               
-              obj.contactDetails = {};
-              
-              if ("" + obj.sender == "" + req.user._id) {
-                if (obj.toGroup && obj.toGroup.length > 0) {
-                  obj.contactDetails.id = obj.toGroup[0];
-                  obj.contactDetails.type = "group";
-                  var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
+              if (!obj.contactDetails || !obj.contactDetails.name) {              
+                if ("" + obj.sender == "" + req.user._id) {
+                  if (obj.toGroup && obj.toGroup.length > 0) {
+                    obj.contactDetails.id = obj.toGroup[0];
+                    obj.contactDetails.type = "group";
+                    var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
 
-                  db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
-                    if (err){
-                      done(err);
-                    }
+                    db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
+                      if (err){
+                        done(err);
+                      }
 
-                    if (groups) {
-                      obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
-                      collection[index].contactDetails = obj.contactDetails;   
-                    }
+                      if (groups) {
+                        obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
+                        collection[index].contactDetails = obj.contactDetails;   
+                      }
 
-                    done();   
-                  });
+                      done();   
+                    });
 
+                  } else {
+                    obj.contactDetails.id = obj.receivers[0];
+                    obj.contactDetails.type = "receiver";
+                    var receiverID = new ObjectID(obj.receivers[0]);
+                    db.collection('user').findOne({_id: receiverID}, function (err, usr) {
+                      if (err || usr == null){
+                        console.log("Not found user ******  ", obj);
+                        done(err);
+                      } else {
+
+                         obj.contactDetails.name = usr.fullName;
+                        collection[index].contactDetails = obj.contactDetails;   
+                        done();
+
+                      }
+                    });
+                  }
                 } else {
-                  obj.contactDetails.id = obj.receivers[0];
-                  obj.contactDetails.type = "receiver";
-                  var receiverID = new ObjectID(obj.receivers[0]);
-                  db.collection('user').findOne({_id: receiverID}, function (err, usr) {
-                    if (err || usr == null){
-                      console.log("Not found user ******  ", obj);
-                      done(err);
-                    } else {
+                  if (obj.toGroup && obj.toGroup.length > 0) {
+                    obj.contactDetails.id = obj.toGroup[0];
+                    obj.contactDetails.type = "group";
+                    var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
 
-                       obj.contactDetails.name = usr.fullName;
-                      collection[index].contactDetails = obj.contactDetails;   
-                      done();
+                    db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
+                      if (err){
+                        done(err);
+                      }
 
-                    }
-                  });
-                }
-              } else {
-                if (obj.toGroup && obj.toGroup.length > 0) {
-                  obj.contactDetails.id = obj.toGroup[0];
-                  obj.contactDetails.type = "group";
-                  var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
+                      if (groups) {
+                        obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
+                        collection[index].contactDetails = obj.contactDetails;   
+                      }
 
-                  db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
-                    if (err){
-                      done(err);
-                    }
+                      done();   
+                    });
 
-                    if (groups) {
-                      obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
-                      collection[index].contactDetails = obj.contactDetails;   
-                    }
-
-                    done();   
-                  });
-
-                } else {
-                  obj.contactDetails.id = obj.sender;
-                  obj.contactDetails.type = "sender";
-                  obj.contactDetails.name = obj.senderDetails.fullName;
-                  collection[index].contactDetails = obj.contactDetails;      
-                  done();
+                  } else {
+                    obj.contactDetails.id = obj.sender;
+                    obj.contactDetails.type = "sender";
+                    obj.contactDetails.name = obj.senderDetails.fullName;
+                    collection[index].contactDetails = obj.contactDetails;      
+                    done();
+                  }
                 }
               }
             })
