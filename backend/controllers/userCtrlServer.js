@@ -375,7 +375,8 @@ exports.getChatMessages = function (db) {
               if (!obj.contactDetails || !obj.contactDetails.name) {    
                 if (!obj.contactDetails) {
                   obj.contactDetails = {};
-                }          
+                }    
+
                 if ("" + obj.sender == "" + req.user._id) {
                   if (obj.toGroup && obj.toGroup.length > 0) {
                     obj.contactDetails.id = obj.toGroup[0];
@@ -439,6 +440,8 @@ exports.getChatMessages = function (db) {
                     done();
                   }
                 }
+              } else {
+                done();
               }
             })
           }, function (err) {
