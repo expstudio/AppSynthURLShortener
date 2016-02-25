@@ -176,9 +176,6 @@ exports.getGroups = function (db) {
   return function (req, res) {
     var query = {};
 
-    console.log("GetGroup query:" + util.inspect(req.query, false, null));
-    console.log("GetGroup user:" + util.inspect(req.user, false, null));
-
     if (req.query._id) {
       query._id = new ObjectID(req.query._id);
     } else {
@@ -237,6 +234,28 @@ exports.getStudents = function (db) {
   }
 };
 
+exports.getParents = function (db) {
+
+  return function (req, res) {
+    var query = {};
+    var parents = new Array();
+
+    query = {$and: [
+      {groupID: {$elemMatch: {$in: req.user.groupID}}},
+      {roles: {$elemMatch: {$in: [req.query.role]}}}
+      ]};
+
+    db.collection('user').find(query, {_id: 1, fullName: 1, profilePicture: 1}).toArray(function (err, collection) {
+      if (err) throw err;
+      if (collection) {
+        console.log(collection);
+        res.send(collection);
+      }
+    });
+  };
+
+};
+
 exports.getMessages = function (db) {
   return function (req, res) {
     var query = {};
@@ -269,6 +288,7 @@ exports.getMessages = function (db) {
         ]
       };
     }
+
     db.collection('messages').find(query)
       .toArray(function (err, collection) {
         if (err) throw err;
@@ -428,8 +448,7 @@ exports.getChatMessages = function (db) {
                 return item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString();
               });
             }
-            
-            console.log(collection);
+
             res.send(collection);
           });
         } else {

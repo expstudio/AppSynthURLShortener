@@ -20,6 +20,8 @@ module.exports = function(app, passport, db) {
     app.put('/api/students', parentCtrl.updateChildProfile(db));
     app.delete('/api/students', userCtrl.deleteChildProfile(db));
 
+    app.get('/api/parents', userCtrl.getParents(db));
+
     app.get('/api/events', userCtrl.getEvents(db));
     app.put('/api/events', userCtrl.updateEvent(db));
     app.delete('/api/events', userCtrl.deleteEvent(db));
