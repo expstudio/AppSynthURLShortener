@@ -372,7 +372,7 @@ exports.getChatMessages = function (db) {
               obj.senderDetails = doc;
               collection[index].senderDetails = doc[0];   
               
-              if (!obj.contactDetails || !obj.contactDetails.name) {    
+              if (!obj.contactDetails || !obj.contactDetails.name || typeof(obj.contactDetails) == 'undefined') {    
                 if (!obj.contactDetails) {
                   obj.contactDetails = {};
                 }    
@@ -441,6 +441,12 @@ exports.getChatMessages = function (db) {
                   }
                 }
               } else {
+                console.log("ASDFASDFASDF", obj.contactDetails, obj.sender, typeof(obj.contactDetails));
+                if (obj.contactDetails.id == req.user._id) {
+                  obj.contactDetails = { id: obj.sender, name: obj.senderDetails.fullName, type: 'sender' };
+                  collection[index].contactDetails = obj.contactDetails;   
+                }
+
                 done();
               }
             })
