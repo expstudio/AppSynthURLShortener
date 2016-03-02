@@ -57,6 +57,7 @@ var passport        = require('passport'),
             // get all data/stuff of the body (POST) parameters
             .use('/api', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/updateProfile', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
+            .use('/saveEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/images/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/attachment/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use(bodyParser.json()) // parse application/json

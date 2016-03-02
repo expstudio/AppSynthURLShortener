@@ -441,7 +441,6 @@ exports.getChatMessages = function (db) {
                   }
                 }
               } else {
-                console.log("ASDFASDFASDF", obj.contactDetails, obj.sender, typeof(obj.contactDetails));
                 if (obj.contactDetails.id == req.user._id) {
                   obj.contactDetails = { id: obj.sender, name: obj.senderDetails.fullName, type: 'sender' };
                   collection[index].contactDetails = obj.contactDetails;   
@@ -707,6 +706,9 @@ exports.getEvents = function (db) {
 exports.saveEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
+
+    console.log(req.user);
+    
     /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
     event.groupID = req.user.groupID[0];
