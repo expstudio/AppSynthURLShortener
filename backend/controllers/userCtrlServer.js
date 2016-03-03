@@ -183,7 +183,7 @@ exports.getGroups = function (db) {
     }
 
     db.collection('groups').find(query).toArray(function (err, collection) {
-      if (req.user.roles.indexOf('teacher') > -1) {
+      if (req.user.roles.indexOf('teacher') > -1 && collection.length > 0) {
         db.collection('groups').find({kindergarten: collection[0].kindergarten}).toArray(function (err, docs) {
           res.send(docs);
         })
