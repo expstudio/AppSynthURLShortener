@@ -453,10 +453,9 @@ exports.getChatMessages = function (db) {
             if (err) {
               throw err;
             }
-
             if (req.user.roles.indexOf('parent') > -1) {
               collection = collection.filter(function(item) {
-                return item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString();
+                return item.senderDetails && (item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString());
               });
             }
 
