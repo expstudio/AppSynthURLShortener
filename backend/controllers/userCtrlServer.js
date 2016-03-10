@@ -402,7 +402,7 @@ exports.getChatMessages = function (db) {
                     var receiverID = new ObjectID(obj.receivers[0]);
                     db.collection('user').findOne({_id: receiverID}, function (err, usr) {
                       if (err || usr == null){
-                        console.log("Not found user ******  ", obj);
+
                         done(err);
                       } else {
 
@@ -441,9 +441,11 @@ exports.getChatMessages = function (db) {
                   }
                 }
               } else {
-                if (obj.contactDetails.id == req.user._id) {
+                if (obj.contactDetails.id == req.user._id && obj.senderDetails) {
                   obj.contactDetails = { id: obj.sender, name: obj.senderDetails.fullName, type: 'sender' };
                   collection[index].contactDetails = obj.contactDetails;   
+                } else if (!obj.senderDetails) {
+                  collection[index] = null;
                 }
 
                 done();
@@ -455,7 +457,11 @@ exports.getChatMessages = function (db) {
             }
             if (req.user.roles.indexOf('parent') > -1) {
               collection = collection.filter(function(item) {
-                return item.senderDetails && (item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString());
+                return item.senderDetails && item.senderDetails != null && (item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString());
+              });
+            } else {
+              collection = collection.filter(function(item) {
+                return item && item.senderDetails && item.senderDetails != null;
               });
             }
 
@@ -526,7 +532,7 @@ exports.sendMessage = function (db) {
       db.collection('messages').insert(message, function (err, doc) {
         if (err)
           throw err;
-        console.log(sendFromDraft, req.body.message._id, message._id);
+
         res.json({success: true, message: doc[0]})
       });
     }
