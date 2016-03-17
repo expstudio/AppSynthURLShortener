@@ -700,6 +700,7 @@ exports.getEvents = function (db) {
     if (req.user.roles.indexOf('parent') > -1) {
       query.isPublished = true;
     }
+
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
@@ -725,6 +726,26 @@ exports.saveEvent = function (db) {
     delete event.isNewEvent;
     delete event.picker1;
     delete event.picker2;
+
+    db.collection('events').insert(event, function (err, event) {
+      if (err)
+        throw err;
+      res.json({success: true, event: event});
+    })
+
+  }
+};
+
+exports.saveEventInvitation = function (db) {
+  return function (req, res) {
+    var event = req.body.data;
+
+    console.log(req.user);
+    
+    /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
+     * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
+    event.groupID = req.user.groupID[0];
+    delete event._id;
 
     db.collection('events').insert(event, function (err, event) {
       if (err)

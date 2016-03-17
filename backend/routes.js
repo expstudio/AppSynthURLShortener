@@ -59,6 +59,7 @@ module.exports = function(app, passport, db) {
     app.post('/updateProfile', parentCtrl.updateProfile(db));
     app.post('/addParent', parentCtrl.addParent(db));
     app.post('/saveEvent', userCtrl.saveEvent(db));
+    app.post('/saveEventInvitation', userCtrl.saveEventInvitation(db));
     app.post('/saveTodayStatus', teacherCtrl.saveTodayStatus(db));
     app.post('/retrievePassword', userCtrl.retrievePassword(db));
     app.post('/resetPassword', userCtrl.resetPassword(db));

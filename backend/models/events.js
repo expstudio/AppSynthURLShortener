@@ -1,5 +1,5 @@
 var mongoose = require('mongoose'),
-_ = require('underscore')
+_ = require('underscore');
 
 
 
@@ -24,7 +24,7 @@ var eventSchema = new mongoose.Schema({
 	color: String,
 	description: String,
 	groupID: String,
-	availableTime: [Date],
+	availableTimes: [{availableAt: Date, available: Boolean}],
 	isRepeatable: {
         type: Boolean,
         default: false
@@ -32,8 +32,7 @@ var eventSchema = new mongoose.Schema({
 	repeating: String,
 	dow: [Number],
 	repeating_day_of_month: Number,
-	invitees: [{type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'}]
+	invitees: [ {parent: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, meetingAt: Date} ]
 });
 
 
@@ -47,7 +46,7 @@ _.extend(Group, {
 		get: function(done) {
 			
 		}
-})
+});
 
 
 
