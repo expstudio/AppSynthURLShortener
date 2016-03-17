@@ -24,22 +24,20 @@ var eventSchema = new mongoose.Schema({
 	color: String,
 	description: String,
 	groupID: String,
-	availableTimes: [{availableAt: Date, available: Boolean}],
 	isRepeatable: {
         type: Boolean,
         default: false
       },
 	repeating: String,
 	dow: [Number],
-	repeating_day_of_month: Number,
-	invitees: [ {parent: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, meetingAt: Date} ]
+	repeating_day_of_month: Number
 });
 
 
 
-var Event = module.exports = mongoose.model('events', groupSchema);
+var Event = module.exports = mongoose.model('events', eventSchema);
 
-_.extend(Group, {
+_.extend(Event, {
   	post: function(object, done) {
 
 		},

@@ -738,7 +738,7 @@ exports.saveEvent = function (db) {
 
 exports.saveEventInvitation = function (db) {
   return function (req, res) {
-    var event = req.body.data;
+    var invitation = req.body.data;
 
     console.log(req.user);
     
@@ -747,7 +747,7 @@ exports.saveEventInvitation = function (db) {
     event.groupID = req.user.groupID[0];
     delete event._id;
 
-    db.collection('events').insert(event, function (err, event) {
+    db.collection('invitations').insert(invitation, function (err, event) {
       if (err)
         throw err;
       res.json({success: true, event: event});
