@@ -709,6 +709,25 @@ exports.getEvents = function (db) {
   }
 };
 
+exports.getInvitations = function (db) {
+  return function (req, res) {
+    var query = {};
+
+    if (req.user.roles.indexOf('parent') > -1) {
+      query.invitees = { $elemMatch: { parent: req.user._id.toString() } };
+    } else {
+      query.user_id = new ObjectID(req.user._id);      
+    }
+
+    db.collection('invitations').find(query).toArray(function (err, collection) {
+      if (err)
+        throw err;
+
+      res.send(collection);
+    })
+  }
+};
+
 exports.saveEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
@@ -739,18 +758,19 @@ exports.saveEvent = function (db) {
 exports.saveEventInvitation = function (db) {
   return function (req, res) {
     var invitation = req.body.data;
-
-    console.log(req.user);
     
     /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
-    event.groupID = req.user.groupID[0];
-    delete event._id;
+    invitation.groupID = req.user.groupID[0];
 
-    db.collection('invitations').insert(invitation, function (err, event) {
+    invitation.user_id = new ObjectID(req.user._id);
+
+    delete invitation._id;
+
+    db.collection('invitations').insert(invitation, function (err, invitation) {
       if (err)
         throw err;
-      res.json({success: true, event: event});
+      res.json({success: true, invitation: invitation});
     })
 
   }

@@ -23,6 +23,7 @@ module.exports = function(app, passport, db) {
     app.get('/api/parents', userCtrl.getParents(db));
 
     app.get('/api/events', userCtrl.getEvents(db));
+    app.get('/api/invitations', userCtrl.getInvitations(db));
     app.put('/api/events', userCtrl.updateEvent(db));
     app.delete('/api/events', userCtrl.deleteEvent(db));
 
