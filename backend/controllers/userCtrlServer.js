@@ -728,6 +728,34 @@ exports.getInvitations = function (db) {
   }
 };
 
+exports.acceptEvent = function(db) {
+
+  return function (req, res) {
+    console.log(req.body.data._id);
+
+    db.collection('events').findOne({_id: req.body.data._id}).toArray(function (err, event) {
+      console.log(event);
+    });
+
+    res.json({success: true});
+  }
+
+};
+
+exports.acceptEventInvitation = function(db) {
+
+  return function (req, res) {
+    console.log(req.body.data._id);
+
+    db.collection('invitations').findOne({_id: req.body.data._id}).toArray(function (err, invitation) {
+      console.log(invitation);
+    });
+
+    res.json({success: true});
+  }
+
+};
+
 exports.saveEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
