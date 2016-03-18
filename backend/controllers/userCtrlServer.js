@@ -695,11 +695,14 @@ exports.updateMessage = function (db) {
 
 exports.getEvents = function (db) {
   return function (req, res) {
-    var query = {groupID: {$in: req.user.groupID}};
-
+    var condition = [{groupID: {$in: req.user.groupID}}];
+    var parentId = new ObjectID(req.user._id);
     if (req.user.roles.indexOf('parent') > -1) {
-      query.isPublished = true;
+      condition.push({isPublished: true});
+      condition.push({parent_id: parentId});
     }
+
+    var query = {$or: condition};
 
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
@@ -731,10 +734,10 @@ exports.getInvitations = function (db) {
 exports.acceptEvent = function(db) {
 
   return function (req, res) {
-    console.log(req.body.data._id);
+    console.log(req.body.data);
 
-    db.collection('events').findOne({_id: req.body.data._id}).toArray(function (err, event) {
-      console.log(event);
+    db.collection('invitations').findOne({_id: req.body.data._id}, function (err, invitation) {
+      console.log(invitation);
     });
 
     res.json({success: true});
@@ -745,13 +748,66 @@ exports.acceptEvent = function(db) {
 exports.acceptEventInvitation = function(db) {
 
   return function (req, res) {
-    console.log(req.body.data._id);
+    var invitationid = new ObjectID(req.body.data._id);
 
-    db.collection('invitations').findOne({_id: req.body.data._id}).toArray(function (err, invitation) {
+    db.collection('invitations').findOne({_id: invitationid}, function (err, invitation) {
+      if (err)
+          throw err;
+      // TO-DO update invitation invitees and available time
+      _.forEach(invitation.invitees, function(invitee) {
+        if(invitee.parent == req.user._id) {
+          if(invitee.meetingAt || invitee.meetingAt == req.body.data.meetingAt) {
+            return res.json({success: false, err: "already accepted invitation."});
+          }
+
+          invitee.meetingAt = req.body.data.meetingAt;          
+        }
+      });
+
+      _.forEach(invitation.availableTimes, function(available) {
+        if(available.availableAt == req.body.data.meetingAt) {
+          if (!available.available) {
+            return res.json({success: false, err: "time not available."});
+          }
+
+          available.available = false;         
+        }
+      });
+
+      db.collection('invitations').update({_id: invitation._id}, invitation, function (err, response) {
+        if (err)
+          throw err;
+        if (response) {
+
+          var event = {} 
+          event.groupID = invitation.groupID;
+          event.title = invitation.title;
+          event.start = req.body.data.meetingAt;
+          event.className = ["1-on-1-Meeting"];
+          event.editable = true;
+          event.allDay = false;
+          event.isPublished = false;
+          event.color = "#24C27A";
+          event.description = invitation.description;
+          event.invitees = [{parent: req.user._id, meetingAt: req.body.data.meetingAt}];
+          event.parent_id =  new ObjectID(req.user._id);
+          event.user_id = invitation.user_id;
+          event.invitation_id = invitation._id;
+
+          db.collection('events').insert(event, function (err, event) {
+            if (err)
+              throw err;
+            res.json({success: true, event: event, invitation: invitation});
+          })
+
+        } else {
+          res.json({success: false});
+        }
+      })
+
       console.log(invitation);
+      // TO-DO create new event
     });
-
-    res.json({success: true});
   }
 
 };
