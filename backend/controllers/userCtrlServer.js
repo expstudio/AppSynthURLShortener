@@ -757,7 +757,7 @@ exports.getInvitations = function (db) {
     if (req.user.roles.indexOf('parent') > -1) {
       query.invitees = { $elemMatch: { parent: req.user._id.toString() } };
     } else {
-      query.user_id = new ObjectID(req.user._id);      
+      query = { 'user._id': new ObjectID(req.user._id) };      
     }
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
@@ -772,8 +772,7 @@ exports.getInvitations = function (db) {
 exports.acceptEvent = function(db) {
 
   return function (req, res) {
-    console.log(req.body.data);
-
+    res.body
     db.collection('invitations').findOne({_id: req.body.data._id}, function (err, invitation) {
       console.log(invitation);
     });
@@ -783,10 +782,55 @@ exports.acceptEvent = function(db) {
 
 };
 
+exports.deleteInvitation = function(db) {
+  return function (req, res) {
+    var objID = new ObjectID(req.query._id);
+    db.collection('invitations').remove({_id: objID}, function (err, response) {
+      if (err)
+        throw err;
+      res.json({success: true});
+    })
+  }
+
+};
+
+exports.declineInvitation = function(db) {
+
+  return function (req, res) {
+    var invitationid = new ObjectID(req.body.data._id);
+    console.log(req.body.data);
+
+    db.collection('invitations').findOne({_id: invitationid}, function (err, invitation) {
+      if (err)
+          throw err;
+      // TO-DO update invitation invitees and available time
+      _.forEach(invitation.invitees, function(invitee) {
+        if(invitee.parent == req.user._id) {
+          invitee.name = req.user.fullName;
+          invitee.email = req.user.local.email;
+          invitee.decline = new Date();
+          delete invitee.meetingAt;          
+        }
+      });
+
+      db.collection('invitations').update({_id: invitation._id}, invitation, function (err, response) {
+        if (err)
+          throw err;
+
+        return res.json({success: true});
+      })
+      // TO-DO create new event
+    });
+  }
+
+};
+
+
 exports.acceptEventInvitation = function(db) {
 
   return function (req, res) {
     var invitationid = new ObjectID(req.body.data._id);
+    var result = {success: true, msg: ""};
 
     db.collection('invitations').findOne({_id: invitationid}, function (err, invitation) {
       if (err)
@@ -795,22 +839,38 @@ exports.acceptEventInvitation = function(db) {
       _.forEach(invitation.invitees, function(invitee) {
         if(invitee.parent == req.user._id) {
           if(invitee.meetingAt || invitee.meetingAt == req.body.data.meetingAt) {
-            return res.json({success: false, err: "already accepted invitation."});
+            result.success = false;
+            result.error = "already accepted invitation.";
           }
+
+          invitee.name = req.user.fullName;
+          invitee.email = req.user.local.email;
 
           invitee.meetingAt = req.body.data.meetingAt;          
         }
       });
 
+      if (!result.success)
+      {
+        return res.json(result);
+      }
+
       _.forEach(invitation.availableTimes, function(available) {
+
         if(available.availableAt == req.body.data.meetingAt) {
           if (!available.available) {
-            return res.json({success: false, err: "time not available."});
+            result.success = false;
+            result.error = "time not available.";
           }
 
-          available.available = false;         
+          available.available = false;  
         }
       });
+
+      if (!result.success)
+      {
+        return res.json(result);
+      }
 
       db.collection('invitations').update({_id: invitation._id}, invitation, function (err, response) {
         if (err)
@@ -820,30 +880,32 @@ exports.acceptEventInvitation = function(db) {
           var event = {} 
           event.groupID = invitation.groupID;
           event.title = invitation.title;
-          event.start = req.body.data.meetingAt;
+          event.start = new Date(req.body.data.meetingAt);
           event.className = ["1-on-1-Meeting"];
           event.editable = true;
           event.allDay = false;
           event.isPublished = false;
           event.color = "#24C27A";
           event.description = invitation.description;
-          event.invitees = [{parent: req.user._id, meetingAt: req.body.data.meetingAt}];
+          event.invitees = [{parent: req.user._id, meetingAt: req.body.data.meetingAt, name: req.user.fullName, email: req.user.local.email }];
           event.parent_id =  new ObjectID(req.user._id);
-          event.user_id = invitation.user_id;
+          event.user = invitation.user;
           event.invitation_id = invitation._id;
+
+          var endAt = new Date(req.body.data.meetingAt).getTime();
+          endAt += (Number(req.body.data.meeting_length) * 60 * 60 * 1000);
+          event.end = new Date(endAt);
 
           db.collection('events').insert(event, function (err, event) {
             if (err)
               throw err;
-            res.json({success: true, event: event, invitation: invitation});
+            return res.json({success: true, event: event, invitation: invitation});
           })
 
         } else {
-          res.json({success: false});
+          return res.json({success: false});
         }
       })
-
-      console.log(invitation);
       // TO-DO create new event
     });
   }
@@ -853,8 +915,6 @@ exports.acceptEventInvitation = function(db) {
 exports.saveEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
-
-    console.log(req.user);
     
     /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
@@ -867,6 +927,9 @@ exports.saveEvent = function (db) {
     delete event.isNewEvent;
     delete event.picker1;
     delete event.picker2;
+    event.start = new Date(event.start);
+    event.end = new Date(event.end);
+    event.user = {_id: new ObjectID(req.user._id), name: req.user.fullName, email: req.user.local.email};
 
     db.collection('events').insert(event, function (err, event) {
       if (err)
@@ -885,7 +948,7 @@ exports.saveEventInvitation = function (db) {
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
     invitation.groupID = req.user.groupID[0];
 
-    invitation.user_id = new ObjectID(req.user._id);
+    invitation.user = {_id: new ObjectID(req.user._id), name: req.user.fullName, email: req.user.local.email};
 
     delete invitation._id;
 
@@ -903,6 +966,8 @@ exports.updateEvent = function (db) {
     var event = req.body;
     event._id = new ObjectID(event._id);
     event.groupID = event.groupID;
+    event.start = new Date(event.start);
+    event.end = new Date(event.end);
     db.collection('events').update({_id: event._id}, event, function (err, response) {
       if (err)
         throw err;
