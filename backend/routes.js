@@ -8,6 +8,7 @@ module.exports = function(app, passport, db) {
     app.get('/api/users', userCtrl.getUsers(db));
     app.put('/api/users', userCtrl.updateUser(db));
     app.delete('/api/users/:id', userCtrl.removeUser(db));
+    app.put('/api/users/registerDevice', userCtrl.registerDevice(db));
 
     app.get('/api/groups', userCtrl.getGroups(db));
 
