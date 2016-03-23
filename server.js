@@ -67,6 +67,8 @@ var passport        = require('passport'),
             .use('/acceptEventInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/images/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/attachment/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
+            .use('/sendMessage', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
+            .use('/sendReplyMessage', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use(bodyParser.json()) // parse application/json
             .use(bodyParser.json({ type: 'application/vnd.api+json' })) // parse application/vnd.api+json as json
             .use(bodyParser.urlencoded({ extended: true })) // parse application/x-www-form-urlencoded
