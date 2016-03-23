@@ -748,15 +748,14 @@ exports.getEvents = function (db) {
       query.isPublished = true;
     }
 
-    query.start = { '$gte': new Date() };
-
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
 
       collection = _.reject(collection, function (event) {
-        var start = event.start;
-        if( start instanceof Date) {
+        var start = null;
+        if( event.start instanceof Date) {
+          start = new Date(event.start.getTime());
           start.setHours(0,0,0,0);
         } else {
           start = new Date();
@@ -771,13 +770,14 @@ exports.getEvents = function (db) {
         _.forEach(event.invitees, function(invitee) {
           if(invitee.parent == req.user._id) {
             if(invitee.decline != null) {
+
               isDecline = true;
               return
             }      
           }
         });
 
-        return event.start >= today || isDecline;
+        return event.start < today || isDecline;
       });
 
       res.send(collection);
@@ -989,7 +989,8 @@ exports.acceptEventInvitation = function(db) {
           var endAt = new Date(req.body.data.meetingAt).getTime();
           endAt += (Number(req.body.data.meeting_length) * 60 * 60 * 1000);
           event.end = new Date(endAt);
-
+          console.log(req.body.data);
+          console.log(event);
           db.collection('events').insert(event, function (err, event) {
             if (err)
               throw err;
