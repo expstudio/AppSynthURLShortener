@@ -748,6 +748,8 @@ exports.getEvents = function (db) {
       query.isPublished = true;
     }
 
+    query.start = { '$gte': new Date() };
+
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
@@ -794,8 +796,6 @@ exports.getInvitations = function (db) {
     } else {
       query = { 'user._id': userid };
     }
-
-    query.start = { '$gte': new Date() };
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
       if (err)
