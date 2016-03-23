@@ -62,6 +62,7 @@ var passport        = require('passport'),
             .use('/deleteEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/deleteInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/declineInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
+            .use('/declineEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/saveEventInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/acceptEventInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/images/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))

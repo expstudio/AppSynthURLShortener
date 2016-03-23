@@ -734,17 +734,50 @@ exports.updateMessage = function (db) {
 exports.getEvents = function (db) {
   return function (req, res) {
     var condition = [{groupID: {$in: req.user.groupID}}];
-    var parentId = new ObjectID(req.user._id);
+    var parentId = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+    var requirePublished = false;
     if (req.user.roles.indexOf('parent') > -1) {
-      condition.push({isPublished: true});
       condition.push({parent_id: parentId});
+      condition.push({'user._id': parentId});
+      requirePublished = true;
     }
 
     var query = {$or: condition};
 
+    if(requirePublished) {
+      query.isPublished = true;
+    }
+
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
+
+      collection = _.reject(collection, function (event) {
+        var start = event.start;
+        if( start instanceof Date) {
+          start.setHours(0,0,0,0);
+        } else {
+          start = new Date();
+          start.setHours(1,0,0,0);
+        }
+
+        var today = new Date();
+        today.setHours(0,0,0,0);
+
+        var isDecline = false;
+
+        _.forEach(event.invitees, function(invitee) {
+          if(invitee.parent == req.user._id) {
+            if(invitee.decline != null) {
+              isDecline = true;
+              return
+            }      
+          }
+        });
+
+        return event.start >= today || isDecline;
+      });
+
       res.send(collection);
     })
   }
@@ -754,11 +787,15 @@ exports.getInvitations = function (db) {
   return function (req, res) {
     var query = {};
 
+    var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+
     if (req.user.roles.indexOf('parent') > -1) {
       query.invitees = { $elemMatch: { parent: req.user._id.toString() } };
     } else {
-      query = { 'user._id': new ObjectID(req.user._id) };      
+      query = { 'user._id': userid };
     }
+
+    query.start = { '$gte': new Date() };
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
       if (err)
@@ -772,12 +809,40 @@ exports.getInvitations = function (db) {
 exports.acceptEvent = function(db) {
 
   return function (req, res) {
-    res.body
-    db.collection('invitations').findOne({_id: req.body.data._id}, function (err, invitation) {
-      console.log(invitation);
-    });
+    var eventid = new ObjectID(req.body.data._id);
+    var result = {success: true, msg: ""};
 
-    res.json({success: true});
+    db.collection('events').findOne({_id: eventid}, function (err, event) {
+      if (err)
+          throw err;
+      // TO-DO update invitation invitees and available time
+      _.forEach(event.invitees, function(invitee) {
+        if(invitee.parent == req.user._id) {
+          if(invitee.meetingAt != null) {
+            result.success = false;
+            result.error = "already accepted invitation.";
+          }
+
+          invitee.name = req.user.fullName;
+          invitee.email = req.user.local.email;
+
+          invitee.meetingAt = event.start;          
+        }
+      });
+
+      if (!result.success)
+      {
+        return res.json(result);
+      }
+
+      db.collection('events').update({_id: event._id}, event, function (err, response) {
+        if (err)
+          throw err;
+
+        return res.json({success: true});
+      })
+      
+    });
   }
 
 };
@@ -798,7 +863,6 @@ exports.declineInvitation = function(db) {
 
   return function (req, res) {
     var invitationid = new ObjectID(req.body.data._id);
-    console.log(req.body.data);
 
     db.collection('invitations').findOne({_id: invitationid}, function (err, invitation) {
       if (err)
@@ -825,6 +889,35 @@ exports.declineInvitation = function(db) {
 
 };
 
+exports.declineEvent = function(db) {
+
+  return function (req, res) {
+    var eventid = new ObjectID(req.body.data._id);
+
+    db.collection('events').findOne({_id: eventid}, function (err, event) {
+      if (err)
+          throw err;
+      // TO-DO update invitation invitees and available time
+      _.forEach(event.invitees, function(invitee) {
+        if(invitee.parent == req.user._id) {
+          invitee.name = req.user.fullName;
+          invitee.email = req.user.local.email;
+          invitee.decline = new Date();
+          delete invitee.meetingAt;          
+        }
+      });
+
+      db.collection('events').update({_id: event._id}, event, function (err, response) {
+        if (err)
+          throw err;
+
+        return res.json({success: true});
+      })
+      // TO-DO create new event
+    });
+  }
+
+};
 
 exports.acceptEventInvitation = function(db) {
 
@@ -888,7 +981,8 @@ exports.acceptEventInvitation = function(db) {
           event.color = "#24C27A";
           event.description = invitation.description;
           event.invitees = [{parent: req.user._id, meetingAt: req.body.data.meetingAt, name: req.user.fullName, email: req.user.local.email }];
-          event.parent_id =  new ObjectID(req.user._id);
+          var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+          event.parent_id =  userid;
           event.user = invitation.user;
           event.invitation_id = invitation._id;
 
@@ -927,9 +1021,12 @@ exports.saveEvent = function (db) {
     delete event.isNewEvent;
     delete event.picker1;
     delete event.picker2;
-    event.start = new Date(event.start);
-    event.end = new Date(event.end);
-    event.user = {_id: new ObjectID(req.user._id), name: req.user.fullName, email: req.user.local.email};
+
+    // event.start = new Date(event.start);
+    // event.end = new Date(event.end);
+
+    var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+    event.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
 
     db.collection('events').insert(event, function (err, event) {
       if (err)
@@ -948,7 +1045,9 @@ exports.saveEventInvitation = function (db) {
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
     invitation.groupID = req.user.groupID[0];
 
-    invitation.user = {_id: new ObjectID(req.user._id), name: req.user.fullName, email: req.user.local.email};
+    var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+
+    invitation.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
 
     delete invitation._id;
 

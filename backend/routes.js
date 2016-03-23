@@ -62,11 +62,12 @@ module.exports = function(app, passport, db) {
     app.post('/updateProfile', parentCtrl.updateProfile(db));
     app.post('/addParent', parentCtrl.addParent(db));
     app.post('/saveEvent', userCtrl.saveEvent(db));
-    app.post('/acceptEvent', userCtrl.acceptEventInvitation(db));    
+    app.post('/acceptEvent', userCtrl.acceptEvent(db));    
     app.post('/saveEventInvitation', userCtrl.saveEventInvitation(db));
     app.post('/deleteEvent', userCtrl.deleteEvent(db));
     app.post('/deleteInvitation', userCtrl.deleteInvitation(db));
     app.post('/declineInvitation', userCtrl.declineInvitation(db));
+    app.post('/declineEvent', userCtrl.declineEvent(db));
     app.post('/acceptEventInvitation', userCtrl.acceptEventInvitation(db));    
     app.post('/saveTodayStatus', teacherCtrl.saveTodayStatus(db));
     app.post('/retrievePassword', userCtrl.retrievePassword(db));
