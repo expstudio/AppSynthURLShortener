@@ -547,25 +547,16 @@ exports.sendMessage = function (db) {
           var objIdArr = _.map(message.receivers, function (receiver) {
             return new ObjectID(receiver);
           });
-          db.collection('user').find({_id: {$in: objIdArr}}, function (users) {
+
+          db.collection('user').find({_id: {$in: objIdArr}}).toArray(function (err, users) {
             var deviceTokenArr = _.map(users, function (user) {
-              // console.log(user.fullName);
               return user.deviceToken;
             });
-            console.log('user', users, deviceTokenArr);
             var notiOptions = {
-              "title": "This is a title",
-              "message": "Phu Pham" + " sent you a new message.",
-              "android": {
-                "title": "Hey",
-                "message": "Phu Pham" + " sent you a new message."
-              },
-              "ios": {
-                "title": "Howdy",
-                "message": "Phu Pham" + " sent you a new message."
-              }
-            }
-            Notification.send(['DEV-1f4db2c5-e2ac-4ed3-923f-0dd222ae7904'], notiOptions);
+              "message": req.user.fullName + " sent you a new message.",
+            };
+
+            Notification.send(deviceTokenArr, notiOptions);
 
             callback(null, null);
           })
