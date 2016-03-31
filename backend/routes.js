@@ -34,14 +34,12 @@ module.exports = function(app, passport, db) {
     app.post('/subscribe', userCtrl.subscribe(db));
     app.get('/api/status', teacherCtrl.getStatusReport(db));
 
-    app.get('/logout', function(req, res) {
-        req.logout();
-        return res.status(200).json({success:true});
-    });
+    app.get('/logout', userCtrl.logout(db));
 
     app.get('/activate/:token', userCtrl.activateUser(db));
 
     app.post('/login', userCtrl.loginUser);
+    app.post('/logout', userCtrl.logout);
     app.post('/signup', userCtrl.signupUser);
     app.post('/attachment/upload', userCtrl.uploadAttachment(db));
     app.post('/images/upload', userCtrl.uploadFile(db));

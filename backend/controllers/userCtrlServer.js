@@ -149,6 +149,24 @@ exports.loginUser = function (req, res, next) {
   })(req, res, next);
 };
 
+exports.logout = function(db) {
+  return function(req, res) {
+      var updateData = req.body;
+      updateData._id = new ObjectID(req.user._id);
+
+      db.collection('user').findAndModify(
+        {_id: updateData._id},
+        [],
+        {$unset: {deviceToken: "", deviceRegistered: ""}},
+        {new: true},
+        function (err, doc) {
+          if (err) throw err;
+        });
+      req.logout();
+      return res.status(200).json({success:true});
+    };
+};
+
 exports.signupUser = function (req, res, next) {
   if (!validator.isEmail((req.body ? req.body.email : '')))
     return res.status(400).end('bad email');
