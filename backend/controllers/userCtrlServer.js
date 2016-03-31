@@ -655,14 +655,9 @@ exports.deleteTemplate = function (db) {
 exports.deleteMessage = function (db) {
   return function (req, res) {
     var messageID = req.body._id  ? new ObjectID(req.body._id) : new ObjectID(req.query._id);
-    console.log("delete message: " + req.body._id, req.query, messageID);    
 
     db.collection('messages').findOne({'_id': messageID}, function (err, message) {
-      console.log("Delete Message ", req.user)
       if(message) {    
-
-        console.log(message);    
-
         if(message.attachment) {
           var fileKey = message.attachment.split('attachmentFiles').pop();
           var params = {
@@ -685,7 +680,7 @@ exports.deleteMessage = function (db) {
           s3.deleteObjects(params, function(err, data) {
             if (err) return console.log(err);
 
-            return console.log(data.Deleted.length);
+            console.log(data.Deleted.length);
           });
         }
 
@@ -704,11 +699,81 @@ exports.deleteMessage = function (db) {
   }
 };
 
+exports.deleteConversation = function (db) {
+  return function (req, res) {
+    if (req.user.roles.indexOf('teacher') > -1) {
+      var receiverID = req.body.receiver.toString();
+
+      query = {
+        $or: [
+          {sender: req.user._id.toString(), receivers: {$in: [receiverID]}},
+          {sender: receiverID, receivers: {$in: [req.user._id.toString()]}}
+        ]
+      };
+    } else {
+      return res.send(500, "parent not allow to delete");
+    }
+
+    console.log(query);
+
+    db.collection('messages').find(query).toArray(function (err, messages) {
+      if(messages) {    
+        var success = true;
+        _.forEach(messages, function(message) {  
+          var messageID = message._id;
+
+          if(message.attachment) {
+            var fileKey = message.attachment.split('attachmentFiles').pop();
+            var params = {
+              Bucket: config.bucket,
+              Delete: {
+                Objects: [{
+                          Key: 'attachmentFiles' +fileKey
+                        }]
+              }
+            };
+
+            var s3 = new AWS.S3({
+              apiVersion: '2006-03-01',
+              accessKeyId: config.accessKeyId,
+              secretAccessKey: config.secretAccessKey,
+              region: config.region,
+              signatureVersion: 'v4'
+            });
+
+            s3.deleteObjects(params, function(err, data) {
+              if (err) return console.log(err);
+
+              return console.log(data.Deleted.length);
+            });
+          }
+
+          db.collection('messages').remove({_id: messageID}, function (err, result) {
+            if (err) {
+              success = false;
+              return;
+            }
+          });
+        });
+
+        if (success) {
+          res.send(200, {success: true});
+        } else {
+          res.send(500, {success: false});
+        }
+      } else {
+        console.log("error delete converstaion with + " + receiverID);     
+        res.send(500, err);
+      }
+    });
+  }
+};
+
 exports.updateMessage = function (db) {
   return function (req, res) {
     var message = req.body;
     var objID = new ObjectID(message._id);
-    console.log(message.seenBy, objID);
+
     db.collection('messages').update({_id: objID}, {$addToSet: {'seenBy': req.user._id.toString()}}, function (err, numOfDoc) {
       if (err)
         res.send(err.toString());
