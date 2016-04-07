@@ -1106,6 +1106,13 @@ exports.saveEvent = function (db) {
     db.collection('events').insert(event, function (err, event) {
       if (err)
         throw err;
+
+      if (event.invitees && event.invitees.length > 0) {
+        _.forEach(event.invitees, function(invite) {
+          
+        });
+      }
+
       res.json({success: true, event: event});
     })
 
