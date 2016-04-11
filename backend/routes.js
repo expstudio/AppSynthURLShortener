@@ -34,6 +34,10 @@ module.exports = function(app, passport, db) {
     app.post('/subscribe', userCtrl.subscribe(db));
     app.get('/api/status', teacherCtrl.getStatusReport(db));
 
+    app.post('/api/addStaff', userCtrl.addStaff(db));
+    app.post('/api/removeStaff', userCtrl.removeStaff(db));
+    app.post('/api/removeAllStaff', userCtrl.removeAllStaff(db));
+
     app.get('/logout', userCtrl.logout(db));
 
     app.get('/activate/:token', userCtrl.activateUser(db));
@@ -43,6 +47,7 @@ module.exports = function(app, passport, db) {
     app.post('/signup', userCtrl.signupUser);
     app.post('/attachment/upload', userCtrl.uploadAttachment(db));
     app.post('/images/upload', userCtrl.uploadFile(db));
+
 
     app.get('/layout/*', function(req, res) {
         //direct from directory of router.js to 'public/app' directory on client side

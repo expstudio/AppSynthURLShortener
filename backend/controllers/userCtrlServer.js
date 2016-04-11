@@ -1611,51 +1611,73 @@ exports.registerDevice = function (db) {
           return res.json({error: err});
         }
 
-        /*// Define relevant info
-        var jwt = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIwOWY5MGFlMi1lM2YzLTQ2NTUtYTMyOC1hYzhjMDFkMDcwM2IifQ.GC7bZGUGeAdBhOiBVFu0Zy4t_dHpPjxlWjxNb2bFXFg';
-        var tokens = [token];
-        var profile = 'tiny_security_profile';
-
-        // Build the request object
-        var postData = JSON.stringify({
-          "tokens": tokens,
-          "profile": profile,
-          "notification": {
-            "message": "Hello World!"
-          }
-        });
-        var req = {
-          method: 'POST',
-          protocol: 'https:',
-          host: 'api.ionic.io',
-          path: '/push/notifications',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + jwt
-          }
-        };
-
-        // Make the API call
-        var request = http.request(req, function(response){
-          // Handle success
-          // console.log("Ionic Push: Push success", response);
-          var str = ''
-            response.on('data', function (chunk) {
-              str += chunk;
-            });
-
-            response.on('end', function () {
-              console.log(str);
-            });
-        });
-        request.on('error', function (error) {
-          console.log('problem with request', error);
-        });
-
-        request.write(postData);
-        request.end();*/
-        // var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
         res.json({error: null, user: user});
       });
   }
-}
+};
+
+exports.addStaff = function (db) {
+  return function (req, res) {
+    var user = req.body.user;
+    var groupID = req.body.groupID;
+    var staff = req.body.staff;
+
+    db.collection('groups').findAndModify(
+      {_id: new ObjectID(groupID)}, 
+      [],
+      {
+        $push: {staffs: staff}
+      },
+      {new: true}, 
+      function (err, user) {
+        if (err || !user) {
+          return res.json({error: err});
+        }
+
+        res.json({success: true});
+      });
+  }
+};
+
+exports.removeStaff = function (db) {
+  return function (req, res) {
+    var user = req.body.user;
+    var groupID = req.body.groupID;
+    var staff = req.body.staff;
+    db.collection('groups').findAndModify(
+      {_id: new ObjectID(groupID)}, 
+      [],
+      {
+        $pull: {staffs: staff}
+      },
+      {new: true}, 
+      function (err, user) {
+        if (err || !user) {
+          return res.json({error: err});
+        }
+
+        res.json({success: true});
+      });
+  }
+};
+
+exports.removeAllStaff = function (db) {
+  return function (req, res) {
+    var user = req.body.user;
+    var groupID = req.body.groupID;
+    db.collection('groups').findAndModify(
+      {_id: new ObjectID(groupID)}, 
+      [],
+      {
+        $unset: {staffs: 1}
+      },
+      {new: true}, 
+      function (err, user) {
+        if (err || !user) {
+          return res.json({error: err});
+        }
+
+        res.json({success: true});
+      });
+  }
+};
