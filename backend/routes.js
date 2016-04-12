@@ -42,7 +42,7 @@ module.exports = function(app, passport, db) {
 
     app.get('/activate/:token', userCtrl.activateUser(db));
 
-    app.post('/login', userCtrl.loginUser);
+    app.post('/login', userCtrl.loginUser(db));
     app.post('/logout', userCtrl.logout);
     app.post('/signup', userCtrl.signupUser);
     app.post('/attachment/upload', userCtrl.uploadAttachment(db));

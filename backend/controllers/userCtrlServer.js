@@ -120,33 +120,41 @@ exports.activateUser = function (db) {
   }
 };
 
-exports.loginUser = function (req, res, next) {
-  console.log(req.body);
-  passport.authenticate('local-login', function (err, user, info) {
-    if (err) {
-      return next(err);
-    }
-    if (!user) {
-      return res.status(401).json({success: false, message: "no user"});
-    }
-    req.logIn(user, function (err) {
+exports.loginUser = function (db) {
+  return function(req, res, next) {
+    passport.authenticate('local-login', function (err, user, info) {
       if (err) {
         return next(err);
       }
-      var redirect = '/home';
-      if (user.roles.indexOf('parent') > -1) {
-        redirect = '/calendar-events';
+      if (!user) {
+        return res.status(401).json({success: false, message: "no user"});
       }
+      req.logIn(user, function (err) {
+        if (err) {
+          return next(err);
+        }
+        var redirect = '/home';
+        if (user.roles.indexOf('parent') > -1) {
+          redirect = '/calendar-events';
+        }
 
-      var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+        var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
 
-      res.send({
-        redirect: redirect,
-        user: req.user,
-        token: token
+        var groupIds = _.map(req.user.groupID, function(grp) { return new ObjectID('' + grp); });
+
+        db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, collection) {
+          console.log(groupIds, collection);
+          req.user.groups = collection;
+
+          res.send({
+            redirect: redirect,
+            user: req.user,
+            token: token
+          });
+        });
       });
-    });
-  })(req, res, next);
+    })(req, res, next);
+  };
 };
 
 exports.logout = function(db) {
@@ -1417,34 +1425,45 @@ exports.retrievePassword = function (db) {
     var retrieveEmail = req.body.data;
     crypto.randomBytes(12, function (ex, buf) {
       var randomToken = buf.toString('hex');
-      db.collection('user').update({'local.email': retrieveEmail}, {$set: {resetPasswordToken: randomToken}}, function (err, numOfDoc) {
-        if (err) {
-          throw err;
-        }
-        if (numOfDoc == 0) {
-          res.json({success: false, error: "Cannot find this email in our system."});
-        } else {
+      db.collection('user').findAndModify(
+        {'local.email': retrieveEmail}, 
+        [], 
+        {$set: {resetPasswordToken: randomToken}}, 
+        {new: true},
+        function (err, user) {
+          if (err) {
+            throw err;
+          }
+          if (user == null) {
+            res.json({success: false, error: "Cannot find this email in our system."});
+          } else {
 
-          var resetLink = req.protocol + '://' + req.get('host') + '/resetPassword/' + randomToken;
-          var body = '<p>You have requested a new password. Click <a href="' + resetLink + '">here</a> to set a new one.</p> <br/>'
-            + '<p>Thanks,</p>'
-            + '<p>The TinyApp Team</p>';
-          var email = new sendgrid.Email({
-            from: 'tinyapp@noreply.fi',
-            subject: 'Reset password',
-            html: body
-          });
-          email.addTo(retrieveEmail);
-          //email.addTo('anphu.1225@gmail.com');
+            var resetLink = req.protocol + '://' + req.get('host') + '/resetPassword/' + randomToken;
+            var body = '<p>You have requested a new password. Click <a href="' + resetLink + '">here</a> to set a new one.</p> <br/>'
+              + '<p>Thanks,</p>'
+              + '<p>The TinyApp Team</p>';
+            var email = new sendgrid.Email({
+              from: 'tinyapp@noreply.fi',
+              subject: 'Reset password',
+              html: body
+            });
+            email.addTo(retrieveEmail);
 
-          sendgrid.send(email, function (err, json) {
-            if (err) {
-              return console.error(err);
+            if (user.staffs && user.staffs.length > 0) {
+              email.addTo(user.staffs[0].email);
             }
-            console.log(json);
-          });
-          res.json({success: true});
-        }
+       
+            //email.addTo('anphu.1225@gmail.com');
+
+            sendgrid.send(email, function (err, json) {
+              if (err) {
+                return console.error(err);
+              }
+              console.log(json);
+            });
+
+            res.json({success: true});
+          }
       });
     });
   }
@@ -1618,18 +1637,21 @@ exports.registerDevice = function (db) {
 
 exports.addStaff = function (db) {
   return function (req, res) {
-    var user = req.body.user;
+    var user = req.user;
     var groupID = req.body.groupID;
     var staff = req.body.staff;
+    staff.groupID = groupID;
 
-    db.collection('groups').findAndModify(
-      {_id: new ObjectID(groupID)}, 
+    console.log(user);
+    db.collection('user').findAndModify(
+      {_id: new ObjectID(user._id)}, 
       [],
       {
         $push: {staffs: staff}
       },
       {new: true}, 
       function (err, user) {
+        console.log(user);
         if (err || !user) {
           return res.json({error: err});
         }
@@ -1641,11 +1663,12 @@ exports.addStaff = function (db) {
 
 exports.removeStaff = function (db) {
   return function (req, res) {
-    var user = req.body.user;
+    var user = req.user;
     var groupID = req.body.groupID;
     var staff = req.body.staff;
-    db.collection('groups').findAndModify(
-      {_id: new ObjectID(groupID)}, 
+    staff.groupID = groupID;
+    db.collection('user').findAndModify(
+      {_id: new ObjectID(user._id)}, 
       [],
       {
         $pull: {staffs: staff}
@@ -1663,10 +1686,10 @@ exports.removeStaff = function (db) {
 
 exports.removeAllStaff = function (db) {
   return function (req, res) {
-    var user = req.body.user;
+    var user = req.user;
     var groupID = req.body.groupID;
-    db.collection('groups').findAndModify(
-      {_id: new ObjectID(groupID)}, 
+    db.collection('user').findAndModify(
+      {_id: new ObjectID(user._id)}, 
       [],
       {
         $unset: {staffs: 1}
