@@ -34,7 +34,7 @@ var Notification = require('../services/pushNotification');
 AWS.config.loadFromPath(rootPath + 'aws.json');
 var secret = "op89uvzx348zxvbhlqw";
 
-var frontendAddress = "https://tinyappmobile.herokuapp.com";
+var frontendAddress = "https://tinyappmobile.herokuapp.com/#";
 
 function validateEmail(email) {
   var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
