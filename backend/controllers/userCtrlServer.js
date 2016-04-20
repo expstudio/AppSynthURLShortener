@@ -1290,7 +1290,7 @@ exports.uploadFile = function (db) {
 
 
 function sendAttachmentMessage(db, res, data) {
-  db.collection('messages').insert(data.message, function (err, doc) {
+  db.collection('messages').insert(data, function (err, doc) {
       if (err)
         throw err;
 
@@ -1305,6 +1305,7 @@ exports.uploadAttachment = function (db) {
 
       var grid = new Grid(db, 'fs');
       var file = files.attachmentFile[0];
+      console.log(file.headers['content-type']);
 
       /* using file system */
       var contentType = file.headers['content-type'];
@@ -1360,8 +1361,8 @@ exports.uploadAttachment = function (db) {
                 })
                 .send(function (err, data) {
                   var attachmentLocation = data.Location;
-                  dataFields.message.attachment = attachmentLocation;
-                  dataFields.message.attachment_type = "image";
+                  dataFields.attachment = attachmentLocation;
+                  dataFields.attachment_type = "image";
                   sendAttachmentMessage(db, res, dataFields);
                 });
             });
@@ -1380,8 +1381,8 @@ exports.uploadAttachment = function (db) {
             .send(function (err, data) {
               console.log(err, data);
               var attachmentLocation = data.Location;
-              dataFields.message.attachment = attachmentLocation;
-              dataFields.message.attachment_type = "file";
+              dataFields.attachment = attachmentLocation;
+              dataFields.attachment_type = "file";
               sendAttachmentMessage(db, res, dataFields);
             });
         });
@@ -1449,14 +1450,19 @@ exports.retrievePassword = function (db) {
               subject: 'Reset password',
               html: body
             });
+
             email.addTo(retrieveEmail);
 
-            if (user.staffs && user.staffs.length > 0) {
-              email.addTo(user.staffs[0].email);
+            if (user.roles.indexOf('teacher') > -1) {
+
+              db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
+                if(group.staffs.length > 0) {
+
+                  email.addTo(group.staffs[0].email);
+                }
+              });
             }
        
-            //email.addTo('anphu.1225@gmail.com');
-
             sendgrid.send(email, function (err, json) {
               if (err) {
                 return console.error(err);
@@ -1644,9 +1650,8 @@ exports.addStaff = function (db) {
     var staff = req.body.staff;
     staff.groupID = groupID;
 
-    console.log(user);
-    db.collection('user').findAndModify(
-      {_id: new ObjectID(user._id)}, 
+    db.collection('groups').findAndModify(
+      {_id: new ObjectID(groupID)}, 
       [],
       {
         $push: {staffs: staff}
@@ -1669,8 +1674,8 @@ exports.removeStaff = function (db) {
     var groupID = req.body.groupID;
     var staff = req.body.staff;
     staff.groupID = groupID;
-    db.collection('user').findAndModify(
-      {_id: new ObjectID(user._id)}, 
+    db.collection('groups').findAndModify(
+      {_id: new ObjectID(groupID)}, 
       [],
       {
         $pull: {staffs: staff}
@@ -1690,8 +1695,8 @@ exports.removeAllStaff = function (db) {
   return function (req, res) {
     var user = req.user;
     var groupID = req.body.groupID;
-    db.collection('user').findAndModify(
-      {_id: new ObjectID(user._id)}, 
+    db.collection('groups').findAndModify(
+      {_id: new ObjectID(groupID)}, 
       [],
       {
         $unset: {staffs: 1}
