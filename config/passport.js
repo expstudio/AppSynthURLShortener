@@ -79,16 +79,15 @@ module.exports = function (db, passport) {
     });
 
     passport.use('local-login', new LocalStrategy({
-            usernameField: 'email',
+            usernameField: 'username',
             passwordField: 'password',
             passReqToCallback: true // allows us to pass in the req from our route (lets us check if a user is logged in or not)
         },
-        function (req, email, password, done) {
-            if (email)
-                email = email.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
+        function (req, username, password, done) {
+            if (username)
+                username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
             process.nextTick(function () {
-                db.collection('user').findOne({
-                    'local.email': email,
+                db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': username}],
                     'createdAt': {$exists: false}
                 }, function (err, user) {
                     if (err)
@@ -111,27 +110,28 @@ module.exports = function (db, passport) {
         }));
 
     passport.use('local-signup', new LocalStrategy({
-            usernameField: 'email',
+            usernameField: 'username',
             passwordField: 'password',
             passReqToCallback: true // allows us to pass in the req from our route (lets us check if a user is logged in or not)
         },
-        function (req, email, password, done) {
-            if (email)
-                email = email.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
+        function (req, username, password, done) {
+            if (username)
+                username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
             process.nextTick(function () {
                 if (!req.user) {
-                    db.collection('user').findOne({'local.email': email}, function (err, user) {
+                    db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': req.body.email}]}, function (err, user) {
                         if (err)
                             return done(err);
-                        if (user) { /* if user exists => email is in use*/
-                            err = new Error('Email is in use');
+                        if (user) { /* if user exists => username is in use*/
+                            err = new Error('Username or email is in use');
                             return done(err.toString());
                         } else { /* user doesn't exist, create new user*/
                             var userObj = {local: {}};
                             userObj.createdAt = new Date();
                             userObj.roles = new Array(req.body.role);
                             userObj.fullName = req.body.fullName;
-                            userObj.local.email = email;
+                            userObj.local.username = username;
+                            userObj.local.email = req.body.email;
                             userObj.local.salt = encrypt.createSalt();
                             userObj.local.hashedPassword = encrypt.hashPwd(userObj.local.salt, password);
                             userObj.lang = req.body.lang;
@@ -178,19 +178,19 @@ module.exports = function (db, passport) {
 
                         }
                     });
-                } else if (!req.user.local.email) {
+                } else if (!req.user.local.username) {
                     // ...presumably they're trying to connect a local account
                     // BUT let's check if the email used to connect a local account is being used by another user
-                    db.collection('user').findOne({'local.email': email}, function (err, user) {
+                    db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': req.body.email}]}, function (err, user) {
                         if (err)
                             return done(err);
                         if (user) {
-                            console.log('email already taken');
+                            console.log('username or email already taken');
                             return done(null, false);
                             // Using 'loginMessage instead of signupMessage because it's used by /connect/local'
                         } else {
                             var user = req.user;
-                            user.local.email = email;
+                            user.local.username = username;
                             user.local.password = user.generateHash(password);
                             user.save(function (err) {
                                 if (err)
