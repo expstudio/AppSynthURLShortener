@@ -1223,7 +1223,7 @@ exports.uploadFile = function (db) {
       var thumbnailPath = rootPath + 'images/' + 'thumb-' + fileName;
       console.log(destPath, thumbnailPath, contentType);
       // Server side file type checker.
-      if (contentType !== 'image/png' && contentType !== 'image/jpeg') {
+      if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'image/png|jpeg') {
         fs.unlink(tmpPath);
         return res.status(400).send('Unsupported file type.');
       }
