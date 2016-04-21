@@ -41,6 +41,27 @@ function validateEmail(email) {
   return regex.test(email);
 }
 
+var contentTypeSupported = [
+  'image/png', 
+  'image/jpeg', 
+  'image/gif', 
+  'image/jpg',
+  'application/pdf',
+  'text/plain',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/x-iwork-keynote-sffkey',
+  'application/x-iwork-pages-sffpages',
+  'application/x-iwork-numbers-sffnumbers',
+  'application/vnd.oasis.opendocument.text ',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation'
+];
+
 exports.activateUser = function (db) {
   return function (req, res, next) {
     var objID = new ObjectID(req.params.token.toString());
@@ -1305,8 +1326,6 @@ exports.uploadAttachment = function (db) {
 
       var grid = new Grid(db, 'fs');
       var file = files.attachmentFile[0];
-      console.log(file.headers['content-type']);
-
       /* using file system */
       var contentType = file.headers['content-type'];
       var tmpPath = file.path;
@@ -1318,7 +1337,7 @@ exports.uploadAttachment = function (db) {
       var thumbnailPath = rootPath + 'images/' + 'thumb-' + fileName;
 
       // Server side file type checker.
-      if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'application/pdf' && contentType !== 'text/plain') {
+      if (contentTypeSupported.indexOf(contentType) < 0) {
         fs.unlink(tmpPath);
         return res.status(400).send('Unsupported file type.');
       }
@@ -1339,7 +1358,7 @@ exports.uploadAttachment = function (db) {
       };
       var body = fs.createReadStream(tmpPath);
 
-      if (contentType !== 'application/pdf' && contentType !== 'text/plain') {
+      if (contentType == 'image/png' || contentType == 'image/jpeg' || contentType == 'image/gif' ||  contentType == 'image/jpg') {
         lwip.open(tmpPath, function (err, image) {
 
           var dataFields = JSON.parse(fields.data[0]);
@@ -1370,6 +1389,7 @@ exports.uploadAttachment = function (db) {
         });
       } else {
         fs.readFile(file.path, function (err, data) {
+          console.log(err);
           if (err) throw err; // Something went wrong!
           
           var dataFields = JSON.parse(fields.data[0]);
