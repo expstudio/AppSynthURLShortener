@@ -689,6 +689,21 @@ APP.config(function($stateProvider, $urlRouterProvider, $locationProvider, toast
     $locationProvider.html5Mode(true);
 });
 
+APP.factory('httpRequestInterceptor', function (localStorageService) {
+  return {
+    request: function (config) {
+
+      config.headers['Authorization'] = 'Bearer ' + localStorageService.get('token');
+
+      return config;
+    }
+  };
+});
+
+APP.config(function($httpProvider){
+    $httpProvider.interceptors.push('httpRequestInterceptor');
+});
+
 APP.run(function($rootScope, $state, editableOptions) {
     editableOptions.theme = 'bs3';
     $rootScope.$on('$stateChangeError', function(event, toState, toParams, fromState, fromParams, rejection) {
@@ -698,19 +713,4 @@ APP.run(function($rootScope, $state, editableOptions) {
             $state.go('/');
         }
     });
-});
-
-angular.module('TinyApp')
-.factory('httpRequestInterceptor', function (localStorageService) {
-  return {
-    request: function (config) {
-
-      config.headers['Authorization'] = 'Bearer ' + localStorageService.get('token');
-
-      return config;
-    }
-  };
-})
-.config(function($httpProvider){
-    $httpProvider.interceptors.push('httpRequestInterceptor');
 });

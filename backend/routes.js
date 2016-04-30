@@ -2,10 +2,12 @@ var _ = require('underscore');
 var userCtrl = require('./controllers/userCtrlServer');
 var teacherCtrl = require('./controllers/teacherCtrlServer');
 var parentCtrl = require('./controllers/parentCtrlServer');
+var dataCtrl = require('./controllers/dataCtrlServer');
 
 module.exports = function(app, passport, db) {
 // server routes ===========================================================
     app.get('/api/users', userCtrl.getUsers(db));
+    app.post('/api/users', userCtrl.updateUser(db));
     app.put('/api/users', userCtrl.updateUser(db));
     app.delete('/api/users/:id', userCtrl.removeUser(db));
     app.put('/api/users/registerDevice', userCtrl.registerDevice(db));
@@ -78,8 +80,10 @@ module.exports = function(app, passport, db) {
     app.post('/retrievePassword', userCtrl.retrievePassword(db));
     app.post('/resetPassword', userCtrl.resetPassword(db));
     app.post('/joinGroup', parentCtrl.joinGroup(db));
-
     app.post('/api/feedback', userCtrl.sendFeedback(db));
+
+    app.get('/api/daycares', dataCtrl.getDaycareCenters(db));
+
     app.all('/api/*', function(req, res) {
         res.send(404);
     });

@@ -112,7 +112,21 @@ exports.activateUser = function (db) {
                   }
                   console.log(json);
                 });
-                //sendMail.send('meanstack.devteam@gmail.com', 'letshavefun#1', mailOptions);
+                
+                db.collection('daycares').find(
+                  { name: doc.kindergarten }).toArray(function (err, collection) {                    
+                    if (collection && collection.length > 0) {
+                      console.log(collection);
+                    } else {
+                       db.collection('daycares').insert({name: doc.kindergarten, city: doc.city}, function (err, doc) {
+                        if (err)
+                          throw err;
+
+                        return;                        
+                      });
+                    }
+                  }
+                );
 
               }
             });
@@ -253,7 +267,8 @@ exports.getStudents = function (db) {
       if (_.isArray(req.query._id)) {
         query._id = new Array();
         _.each(req.query._id, function (id) {
-          query._id.push(new ObjectID(id));
+          if(id != "null")
+            query._id.push(new ObjectID(id));
         });
       } else {
         query._id = new ObjectID(req.query._id);
@@ -872,8 +887,11 @@ exports.getEvents = function (db) {
 
         var isDecline = false;
 
+        var isInvitee = false;
+
         _.forEach(event.invitees, function(invitee) {
           if(invitee.parent == req.user._id) {
+            isInvitee = true;
             if(invitee.decline != null) {
 
               isDecline = true;
@@ -882,7 +900,7 @@ exports.getEvents = function (db) {
           }
         });
 
-        return event.start < today || isDecline;
+        return event.start < today || isDecline || !isInvitee;
       });
 
       res.send(collection);
@@ -1551,6 +1569,7 @@ exports.deleteChildProfile = function (db) {
 
 exports.updateUser = function (db) {
   return function (req, res) {
+    console.log(req.body);
     var updateData = req.body;
     updateData._id = new ObjectID(req.user._id);
 

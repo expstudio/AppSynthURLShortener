@@ -7,7 +7,7 @@ function addRepresentative (db, sender, child, callback) {
     var childID = child._id;
     var representativeEmailArr = new Array();
     //child.personalInfo.newRepresentatives = [{}] by default
-    if (!_.isEmpty(child.personalInfo.newRepresentatives[0])) {
+    if (child.personalInfo && child.personalInfo.newRepresentatives && !_.isEmpty(child.personalInfo.newRepresentatives[0])) {
 
         _.each(child.personalInfo.newRepresentatives, function (item) {
             if (item.email !== undefined) {
