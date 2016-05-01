@@ -914,6 +914,7 @@ exports.getEvents = function (db) {
         }
 
         if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
+        
         if(start < today || isDecline || !isInvitee)
         {
           console.log(start < today, isDecline, !isInvitee);
