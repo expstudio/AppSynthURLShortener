@@ -873,12 +873,17 @@ exports.getEvents = function (db) {
         throw err;
 
       collection = _.reject(collection, function (event) {
+        if(event.endAt && new Date(event.endAt) < new Date()){
+          return true;
+        }
+
         var start = null;
         if( event.start instanceof Date) {
           start = new Date(event.start.getTime());
+
           start.setHours(0,0,0,0);
         } else {
-          start = new Date();
+          start = new Date(event.start);
           start.setHours(1,0,0,0);
         }
 
@@ -900,7 +905,9 @@ exports.getEvents = function (db) {
           }
         });
 
-        return event.start < today || isDecline || !isInvitee;
+        if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
+
+        return start < today || isDecline || !isInvitee;
       });
 
       res.send(collection);
@@ -1145,6 +1152,7 @@ exports.saveEvent = function (db) {
     delete event.isNewEvent;
     delete event.picker1;
     delete event.picker2;
+    event.createdAt = new Date();
 
     // event.start = new Date(event.start);
     // event.end = new Date(event.end);
