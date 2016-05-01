@@ -896,7 +896,7 @@ exports.getEvents = function (db) {
         var isInvitee = false;
 
         _.forEach(event.invitees, function(invitee) {
-          if(invitee.parent == req.user._id) {
+          if(invitee.parent == req.user._id.toString()) {
             isInvitee = true;
             if(invitee.decline != null) {
 
