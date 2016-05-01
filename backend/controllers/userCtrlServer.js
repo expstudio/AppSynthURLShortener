@@ -874,7 +874,7 @@ exports.getEvents = function (db) {
         throw err;
 
       console.log(query);
-      console.log(event);
+      console.log(collection);
 
       collection = _.reject(collection, function (event) {
         if(event.endAt && new Date(event.endAt) < new Date()){
