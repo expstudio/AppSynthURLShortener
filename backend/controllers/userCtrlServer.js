@@ -853,6 +853,7 @@ exports.updateMessage = function (db) {
 
 exports.getEvents = function (db) {
   return function (req, res) {
+    console.logs(req.user);
     var condition = [{groupID: {$in: req.user.groupID}}];
     var parentId = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
     var requirePublished = false;
@@ -868,10 +869,12 @@ exports.getEvents = function (db) {
       query.isPublished = true;
     }
 
+    console.logs(query);
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
 
+    console.logs(collection);
       collection = _.reject(collection, function (event) {
         if(event.endAt && new Date(event.endAt) < new Date()){
           return true;
