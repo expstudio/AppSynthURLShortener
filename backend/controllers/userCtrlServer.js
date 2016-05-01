@@ -853,7 +853,6 @@ exports.updateMessage = function (db) {
 
 exports.getEvents = function (db) {
   return function (req, res) {
-    console.log(req.user);
     var condition = [{groupID: {$in: req.user.groupID}}];
     var parentId = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
     var requirePublished = false;
@@ -907,16 +906,10 @@ exports.getEvents = function (db) {
         });
 
         if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
-        if(start < today || isDecline || !isInvitee)
-        {
-          console.log(start < today, isDecline, !isInvitee);
-          console.log(event);
-        }
 
         return start < today || isDecline || !isInvitee;
       });
 
-      console.log(collection);
       res.send(collection);
     })
   }
