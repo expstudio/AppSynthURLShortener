@@ -873,6 +873,9 @@ exports.getEvents = function (db) {
       if (err)
         throw err;
 
+      console.log(query);
+      console.log(event);
+
       collection = _.reject(collection, function (event) {
         if(event.endAt && new Date(event.endAt) < new Date()){
           return true;
@@ -905,6 +908,10 @@ exports.getEvents = function (db) {
             }      
           }
         });
+
+        if(event.invitees && event.invitees.length == 0) {
+          isInvitee = true;
+        }
 
         if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
         if(start < today || isDecline || !isInvitee)
