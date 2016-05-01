@@ -873,8 +873,8 @@ exports.getEvents = function (db) {
       if (err)
         throw err;
 
-      console.log(query);
-      console.log(collection);
+      // console.log(query);
+      // console.log(collection);
 
       collection = _.reject(collection, function (event) {
         if(event.endAt && new Date(event.endAt) < new Date()){
@@ -915,16 +915,16 @@ exports.getEvents = function (db) {
 
         if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
         
-        if(start < today || isDecline || !isInvitee)
-        {
-          console.log(start < today, isDecline, !isInvitee);
-          console.log(event);
-        }
+        // if(start < today || isDecline || !isInvitee)
+        // {
+        //   console.log(start < today, isDecline, !isInvitee);
+        //   console.log(event);
+        // }
 
         return start < today || isDecline || !isInvitee;
       });
 
-      console.log(collection);
+      // console.log(collection);
       res.send(collection);
     })
   }
