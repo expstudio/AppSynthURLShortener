@@ -21,6 +21,7 @@ var uuid = require('node-uuid');
 var encrypt = require('../services/encrypt.js');
 var crypto = require('crypto');
 var lwip = require('lwip');
+var lwipJpegAutorotate = require('lwip-jpeg-autorotate');
 var AWS = require('aws-sdk');
 var config = require(rootPath + 'aws.json');
 var zlib = require('zlib');
@@ -1262,7 +1263,7 @@ exports.uploadFile = function (db) {
       var fileName = uuid.v4() + extension;
       var destPath = rootPath + 'images/' + fileName;
       var thumbnailPath = rootPath + 'images/' + 'thumb-' + fileName;
-      console.log(destPath, thumbnailPath, contentType);
+      // console.log(destPath, thumbnailPath, contentType);
       // Server side file type checker.
       if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'image/png|jpeg') {
         fs.unlink(tmpPath);
@@ -1285,26 +1286,28 @@ exports.uploadFile = function (db) {
         ACL: 'public-read'
       };
       var body = fs.createReadStream(tmpPath);
-
-      /*s3.upload({Body: body})
-       .on('httpUploadProgress', function(evt) { console.log(evt); })
-       .send(function(err, data) { console.log(err, data) });
-       */
-
-       
+      var outputpath = tmpPath.replace('.', '.rotated.');
 
       lwip.open(tmpPath, function (err, image) {
         console.log(err);
         if(!image) {
           return res.json(err);
         }
+
         var dataFields = JSON.parse(fields.data[0]);
         var coords = dataFields.cropCoords;
         var ratio = 1;
         var biggestWidth = 500;
+        dataFields.orientation = '90';
         var imgWidth = image.width();
         if (imgWidth > biggestWidth) {
           ratio = biggestWidth / imgWidth;
+        }
+
+        if (dataFields.orientation) {
+          image.rotate(Number(dataFields.orientation), null, function(err, newImage) {
+            image = newImage;
+          });
         }
         
         image.scale(ratio, ratio, function (err, newImage) {
