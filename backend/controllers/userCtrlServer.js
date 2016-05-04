@@ -1304,49 +1304,55 @@ exports.uploadFile = function (db) {
           ratio = biggestWidth / imgWidth;
         }
 
+        function uploadToS3() {
+
+          
+          image.scale(ratio, ratio, function (err, newImage) {
+
+            newImage.toBuffer('jpg', function (err, buffer) {
+              params.Body = buffer;
+              s3.upload(params)
+                .on('httpUploadProgress', function (evt) {
+                  console.log(evt);
+                })
+                .send(function (err, data) {
+                  console.log(err, data);
+                  var originImg = data.Location;
+                  newImage.batch()
+                    .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
+                    .resize(150, 150)
+                    .toBuffer('jpg', function (err, buffer) {
+                      params.Key = 'profilePic/' + folder + '/' + 'thumb-' + fileName;
+                      params.Body = buffer;
+                      s3.upload(params)
+                        .on('httpUploadProgress', function (evt) {
+                          console.log(evt);
+                        })
+                        .send(function (err, data) {
+                          console.log(err, data);
+                          var objID = new ObjectID(dataFields.profileOwner);
+                          var newPic = {thumb: data.Location, original: originImg};
+                          db.collection('students').update({_id: objID}, {$set: {'personalInfo.profilePicture': newPic}}, function (err, count) {
+                            if (err) {
+                              throw err;
+                            }
+                            ;
+                            return res.json(newPic);
+                          })
+                        });
+                    });
+                });
+            });
+          })
+        }
+
         if (dataFields.orientation) {
           image.rotate(Number(dataFields.orientation), function(err, newImage) {
             image = newImage;
+
+            uploadToS3();
           });
         }
-        
-        image.scale(ratio, ratio, function (err, newImage) {
-
-          newImage.toBuffer('jpg', function (err, buffer) {
-            params.Body = buffer;
-            s3.upload(params)
-              .on('httpUploadProgress', function (evt) {
-                console.log(evt);
-              })
-              .send(function (err, data) {
-                console.log(err, data);
-                var originImg = data.Location;
-                newImage.batch()
-                  .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
-                  .resize(150, 150)
-                  .toBuffer('jpg', function (err, buffer) {
-                    params.Key = 'profilePic/' + folder + '/' + 'thumb-' + fileName;
-                    params.Body = buffer;
-                    s3.upload(params)
-                      .on('httpUploadProgress', function (evt) {
-                        console.log(evt);
-                      })
-                      .send(function (err, data) {
-                        console.log(err, data);
-                        var objID = new ObjectID(dataFields.profileOwner);
-                        var newPic = {thumb: data.Location, original: originImg};
-                        db.collection('students').update({_id: objID}, {$set: {'personalInfo.profilePicture': newPic}}, function (err, count) {
-                          if (err) {
-                            throw err;
-                          }
-                          ;
-                          return res.json(newPic);
-                        })
-                      });
-                  });
-              });
-          });
-        })
       });
     });
 
