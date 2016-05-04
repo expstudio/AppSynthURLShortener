@@ -1346,8 +1346,8 @@ exports.uploadFile = function (db) {
           })
         }
 
-        if (dataFields.orientation) {
-          image.rotate(Number(dataFields.orientation), function(err, newImage) {
+        if (dataFields.rotateDegree) {
+          image.rotate(Number(dataFields.rotateDegree), function(err, newImage) {
             image = newImage;
 
             uploadToS3();
