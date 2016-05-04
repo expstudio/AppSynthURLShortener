@@ -1298,7 +1298,6 @@ exports.uploadFile = function (db) {
         var coords = dataFields.cropCoords;
         var ratio = 1;
         var biggestWidth = 500;
-        dataFields.orientation = '90';
         var imgWidth = image.width();
         if (imgWidth > biggestWidth) {
           ratio = biggestWidth / imgWidth;
@@ -1346,12 +1345,15 @@ exports.uploadFile = function (db) {
           })
         }
 
-        if (dataFields.rotateDegree) {
+        if (dataFields.rotateDegree && dataFields.rotateDegree != 0) {
           image.rotate(Number(dataFields.rotateDegree), function(err, newImage) {
+            console.log('Rotate: ' + dataFields.rotateDegree);
             image = newImage;
 
             uploadToS3();
           });
+        } else {
+          uploadToS3();
         }
       });
     });
