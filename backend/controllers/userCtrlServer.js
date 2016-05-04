@@ -1305,7 +1305,7 @@ exports.uploadFile = function (db) {
         }
 
         if (dataFields.orientation) {
-          image.rotate(Number(dataFields.orientation), null, function(err, newImage) {
+          image.rotate(Number(dataFields.orientation), function(err, newImage) {
             image = newImage;
           });
         }
