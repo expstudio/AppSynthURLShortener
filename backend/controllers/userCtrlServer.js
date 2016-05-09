@@ -1133,7 +1133,7 @@ exports.acceptEventInvitation = function(db) {
           event.invitation_id = invitation._id;
 
           var endAt = new Date(req.body.data.meetingAt).getTime();
-          endAt += (Number(req.body.data.meeting_length) * 60 * 60 * 1000);
+          endAt += (Number(req.body.data.meeting_length) * 60 * 1000);
           event.end = new Date(endAt);
           console.log(req.body.data);
           console.log(event);
