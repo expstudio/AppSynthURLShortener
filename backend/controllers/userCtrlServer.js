@@ -310,6 +310,10 @@ exports.getStudents = function (db) {
           } else if (!item.personalInfo){
             item.personalInfo = { profilePicture: {}};
           }
+
+          if(!item.parents) {
+            item.parents = [];
+          }
         });
 
         res.send(collection);
