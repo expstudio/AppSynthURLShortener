@@ -299,14 +299,16 @@ exports.getStudents = function (db) {
             item.personalInfo.profilePicture = {};
           }
         });
-        
+
         res.send(collection);
       })
     } else {
       db.collection('students').find(query).sort({name: 1}).toArray(function (err, collection) {
         _.each(collection, function(item) {
-          if(!item.personalInfo && !item.personalInfoprofilePicture) {
+          if(item.personalInfo && !item.personalInfo.profilePicture) {
             item.personalInfo.profilePicture = {};
+          } else if (!item.personalInfo){
+            item.personalInfo = { profilePicture: {}};
           }
         });
 
