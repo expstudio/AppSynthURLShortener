@@ -1366,7 +1366,7 @@ exports.uploadFile = function (db) {
 
       var grid = new Grid(db, 'fs');
       if(!files.myFile) {
-        return res.status(400).send('No file uploaded.');        
+        return res.json({});        
       }
 
       var file = files.myFile[0];
