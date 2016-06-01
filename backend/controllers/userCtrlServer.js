@@ -176,6 +176,10 @@ exports.loginUser = function (db) {
           redirect = '/calendar-events';
         }
 
+        if (req.user && !req.user.myChildren) {
+          req.user.myChildren = [];
+        }
+
         var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
 
         var groupIds = _.map(req.user.groupID, function(grp) { return new ObjectID('' + grp); });
