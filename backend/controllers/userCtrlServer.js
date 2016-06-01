@@ -294,10 +294,22 @@ exports.getStudents = function (db) {
     }
     if (_.isArray(query._id)) {
       db.collection('students').find({_id: {$in: query._id}}).sort({name: 1}).toArray(function (err, collection) {
+        _.each(collection, function(item) {
+          if(!item.personalInfo && !item.personalInfoprofilePicture) {
+            item.personalInfo.profilePicture = {};
+          }
+        });
+        
         res.send(collection);
       })
     } else {
       db.collection('students').find(query).sort({name: 1}).toArray(function (err, collection) {
+        _.each(collection, function(item) {
+          if(!item.personalInfo && !item.personalInfoprofilePicture) {
+            item.personalInfo.profilePicture = {};
+          }
+        });
+
         res.send(collection);
       })
     }
