@@ -3,6 +3,8 @@ var userCtrl = require('./controllers/userCtrlServer');
 var teacherCtrl = require('./controllers/teacherCtrlServer');
 var parentCtrl = require('./controllers/parentCtrlServer');
 var dataCtrl = require('./controllers/dataCtrlServer');
+var authServer = require('./servers/authServer');
+var adminCtrl = require('./controllers/adminCtrlServer');
 
 module.exports = function(app, passport, db) {
 // server routes ===========================================================
@@ -84,6 +86,9 @@ module.exports = function(app, passport, db) {
 
     app.get('/api/daycares', dataCtrl.getDaycareCenters(db));
 
+    //admin
+    app.get('/api/pendingUsers', authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));
+    
     app.all('/api/*', function(req, res) {
         res.send(404);
     });

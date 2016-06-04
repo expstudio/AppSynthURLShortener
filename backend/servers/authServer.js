@@ -42,3 +42,7 @@ exports.requiresRole = function(role) {
 		}
 	}
 }
+
+exports.isAdmin = function(user) {
+	return user.roles.indexOf('admin') > -1;
+}

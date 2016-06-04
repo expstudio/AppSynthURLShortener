@@ -1,7 +1,8 @@
 var APP = angular.module('TinyApp', [
 	'ngRoute', 'ui.router', 'ngResource', 'firebase', 'ngMessages', 'ui.calendar', 'ui.bootstrap',
     'ngSanitize', 'toastr', 'xeditable', 'btford.socket-io', 'angularFileUpload', 'ngCkeditor',
-    'ui.jq', 'pascalprecht.translate', 'LocalStorageModule'
+    'ui.jq', 'pascalprecht.translate', 'LocalStorageModule',
+    'tinyapp.admin'
 ]);
 
 APP.config(function ($translateProvider) {
@@ -528,6 +529,11 @@ APP.config(function($stateProvider, $urlRouterProvider, $locationProvider, toast
         toastClass: 'toast'
     });
     var routePermission = {
+        admin: {
+            auth: function(authClient) {
+                return authClient.authorizeUser('admin');
+            }
+        },
         teacher: {
             auth: function(authClient) {
                 return authClient.authorizeUser('teacher');
@@ -683,7 +689,6 @@ APP.config(function($stateProvider, $urlRouterProvider, $locationProvider, toast
             templateUrl: 'parent/views/joinGroup.html',
             controller: 'parentController'
         })
-
 
 
     $locationProvider.html5Mode(true);

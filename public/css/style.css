@@ -17,7 +17,7 @@ a {
 }
 /*******************/
 .error-messages.ng-active {
-  background: maroon;
+  background: #C91216;
   color: white;
   padding: 5px;
   border-radius: 5px;
@@ -30,7 +30,7 @@ a {
   content: "";
   left: 20px;
   border-style: solid;
-  border-color: transparent transparent maroon;
+  border-color: transparent transparent #C91216;
   border-width: 5px;
 }
 #header {
@@ -49,7 +49,7 @@ a {
   padding: 5px 10px;
 }
 .langSelection ul li:hover {
-  background-color: #009e0f;
+  background-color: #00acae;
   color: #fff;
 }
 .signup-page .access-section .divider {
@@ -178,7 +178,7 @@ a {
   width: 100%;
 }
 .content .studentList .student.incare .image i.fa-user {
-  color: #009e0f;
+  color: #00acae;
 }
 .content .delete {
   position: absolute;
@@ -237,10 +237,10 @@ a {
   border-radius: 4px;
 }
 .content .eventMenu ul li.editEventBtn {
-  color: #009e0f;
+  color: #00acae;
 }
 .content .eventMenu ul li.editEventBtn:hover {
-  background: #009e0f;
+  background: #00acae;
   color: #fff;
 }
 .content .eventMenu ul li.deleteEvent {
@@ -268,12 +268,12 @@ a {
   margin-left: -14px;
 }
 .content .status .statusItem .panel {
-  border: 1px solid #009e0f;
+  border: 1px solid #00acae;
   border-radius: 0px;
 }
 .content .status .statusItem .panel .heading {
   padding: 5px 10px;
-  background: #009e0f;
+  background: #00acae;
   color: #fff;
 }
 .content .childProfile {
@@ -324,7 +324,7 @@ a {
 }
 .dropdown-menu.childStatus .incare i,
 .statusIndicator .incare i {
-  color: #009e0f;
+  color: #00acae;
 }
 .dropdown-menu.childStatus .outcare i,
 .statusIndicator .outcare i {
@@ -571,7 +571,7 @@ a {
   text-align: center;
 }
 .messageReceiver ul.recipientList li i {
-  color: #009e0f;
+  color: #00acae;
 }
 .messageReceiver .closeBtn {
   background: #606061;
@@ -593,13 +593,13 @@ a {
   cursor: pointer;
 }
 .messageReceiver .closeBtn:hover {
-  background: #009e0f;
+  background: #00acae;
 }
 .profileToCreate .item {
   padding: 10px 20px;
   border: 2px solid #000;
   margin-bottom: 5px;
-  background: #009e0f;
+  background: #00acae;
   opacity: 0.7;
 }
 .profileToCreate .item a,
@@ -647,7 +647,7 @@ a {
   font-size: 12px;
 }
 .messageItem .panel-heading a:hover {
-  color: #009e0f;
+  color: #00acae;
 }
 .messageItem .actions {
   float: right;

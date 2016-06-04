@@ -1,8 +1,7 @@
 // local authentication
 // For more details go to https://github.com/jaredhanson/passport-local
 var LocalStrategy = require('passport-local').Strategy;
-var sendMail = require('../backend/services/sendMail.js');
-var sendgrid = require('sendgrid')('panphu', 'letshavefun#1');
+var sendgrid = require('sendgrid')('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');
 var encrypt = require('../backend/services/encrypt.js');
 var crypto = require('crypto');
 var i18n = require("i18n");
@@ -30,10 +29,13 @@ module.exports = function (db, passport) {
                 subject: i18n.__('Activate your TinyApp account'),
                 html: body
             });
-            email.addTo('anphu.1225@gmail.com');
-            email.addTo(savedUser.local.email.toString());
+            
+            if (savedUser.roles.indexOf('teacher') > -1) {
+                email.addTo('meanstack.devteam@gmail.com');    
+            } else {
+                email.addTo(savedUser.local.email.toString());    
+            }
 
-            //sendMail.send('meanstack.devteam@gmail.com', 'letshavefun#1', mailOptions);
             sendgrid.send(email, function (err, json) {
                 if (err) {
                     return console.error(err);
@@ -43,7 +45,7 @@ module.exports = function (db, passport) {
             return done(null, savedUser);
         });
     }
-    // console.log(User)
+
     // Maintaining persistent login sessions
     // serialized  authenticated user to the session
     db.collection('user').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {

@@ -1,11 +1,11 @@
-var async = require('async'),
-  helper = require('../helpers'),
-  validator = require('validator'),
-  ObjectID = require('mongodb').ObjectID,
-  passport = require('passport');
+var async = require('async');
+var helper = require('../helpers');
+var validator = require('validator');
+var ObjectID = require('mongodb').ObjectID;
+var passport = require('passport');
 var _ = require('underscore');
 var mv = require('mv');
-var sendgrid = require('sendgrid')('panphu', 'letshavefun#1');
+var sendgrid = require('sendgrid')('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');
 var multiparty = require('multiparty');
 var http = require('http');
 var util = require('util');
@@ -15,7 +15,6 @@ var Grid = require('mongodb').Grid;
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
-//var rootPath = path.normalize(__dirname + '/../../upload/');
 var rootPath = path.normalize(__dirname + '/../../config/');
 var uuid = require('node-uuid');
 var encrypt = require('../services/encrypt.js');
@@ -30,6 +29,7 @@ var expressJwt = require('express-jwt');
 var jwt = require('jsonwebtoken');
 var http = require('https');
 var Notification = require('../services/pushNotification');
+var Auth = require('../servers/authServer.js');
 //sendMail = require('../../backend/services/sendMail.js');
 
 AWS.config.loadFromPath(rootPath + 'aws.json');
@@ -64,7 +64,7 @@ var contentTypeSupported = [
 ];
 
 exports.activateUser = function (db) {
-  return function (req, res, next) {
+  return function (req, res) {
     var objID = new ObjectID(req.params.token.toString());
 
     db.collection('user').findOne({_id: objID}, function (err, user) {
@@ -78,7 +78,6 @@ exports.activateUser = function (db) {
           if (err) {
             throw err;
           }
-          ;
 
           console.log('Activation successful!');
           /*if the group is not activated, activate it then*/
@@ -104,7 +103,6 @@ exports.activateUser = function (db) {
                   subject: i18n.__('Tiny group code'),
                   html: body
                 });
-                email.addTo('anphu.1225@gmail.com');
                 email.addTo(user.local.email.toString());
 
                 sendgrid.send(email, function (err, json) {
@@ -132,26 +130,20 @@ exports.activateUser = function (db) {
               }
             });
 
-          /* add teacher to the group*/
-          /*dont need to use $in like: roles: {$in: ['teacher']} */
-          /*db.collection('groups').update({_id: user.groupID[0]}, {$push : { teachers : user._id }}, function(err, updated) {
-           if (err) {
-           throw err;
-           };
 
-           // next(); => this might cause the err: https://devcenter.heroku.com/changelog-items/30
-           });*/
-
-          req.logIn(user, function (err) {
-            if (err) {
-              return next(err);
-            }
-            //return res.send({redirect: '/'});
-            return res.redirect(frontendAddress + '/inform');
-            // return res.status(200).json(user);
-            //logged in the same user even activate different users
-          });
-          // next(); => this might cause the err: https://devcenter.heroku.com/changelog-items/30
+          if (req.user && Auth.isAdmin(req.user)) {
+            return res.send(user);
+          } else {
+            req.logIn(user, function (err) {
+              if (err) {
+                throw err;
+              }
+              //return res.send({redirect: '/'});
+              return res.redirect(frontendAddress + '/inform');
+              // return res.status(200).json(user);
+              //logged in the same user even activate different users
+            });
+          }
         });
       }
     })
