@@ -16,6 +16,15 @@ module.exports = function(app, passport, db) {
 
     app.get('/api/groups', userCtrl.getGroups(db));
 
+    app.get('/api/chatRoom', userCtrl.getChatRoom(db));
+    app.get('/api/chatRooms/:id', userCtrl.getChatRoom(db));
+    app.get('/api/chatRooms', userCtrl.getChatRooms(db));
+    app.put('/api/chatRooms', userCtrl.updateMessage(db));
+
+    app.get('/api/groupMessages/:id', userCtrl.getGroupMessage(db));
+    app.post('/api/groupMessages', userCtrl.sendGroupMessage(db));
+    app.put('/api/groupMessages', userCtrl.updateGroupMessage(db));
+
     app.get('/api/messages', userCtrl.getMessages(db));
     app.get('/api/chatmessages', userCtrl.getChatMessages(db));
     app.put('/api/messages', userCtrl.updateMessage(db));
@@ -50,6 +59,7 @@ module.exports = function(app, passport, db) {
     app.post('/logout', userCtrl.logout);
     app.post('/signup', userCtrl.signupUser);
     app.post('/attachment/upload', userCtrl.uploadAttachment(db));
+    app.post('/group_attachment/upload', userCtrl.uploadGroupAttachment(db));
     app.post('/images/upload', userCtrl.uploadFile(db));
 
 
