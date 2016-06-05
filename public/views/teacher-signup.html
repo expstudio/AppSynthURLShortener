@@ -39,10 +39,11 @@
                                                    ng-model="userInfo.username" 
                                                    required 
                                                    autofocus="" 
-                                                   pattern="^[A-Za-z0-9_@.]{1,32}$">
+                                                   ng-maxlength="32"
+                                                   pattern="^[A-Za-z0-9_@.]{1,}$">
                                             <div class="error-messages"
                                                  ng-if="interacted(teacherForm.username) || submittedMessage"
-                                                 ng-messages="teacherForm.fullname.$error"
+                                                 ng-messages="teacherForm.username.$error"
                                                  ng-messages-include="common/views/errorMessages.html">
                                                 <div ng-message="required">You did not enter your username</div>
                                             </div>

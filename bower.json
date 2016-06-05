@@ -24,8 +24,9 @@
     "ng-file-upload-shim": "~3.0.2",
     "ng-ckeditor": "~0.2.1",
     "angular-ui-utils": "bower-jq",
-    "angular-translate": "~2.6.1",
-    "angular-local-storage": "~0.1.5"
+    "angular-translate": "^2.11.0",
+    "angular-local-storage": "~0.1.5",
+    "angular-translate-loader-static-files": "^2.11.0"
   },
   "resolutions": {
     "firebase": "2.0.x",

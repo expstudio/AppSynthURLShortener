@@ -21,6 +21,24 @@
                                                 <div ng-message="required">You did not enter your name</div>
                                             </div>
                                         </div>
+                                        <div class="form-group username">
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   name="username" 
+                                                   id="username" 
+                                                   placeholder="{{'USERNAME' | translate}}" 
+                                                   ng-model="userInfo.username" 
+                                                   required 
+                                                   autofocus="" 
+                                                   ng-maxlength="32"
+                                                   pattern="^[A-Za-z0-9_@.]{1,}$">
+                                            <div class="error-messages"
+                                                 ng-if="interacted(parentForm.username) || submittedMessage"
+                                                 ng-messages="parentForm.username.$error"
+                                                 ng-messages-include="common/views/errorMessages.html">
+                                                <div ng-message="required">You did not enter your username</div>
+                                            </div>
+                                        </div>
                                         <div class="form-group email">
                                             <input type="email" class="form-control" name="email" id="email" placeholder="{{'EMAIL' | translate}}" ng-model="userInfo.email" required autofocus="">
                                             <div class="error-messages" ng-if="interacted(parentForm.email) || submittedMessage" ng-messages="parentForm.email.$error" ng-messages-include="common/views/errorMessages.html">
