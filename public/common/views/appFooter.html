@@ -44,6 +44,13 @@
                 <span>{{'HELP' | translate}}</span>
             </a>
         </li>
+        
+        <li class="item" ng-if="identity.isAuthorized('admin')">
+            <a ui-sref="admin.dashboard">
+                <i class="fa fa-tachometer"></i>
+                <span>{{'Dashboard' | translate}}</span>
+            </a>
+        </li>
     </ul>
 
     <ul class="actionMenu" ng-if="identity.isAuthorized('parent')">
@@ -68,6 +75,5 @@
                 <span>{{'HELP' | translate}}</span>
             </a>
         </li>
-
     </ul>
 </div>
