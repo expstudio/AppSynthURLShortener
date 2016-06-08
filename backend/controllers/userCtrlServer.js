@@ -609,6 +609,27 @@ exports.getGroupMessage = function (db) {
   };
 };
 
+var sendGroupNotification = function(groupID, message, db, req, res) {
+  db.collection('user').find({groupID: groupID.toString(), roles: ['parent']}).toArray(function(err, users) {  
+    if(err) {
+      return res.send(500, err);
+    } 
+
+    var deviceTokenArr = _.map(users, function (user) {
+      return user.deviceToken;
+    });
+
+    var notiOptions = {
+      "message": req.user.fullName + " sent you a new message.",
+    };
+
+    Notification.send(deviceTokenArr, notiOptions);
+
+    return res.json(message);
+  });
+
+}
+
 exports.sendGroupMessage = function (db) {
   return function (req, res) {
     var groupID = new ObjectID(req.user.groupID.toString());
@@ -623,7 +644,7 @@ exports.sendGroupMessage = function (db) {
       if (count == 0) {
         return res.json({success: false});
       } else {
-        return res.json(message);
+        sendGroupNotification(groupID, message, db, req, res);
       }
     });
   }
@@ -728,6 +749,28 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 
 }
 
+var sendPushNotification = function(message, db, req, res) {
+  if(req.user.roles.indexOf('teacher')) {
+    db.collection('messages').findOne({_id: message._id}, function (err, message) { 
+      if (message) {
+        var userIds = message.parents;
+
+        sendNotification(userIds, req.user.fullName, message, db, res);
+      }
+    });
+  } else {
+    var groupID = new ObjectID(req.user.groupID[0]);
+
+    db.collection('groups').findOne({_id: groupID}, function (err, group) {
+      if(group) {
+        var userIds = group.teachers;
+
+        sendNotification(userIds, req.user.fullName, message, db, res);
+      }
+    })
+  }
+}
+
 exports.sendMessage = function (db) {
   return function (req, res) {
 
@@ -741,25 +784,7 @@ exports.sendMessage = function (db) {
       if (count == 0) {
         return res.json({success: false});
       } else {
-        if(req.user.roles.indexOf('teacher')) {
-          db.collection('messages').findOne({_id: message._id}, function (err, message) { 
-            if (message) {
-              var userIds = message.parents;
-
-              sendNotification(userIds, req.user.fullName, message, db, res);
-            }
-          });
-        } else {
-          var groupID = new ObjectID(req.user.groupID[0]);
-
-          db.collection('groups').findOne({_id: groupID}, function (err, group) {
-            if(group) {
-              var userIds = group.teachers;
-
-              sendNotification(userIds, req.user.fullName, message, db, res);
-            }
-          })
-        }
+        sendPushNotification(message, db, req, res);
       }
     });
   }
@@ -1524,7 +1549,7 @@ exports.uploadFile = function (db) {
 };
 
 
-function sendAttachmentMessage(db, res, data) {
+function sendAttachmentMessage(db, req, res, data) {
   console.log(data);
 
   var message = data;
@@ -1545,7 +1570,7 @@ function sendAttachmentMessage(db, res, data) {
     if (count == 0) {
       return res.json({success: false});
     } else {
-      return res.json(message);
+      sendPushNotification(message, db, req, res);
     }
   });
 }
@@ -1613,7 +1638,7 @@ exports.uploadAttachment = function (db) {
                   var attachmentLocation = data.Location;
                   dataFields.attachment = attachmentLocation;
                   dataFields.attachment_type = "image";
-                  sendAttachmentMessage(db, res, dataFields);
+                  sendAttachmentMessage(db, req, res, dataFields);
                 });
             });
           })
@@ -1634,7 +1659,7 @@ exports.uploadAttachment = function (db) {
               var attachmentLocation = data.Location;
               dataFields.attachment = attachmentLocation;
               dataFields.attachment_type = "file";
-              sendAttachmentMessage(db, res, dataFields);
+              sendAttachmentMessage(db, req, res, dataFields);
             });
         });
       }
@@ -1644,7 +1669,7 @@ exports.uploadAttachment = function (db) {
 };
 
 
-function sendGroupAttachmentMessage(db, res, data) {
+function sendGroupAttachmentMessage(db, req, res, data) {
   console.log(data);
 
   var message = data;
@@ -1661,7 +1686,7 @@ function sendGroupAttachmentMessage(db, res, data) {
     if (count == 0) {
       return res.json({success: false});
     } else {
-      return res.json(message);
+      sendGroupNotification(groupID, message, db, req, res);
     }
   });
 }
@@ -1729,7 +1754,7 @@ exports.uploadGroupAttachment = function (db) {
                   var attachmentLocation = data.Location;
                   dataFields.attachment = attachmentLocation;
                   dataFields.attachment_type = "image";
-                  sendGroupAttachmentMessage(db, res, dataFields);
+                  sendGroupAttachmentMessage(db, req, res, dataFields);
                 });
             });
           })
@@ -1750,7 +1775,7 @@ exports.uploadGroupAttachment = function (db) {
               var attachmentLocation = data.Location;
               dataFields.attachment = attachmentLocation;
               dataFields.attachment_type = "file";
-              sendGroupAttachmentMessage(db, res, dataFields);
+              sendGroupAttachmentMessage(db, req, res, dataFields);
             });
         });
       }
