@@ -751,9 +751,8 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 
 var sendPushNotification = function(message, db, req, res) {
   if(req.user.roles.indexOf('teacher') > -1) 
-    console.log(message);
 
-    db.collection('messages').findOne({_id: message._id}, function (err, m) { 
+    db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) { 
       if (m) {
         var userIds = m.parents;
 
