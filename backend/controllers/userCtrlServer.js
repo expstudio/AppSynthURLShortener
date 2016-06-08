@@ -734,8 +734,6 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
       return res.send(500, err);
     } 
 
-    console.log(users,userIds);
-
     var deviceTokenArr = _.map(users, function (user) {
       return user.deviceToken;
     });
@@ -752,7 +750,9 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 }
 
 var sendPushNotification = function(message, db, req, res) {
-  if(req.user.roles.indexOf('teacher') > -1) {
+  if(req.user.roles.indexOf('teacher') > -1) 
+    console.log(message);
+
     db.collection('messages').findOne({_id: message._id}, function (err, m) { 
       if (m) {
         var userIds = m.parents;
