@@ -723,17 +723,17 @@ exports.sendMessage = function (db) {
       if (count == 0) {
         return res.json({success: false});
       } else {
-        var groupID = new ObjectID(message.groupID);
+        var groupID = new ObjectID(req.user.groupID[0]);
 
-        db.collection('groups').find({_id: groupID}).toArray(function (err, group) {
+        db.collection('groups').findOne({_id: groupID}, function (err, group) {
           if(group) {
-            var userIds = req.user.roles.indexOf('teacher') > -1 ? group.teachers : group.parents;
+            var userIds = req.user.roles.indexOf('teacher') > -1 ? group.parents : group.teachers;
 
             userIds = _.map(userIds, function(id) {
               return new ObjectID(id);
             });
 
-            db.collection('users').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+            db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
               if(err) {
                 return res.send(500, err);
               } 
@@ -741,7 +741,7 @@ exports.sendMessage = function (db) {
               var deviceTokenArr = _.map(users, function (user) {
                 return user.deviceToken;
               });
-              
+
               var notiOptions = {
                 "message": req.user.fullName + " sent you a new message.",
               };
