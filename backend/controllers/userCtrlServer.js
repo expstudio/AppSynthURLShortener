@@ -702,6 +702,32 @@ exports.getChatRoom = function(db) {
   }
 }
 
+var sendNotification = function(userIds, receiverName) {
+
+  userIds = _.map(userIds, function(id) {
+    return new ObjectID(id);
+  });
+
+  db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+    if(err) {
+      return res.send(500, err);
+    } 
+
+    var deviceTokenArr = _.map(users, function (user) {
+      return user.deviceToken;
+    });
+
+    var notiOptions = {
+      "message": receiverName + " sent you a new message.",
+    };
+
+    Notification.send(deviceTokenArr, notiOptions);
+
+    return res.json(message);
+  });
+
+}
+
 exports.sendMessage = function (db) {
   return function (req, res) {
 
@@ -715,35 +741,25 @@ exports.sendMessage = function (db) {
       if (count == 0) {
         return res.json({success: false});
       } else {
-        var groupID = new ObjectID(req.user.groupID[0]);
+        if(req.user.roles.indexOf('teacher')) {
+          db.collection('messages').findOne({_id: message._id}, function (err, message) { 
+            if (message) {
+              var userIds = message.parents;
 
-        db.collection('groups').findOne({_id: groupID}, function (err, group) {
-          if(group) {
-            var userIds = req.user.roles.indexOf('teacher') > -1 ? group.parents : group.teachers;
+              sendNotification(userIds, req.user.fullName);
+            }
+          });
+        } else {
+          var groupID = new ObjectID(req.user.groupID[0]);
 
-            userIds = _.map(userIds, function(id) {
-              return new ObjectID(id);
-            });
+          db.collection('groups').findOne({_id: groupID}, function (err, group) {
+            if(group) {
+              var userIds = group.teachers;
 
-            db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
-              if(err) {
-                return res.send(500, err);
-              } 
-
-              var deviceTokenArr = _.map(users, function (user) {
-                return user.deviceToken;
-              });
-
-              var notiOptions = {
-                "message": req.user.fullName + " sent you a new message.",
-              };
-
-              Notification.send(deviceTokenArr, notiOptions);
-
-              return res.json(message);
-            });
-          }
-        })
+              sendNotification(userIds, req.user.fullName);
+            }
+          })
+        }
       }
     });
   }
