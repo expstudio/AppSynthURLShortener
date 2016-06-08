@@ -766,7 +766,7 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
       return res.send(500, err);
     } 
 
-    console.log(users);
+    console.log(users,userIds);
 
     var deviceTokenArr = _.map(users, function (user) {
       return user.deviceToken;
