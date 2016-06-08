@@ -41,6 +41,8 @@ exports.send = function (arrOfTokens, notification) {
       }
     };
 
+    console.log(req);
+
     // Make the API call
     var request = https.request(req, function(response){
       var str = ''
