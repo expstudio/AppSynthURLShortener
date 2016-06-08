@@ -39,6 +39,7 @@ var passport        = require('passport'),
                 console.log('room created', data.id);
                 socket.join(data.id);
             });
+
             socket.on('newMessage', function(listeners) {
                 _.each(listeners, function (listener) {
                     io.to(listener).emit('newMessage', {message: "New Notification"});
@@ -53,6 +54,7 @@ var passport        = require('passport'),
             defaultLocale: 'fi',
             directory: __dirname + '/locales'
         });
+
         app.enable('trust proxy')
             .disable('x-powered-by')
             // get all data/stuff of the body (POST) parameters
@@ -98,6 +100,7 @@ var passport        = require('passport'),
             .use(flash())
             .use(passport.initialize())
             .use(passport.session());
+
         app.options('*', function(req, res) {
             res.send(200);
         });
@@ -107,9 +110,6 @@ var passport        = require('passport'),
         server.listen(port, function () {
             console.log('app started at port ' +port);
         });
-
-
     });
-
 
 exports = module.exports = app; // expose app

@@ -723,7 +723,35 @@ exports.sendMessage = function (db) {
       if (count == 0) {
         return res.json({success: false});
       } else {
-        return res.json(message);
+        var groupID = new ObjectID(message.groupID);
+
+        db.collection('groups').find({_id: groupID}).toArray(function (err, group) {
+          if(group) {
+            var userIds = req.user.roles.indexOf('teacher') > -1 ? group.teachers : group.parents;
+
+            userIds = _.map(userIds, function(id) {
+              return new ObjectID(id);
+            });
+
+            db.collection('users').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+              if(err) {
+                return res.send(500, err);
+              } 
+
+              var deviceTokenArr = _.map(users, function (user) {
+                return user.deviceToken;
+              });
+              
+              var notiOptions = {
+                "message": req.user.fullName + " sent you a new message.",
+              };
+
+              Notification.send(deviceTokenArr, notiOptions);
+
+              return res.json(message);
+            });
+          }
+        })
       }
     });
   }
