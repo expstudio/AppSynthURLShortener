@@ -710,7 +710,7 @@ exports.getChatRoom = function(db) {
   }
 }
 
-var sendNotification = function(userIds, receiverName, db, res) {
+var sendNotification = function(userIds, receiverName, message, db, res) {
 
   userIds = _.map(userIds, function(id) {
     return new ObjectID(id);
@@ -754,7 +754,7 @@ exports.sendMessage = function (db) {
             if (message) {
               var userIds = message.parents;
 
-              sendNotification(userIds, req.user.fullName, db, res);
+              sendNotification(userIds, req.user.fullName, message, db, res);
             }
           });
         } else {
@@ -764,7 +764,7 @@ exports.sendMessage = function (db) {
             if(group) {
               var userIds = group.teachers;
 
-              sendNotification(userIds, req.user.fullName, db, res);
+              sendNotification(userIds, req.user.fullName, message, db, res);
             }
           })
         }
