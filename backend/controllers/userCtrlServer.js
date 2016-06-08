@@ -750,7 +750,7 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 }
 
 var sendPushNotification = function(message, db, req, res) {
-  if(req.user.roles.indexOf('teacher') > -1) 
+  if(req.user.roles.indexOf('teacher') > -1) {
 
     db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) { 
       if (m) {
