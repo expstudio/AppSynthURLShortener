@@ -40,7 +40,7 @@ module.exports = function (db, passport) {
                 if (err) {
                     return console.error(err);
                 }
-                console.log("send success", email, json);
+                console.log("send success", savedUser, json);
             });
             return done(null, savedUser);
         });
