@@ -105,7 +105,7 @@ var passport        = require('passport'),
             res.send(200);
         });
 
-        app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: ['/api/daycares', '/resetPassword', '/activate', '/activate/:token', '/retrievePassword', '/signup', '/login']}));
+        app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: ['/api/daycares', '/resetPassword', '/activate', '/activate/:token', '/retrievePassword', '/signup', '/login',/^\/activate\/*/]}));
         
         require('./backend/routes.js')(app, passport, db);
         // var io = require('socket.io').listen(app);
