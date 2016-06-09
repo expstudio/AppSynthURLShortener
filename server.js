@@ -73,6 +73,7 @@ var passport        = require('passport'),
             .use('/sendMessage', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/sendReplyMessage', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/logout', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
+            .use('/api/daycares', expressJwt({secret: "op89uvzx348zxvbhlqw", credentialsRequired: false}))
             .use(bodyParser.json()) // parse application/json
             .use(bodyParser.json({ type: 'application/vnd.api+json' })) // parse application/vnd.api+json as json
             .use(bodyParser.urlencoded({ extended: true })) // parse application/x-www-form-urlencoded
