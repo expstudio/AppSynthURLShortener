@@ -85,6 +85,8 @@ var passport        = require('passport'),
             .use(flash())
             .use(passport.initialize())
             .use(passport.session());
+            
+        app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: ['/daycares']}));
 
         app.options('*', function(req, res) {
             res.send(200);
