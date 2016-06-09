@@ -58,7 +58,6 @@ var passport        = require('passport'),
         app.enable('trust proxy')
             .disable('x-powered-by')
             // get all data/stuff of the body (POST) parameters
-            .use('/api/daycares', expressJwt({secret: "op89uvzx348zxvbhlqw", credentialsRequired: false}))
             .use('/api', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/updateProfile', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use('/saveEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
@@ -101,6 +100,8 @@ var passport        = require('passport'),
             .use(flash())
             .use(passport.initialize())
             .use(passport.session());
+            
+        app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: ['/daycares']}));
 
         app.options('*', function(req, res) {
             res.send(200);
