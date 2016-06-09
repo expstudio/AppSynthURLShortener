@@ -90,7 +90,6 @@ var passport        = require('passport'),
             res.send(200);
         });
 
-<<<<<<< 79ad8d9434a009b379b12465e16336bbb4abb657
         app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: [
             '/', 
             '/api/daycares', 
@@ -102,9 +101,6 @@ var passport        = require('passport'),
             '/login',
             /^\/activate\/*/
         ]}));
-=======
-        app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: ['/api/daycares', '/resetPassword', '/activate', '/retrievePassword', '/signup', '/login']}));
->>>>>>> Fix jwt for daycares
         
         require('./backend/routes.js')(app, passport, db);
         // var io = require('socket.io').listen(app);
