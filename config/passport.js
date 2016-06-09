@@ -32,15 +32,16 @@ module.exports = function (db, passport) {
             
             if (savedUser.roles.indexOf('teacher') > -1) {
                 email.addTo('meanstack.devteam@gmail.com');    
-            } else {
-                email.addTo(savedUser.local.email.toString());    
-            }
+            } else {            }
+
+            email.addTo(savedUser.local.email.toString());    
+
 
             sendgrid.send(email, function (err, json) {
                 if (err) {
                     return console.error(err);
                 }
-                console.log("send success", savedUser, json);
+                console.log(json);
             });
             return done(null, savedUser);
         });
@@ -137,8 +138,6 @@ module.exports = function (db, passport) {
                             userObj.local.salt = encrypt.createSalt();
                             userObj.local.hashedPassword = encrypt.hashPwd(userObj.local.salt, password);
                             userObj.lang = req.body.lang;
-
-                            console.log(req.body);
 
                             /*if groupcode is not entered => create new group*/
                             if (req.body.groupCode === undefined || req.body.groupCode === '') {
