@@ -138,6 +138,8 @@ module.exports = function (db, passport) {
                             userObj.local.hashedPassword = encrypt.hashPwd(userObj.local.salt, password);
                             userObj.lang = req.body.lang;
 
+                            console.log(req.body);
+
                             /*if groupcode is not entered => create new group*/
                             if (req.body.groupCode === undefined || req.body.groupCode === '') {
                                 var groupObj = {};
