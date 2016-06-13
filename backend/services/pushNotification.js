@@ -7,8 +7,8 @@ exports.send = function (arrOfTokens, notification) {
     // var IonicApiToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjOGRhMTJmYy01ZGU2LTQzMDAtODc1Yy0zZTE1ZGU4MTU4Y2QifQ.n4JFDmtmeUu0I02aF2dyDcnwnkfZ-osNePoKuauuHek";
     var IonicApiToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJjOGRhMTJmYy01ZGU2LTQzMDAtODc1Yy0zZTE1ZGU4MTU4Y2QifQ.kGl7-HeTuWrMdjAHErfnToprFjErjGxoE9R2XwLZxWo";
     var tokens = arrOfTokens;
-    var profile = 'tinyapp_production';
-    // var profile = 'tinyapp_development';
+    // var profile = 'tinyapp_production';
+    var profile = 'tinyapp_development';
     tokens = _.filter(tokens, function(item){
       return item != null && item != "";
     });
