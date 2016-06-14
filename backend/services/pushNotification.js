@@ -12,7 +12,18 @@ exports.send = function (arrOfTokens, notification) {
     tokens = _.filter(tokens, function(item){
       return item != null && item != "";
     });
-    
+
+    notification.ios = {
+      "message": notification.message,
+      "sound": "default",
+      "badge": 1,
+    };
+
+    notification.android = {
+      "message": notification.message,
+      "sound": "default"
+    };
+
     // Build the request object
     var postData = JSON.stringify({
       "tokens": tokens,
