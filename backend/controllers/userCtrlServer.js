@@ -1848,16 +1848,16 @@ exports.retrievePassword = function (db) {
               html: body
             });
 
-            email.addTo(retrieveEmail);
-
             if (user.roles.indexOf('teacher') > -1) {
-
               db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
                 if(group.staffs.length > 0) {
-
                   email.addTo(group.staffs[0].email);
+                } else {
+                  email.addTo(retrieveEmail);
                 }
               });
+            } else {
+              email.addTo(retrieveEmail);
             }
        
             sendgrid.send(email, function (err, json) {
@@ -1896,7 +1896,7 @@ exports.resetPassword = function (db) {
           }
           ;
           res.send({
-            redirect: '/home',
+            redirect: frontendAddress + '/home',
             success: true
           });
         })
