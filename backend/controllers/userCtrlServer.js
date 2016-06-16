@@ -882,10 +882,12 @@ exports.deleteTemplate = function (db) {
 
 exports.deleteMessage = function (db) {
   return function (req, res) {
-    var messageID = req.body._id  ? new ObjectID(req.body._id) : new ObjectID(req.query._id);
+    var chatId = req.body.chatId  ? new ObjectID(req.body.chatId) : new ObjectID(req.query.chatId);
+    var message = req.body.message;
+    message._id = new ObjectID(message._id);
 
-    db.collection('messages').findOne({'_id': messageID}, function (err, message) {
-      if(message) {    
+    db.collection('messages').findOne({'_id': chatId}, function (err, chatRoom) {
+      if(message && chatRoom) {    
         if(message.attachment) {
           var fileKey = message.attachment.split('attachmentFiles').pop();
           var params = {
@@ -912,32 +914,88 @@ exports.deleteMessage = function (db) {
           });
         }
 
-        db.collection('messages').remove({_id: messageID}, function (err, result) {
+        console.log(chatId,message);
+
+        db.collection('messages').update({_id: chatId}, {$pull: {messages: message}}, function (err, result) {
           if (err) {
-            res.send(500, err);
+            console.log(err, result);
+            return res.send(500, err);
           }
 
-          res.send(200);
+          return res.send(200);
         });
       } else {
-        console.log("error delete " + messageID);     
-        res.send(500, err);
+        console.log("error delete " + message);     
+        return res.send(500, err);
       }
     });
   }
 };
 
-exports.deleteConversation = function (db) {
+exports.deleteGroupMessage = function (db) {
+  return function (req, res) {
+    var chatId = req.body.chatId  ? new ObjectID(req.body.chatId) : new ObjectID(req.query.chatId);
+    var message = req.body.message;
+    message._id = new ObjectID(message._id);
+    
+    db.collection('group_messages').findOne({'_id': chatId}, function (err, chatRoom) {
+      if(message && chatRoom) {    
+        if(message.attachment) {
+          var fileKey = message.attachment.split('attachmentFiles').pop();
+          var params = {
+            Bucket: config.bucket,
+            Delete: {
+              Objects: [{
+                        Key: 'attachmentFiles' +fileKey
+                      }]
+            }
+          };
+
+          var s3 = new AWS.S3({
+            apiVersion: '2006-03-01',
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
+            region: config.region,
+            signatureVersion: 'v4'
+          });
+
+          s3.deleteObjects(params, function(err, data) {
+            if (err) return console.log(err);
+
+            console.log(data.Deleted.length);
+          });
+        }
+
+        console.log(chatId,message);
+
+        db.collection('group_messages').update({_id: chatId}, {$pull: {messages: message}}, function (err, result) {
+          if (err) {
+            console.log(err, result);
+            return res.send(500, err);
+          }
+
+          return res.send(200);
+        });
+      } else {
+        console.log("error delete " + message);     
+        return res.send(500, err);
+      }
+    });
+  }
+};
+
+exports.deleteGroupConversation = function (db) {
   return function (req, res) {
     if (req.user.roles.indexOf('parent') > -1) {
       return res.send(500, "parent not allow to delete");
     }
-      var chatRoomId = req.body._id.toString();
+      
+    var chatRoomId = new ObjectID(req.body._id.toString());
 
-    db.collection('messages').find(query).toArray(function (err, messages) {
-      if(messages) {    
+    db.collection('group_messages').findOne({_id: chatRoomId}, function (err, chatRoom) {
+      if(chatRoom && chatRoom.messages) {    
         var success = true;
-        _.forEach(messages, function(message) {  
+        _.forEach(chatRoom.messages, function(message) {  
           var messageID = message._id;
 
           if(message.attachment) {
@@ -966,7 +1024,7 @@ exports.deleteConversation = function (db) {
             });
           }
 
-          db.collection('messages').remove({_id: messageID}, function (err, result) {
+          db.collection('group_messages').remove({_id: chatRoomId}, function (err, result) {
             if (err) {
               success = false;
               return;
@@ -980,7 +1038,67 @@ exports.deleteConversation = function (db) {
           res.send(500, {success: false});
         }
       } else {
-        console.log("error delete converstaion with + " + receiverID);     
+        console.log("error delete converstaion with + " + chatRoomId);     
+        res.send(500, err);
+      }
+    });
+  }
+};
+exports.deleteConversation = function (db) {
+  return function (req, res) {
+    if (req.user.roles.indexOf('parent') > -1) {
+      return res.send(500, "parent not allow to delete");
+    }
+      
+    var chatRoomId = new ObjectID(req.body._id.toString());
+
+    db.collection('messages').findOne({_id: chatRoomId}, function (err, chatRoom) {
+      if(chatRoom && chatRoom.messages) {    
+        var success = true;
+        _.forEach(chatRoom.messages, function(message) {  
+          var messageID = message._id;
+
+          if(message.attachment) {
+            var fileKey = message.attachment.split('attachmentFiles').pop();
+            var params = {
+              Bucket: config.bucket,
+              Delete: {
+                Objects: [{
+                          Key: 'attachmentFiles' +fileKey
+                        }]
+              }
+            };
+
+            var s3 = new AWS.S3({
+              apiVersion: '2006-03-01',
+              accessKeyId: config.accessKeyId,
+              secretAccessKey: config.secretAccessKey,
+              region: config.region,
+              signatureVersion: 'v4'
+            });
+
+            s3.deleteObjects(params, function(err, data) {
+              if (err) return console.log(err);
+
+              return console.log(data.Deleted.length);
+            });
+          }
+
+          db.collection('messages').remove({_id: chatRoomId}, function (err, result) {
+            if (err) {
+              success = false;
+              return;
+            }
+          });
+        });
+
+        if (success) {
+          res.send(200, {success: true});
+        } else {
+          res.send(500, {success: false});
+        }
+      } else {
+        console.log("error delete converstaion with + " + chatRoomId);     
         res.send(500, err);
       }
     });
