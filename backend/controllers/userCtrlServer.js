@@ -1860,6 +1860,8 @@ exports.retrievePassword = function (db) {
               email.addTo(retrieveEmail);
             }
        
+            console.log(email);
+            
             sendgrid.send(email, function (err, json) {
               if (err) {
                 return console.error(err);
