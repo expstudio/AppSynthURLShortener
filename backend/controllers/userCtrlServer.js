@@ -1850,26 +1850,34 @@ exports.retrievePassword = function (db) {
 
             if (user.roles.indexOf('teacher') > -1) {
               db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
+                console.log(group);
                 if(group.staffs.length > 0) {
                   email.addTo(group.staffs[0].email);
                 } else {
                   email.addTo(retrieveEmail);
                 }
+
+                sendgrid.send(email, function (err, json) {
+                  if (err) {
+                    return console.error(err);
+                  }
+                  console.log(json);
+                });
+
+                res.json({success: true});
               });
             } else {
               email.addTo(retrieveEmail);
-            }
-       
-            console.log(email);
-            
-            sendgrid.send(email, function (err, json) {
-              if (err) {
-                return console.error(err);
-              }
-              console.log(json);
-            });
 
-            res.json({success: true});
+              sendgrid.send(email, function (err, json) {
+                if (err) {
+                  return console.error(err);
+                }
+                console.log(json);
+              });
+
+              res.json({success: true});
+            }
           }
       });
     });
