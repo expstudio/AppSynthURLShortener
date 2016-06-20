@@ -14,19 +14,20 @@ APP.controller('userController', function($scope, $rootScope, $http, $location, 
                 $rootScope.user = response.user;
                 identityService.currentUser = response.user;
                 localStorageService.set('token', response.token);
-
-
-                if (response.redirect) {
-                    if (window.location.href === response.redirect) {
-                        //This is so an admin user will get full admin page
-                        window.location.reload();
-                    } else {
-                        window.location = response.redirect;
-                    }
-                } else {
-                    $location.url('/');
-                    window.location('/');
-                }
+                console.log(response);
+                $state.go('home');
+                // if (response.redirect) {
+                //     if (window.location.href === response.redirect) {
+                //         //This is so an admin user will get full admin page
+                //         window.location.reload();
+                //     } else {
+                //         window.location = response.redirect;
+                //     }
+                // } else {
+                //     $location.url('/');
+                //     window.location('/');
+                    
+                // }
                 toastr.success($filter("translate")('WELCOME') + ' ' + identityService.currentUser.fullName);
             })
             .error(function(err, message){
