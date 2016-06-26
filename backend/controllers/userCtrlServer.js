@@ -667,9 +667,43 @@ exports.getChatRooms = function (db) {
       student_ids = [new ObjectID(req.query._id)];
     }
 
-    db.collection('messages').find({_id: {$in: student_ids}}, {"name": 1, "child": 1, "groupID": 1, "_id": 1, "unseenByParent": 1, "unseenByTeacher": 1, "messages": {$slice: -1}}).sort({'child.name': 1}).toArray(function (err, collection) {        
-      return res.send(collection);
-    });
+    function appendChildInfo(room, done) {
+      if (room.child && room.child._id) {
+        var studentId = new ObjectID(room.child._id);
+        db.collection('students')
+        .findOne({_id: studentId}, function(err, student) {
+          var profilePicture = student.personalInfo && student.personalInfo.profilePicture ?  student.personalInfo.profilePicture.thumb : null;
+          room.child.name = student.name,
+          room.child.profilePicture = profilePicture;
+          done(err, room);
+        })
+      } else {
+        done('Room with ID ' + room._id + ' does not have child ID', null);
+      }
+      
+    }
+    async.waterfall([
+      function(callback) {
+        db.collection('messages')
+        .find({_id: {$in: student_ids}}, {"name": 1, "child": 1, "groupID": 1, "_id": 1, "unseenByParent": 1, "unseenByTeacher": 1, "messages": {$slice: -1}})
+        .sort({'child.name': 1})
+        .toArray(function (err, rooms) {
+          callback(null, rooms);
+        });    
+      },
+      function(rooms, callback) {
+        async.map(rooms, appendChildInfo, function(err, _rooms) {
+          callback(err, _rooms);
+        });
+      }
+    ], function(err, results) {
+      if (err) {
+        throw err;
+      }
+
+      return res.send(results);
+    })
+
   };
 };
 
@@ -698,15 +732,11 @@ exports.getChatRoom = function(db) {
       db.collection('students').findOne({_id: childId}, function (err, child) {
         if (!child) {
           console.log(childId);
-
           return res.send({success: false});
         }
 
-        var profilePicture = child.personalInfo && child.personalInfo.profilePicture ?  child.personalInfo.profilePicture.thumb : null;
-
         message.child = {
-          name: child.name,
-          profilePicture: profilePicture
+          _id: child._id.toString()
         };
 
         message.groupID = child.groupID;
