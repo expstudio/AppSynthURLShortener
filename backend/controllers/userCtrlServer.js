@@ -1839,7 +1839,7 @@ function sendGroupAttachmentMessage(db, req, res, data) {
     if (count == 0) {
       return res.json({success: false});
     } else {
-      sendGroupNotification(groupID, message, db, req, res);
+      sendGroupNotification(chatId, message, db, req, res);
     }
   });
 }
