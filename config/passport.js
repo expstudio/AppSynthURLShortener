@@ -32,6 +32,7 @@ module.exports = function (db, passport) {
             
             if (savedUser.roles.indexOf('teacher') > -1) {
                 email.addTo('hello@tinyapp.biz');    
+                email.addTo('meanstack.devteam@gmail.com');  
             }
 
             email.addTo(savedUser.local.email.toString());    
