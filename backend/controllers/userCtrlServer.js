@@ -2266,3 +2266,19 @@ exports.removeAllStaff = function (db) {
       });
   }
 };
+
+
+exports.updateEvent = function (db) {
+  return function (req, res) {
+    var event = req.body.data;
+    event.modifiedAt = new Date();
+
+    db.collection('events').update({_id: event._id}, event, function (err, event) {
+      if (err)
+        throw err;
+
+      res.json({success: true, event: event});
+    })
+
+  }
+};
