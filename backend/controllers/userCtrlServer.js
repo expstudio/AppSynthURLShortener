@@ -2271,7 +2271,14 @@ exports.removeAllStaff = function (db) {
 exports.updateEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
+    event._id = new ObjectID(event._id);
+    event.user._id = new ObjectID(event.user._id);
     event.modifiedAt = new Date();
+    delete event.eventDate;
+    delete event.startDate;
+    delete event.endDate;
+    delete event.startTime;
+    delete event.endTime;
 
     db.collection('events').update({_id: event._id}, event, function (err, event) {
       if (err)
