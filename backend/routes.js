@@ -104,7 +104,9 @@ module.exports = function(app, passport, db) {
 
     //admin
     app.get('/api/pendingUsers', authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));
-    
+    app.delete('/api/pendingUsers/:id', authServer.requiresRole('admin'), adminCtrl.removePendingUser(db));
+    app.get('/api/activate/:token', authServer.requiresRole('admin'), userCtrl.activateUser(db));
+
     app.all('/api/*', function(req, res) {
         res.send(404);
     });
