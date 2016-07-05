@@ -32,10 +32,9 @@ module.exports = function (db, passport) {
             
             if (savedUser.roles.indexOf('teacher') > -1) {
                 email.addTo('hello@tinyapp.biz');    
-                email.addTo('meanstack.devteam@gmail.com');  
+            } else {
+                email.addTo(savedUser.local.email.toString());
             }
-
-            email.addTo(savedUser.local.email.toString());    
 
             sendgrid.send(email, function (err, json) {
                 if (err) {
