@@ -1512,6 +1512,10 @@ exports.saveEvent = function (db) {
     var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
     event.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
 
+    if (event.isPublished) {
+      event.color = "#24C27A";
+    }
+
     db.collection('events').insert(event, function (err, event) {
       if (err)
         throw err;
