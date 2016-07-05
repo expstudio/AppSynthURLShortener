@@ -2003,7 +2003,7 @@ exports.retrievePassword = function (db) {
             if (user.roles.indexOf('teacher') > -1) {
               db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
                 console.log(group);
-                if(group.staffs.length > 0) {
+                if(group.staffs && group.staffs.length > 0) {
                   email.addTo(group.staffs[0].email);
                 } else {
                   email.addTo(retrieveEmail);
