@@ -97,6 +97,8 @@ var passport        = require('passport'),
             '/activate', 
             '/activate/:token', 
             '/retrievePassword', 
+            '/resetPassword/:token',
+            /^\/resetPassword\/*/,
             '/signup', 
             '/login',
             /^\/activate\/*/

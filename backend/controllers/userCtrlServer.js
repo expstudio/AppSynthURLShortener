@@ -2003,7 +2003,7 @@ exports.retrievePassword = function (db) {
             if (user.roles.indexOf('teacher') > -1) {
               db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
                 console.log(group);
-                if(group.staffs.length > 0) {
+                if(group.staffs && group.staffs.length > 0) {
                   email.addTo(group.staffs[0].email);
                 } else {
                   email.addTo(retrieveEmail);
@@ -2275,7 +2275,14 @@ exports.removeAllStaff = function (db) {
 exports.updateEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
+    event._id = new ObjectID(event._id);
+    event.user._id = new ObjectID(event.user._id);
     event.modifiedAt = new Date();
+    delete event.eventDate;
+    delete event.startDate;
+    delete event.endDate;
+    delete event.startTime;
+    delete event.endTime;
 
     db.collection('events').update({_id: event._id}, event, function (err, event) {
       if (err)
