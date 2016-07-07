@@ -1251,7 +1251,7 @@ exports.getEvents = function (db) {
         
         if (req.user.roles.indexOf('parent') > -1) {
           if (!event.selectAllChild && (event.invitees == null || event.invitees.length == 0) && (req.user.myChildren == null || req.user.myChildren.length == 0)) {
-            return false;
+            return true;
           }
         }
 
