@@ -1563,6 +1563,13 @@ exports.updateEvent = function (db) {
     event.groupID = event.groupID;
     event.start = new Date(event.start);
     event.end = new Date(event.end);
+
+    if (event.isPublished) {
+      event.color = "#24C27A";
+    } else {
+      delete event.color;
+    }
+
     db.collection('events').update({_id: event._id}, event, function (err, response) {
       if (err)
         throw err;
