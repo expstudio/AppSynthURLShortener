@@ -1570,6 +1570,8 @@ exports.updateEvent = function (db) {
       delete event.color;
     }
 
+    console.log(event);
+
     db.collection('events').update({_id: event._id}, event, function (err, response) {
       if (err)
         throw err;
