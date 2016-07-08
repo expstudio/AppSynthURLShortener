@@ -1556,34 +1556,6 @@ exports.saveEventInvitation = function (db) {
   }
 };
 
-exports.updateEvent = function (db) {
-  return function (req, res) {
-    var event = req.body;
-    event._id = new ObjectID(event._id);
-    event.groupID = event.groupID;
-    event.start = new Date(event.start);
-    event.end = new Date(event.end);
-
-    if (event.isPublished) {
-      event.color = "#24C27A";
-    } else {
-      delete event.color;
-    }
-
-    console.log(event);
-
-    db.collection('events').update({_id: event._id}, event, function (err, response) {
-      if (err)
-        throw err;
-      if (response) {
-        res.json({success: true});
-      } else {
-        res.json({success: false});
-      }
-    })
-  }
-};
-
 exports.deleteEvent = function (db) {
   return function (req, res) {
     var objID = new ObjectID(req.query._id);
@@ -2281,7 +2253,6 @@ exports.removeAllStaff = function (db) {
   }
 };
 
-
 exports.updateEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
@@ -2293,6 +2264,12 @@ exports.updateEvent = function (db) {
     delete event.endDate;
     delete event.startTime;
     delete event.endTime;
+
+    if (event.isPublished) {
+      event.color = "#24C27A";
+    } else {
+      delete event.color;
+    }
 
     db.collection('events').update({_id: event._id}, event, function (err, event) {
       if (err)
