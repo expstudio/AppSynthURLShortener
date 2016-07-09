@@ -93,8 +93,8 @@ exports.activateUser = function (db) {
               if (doc) {
                 i18n.setLocale(user.lang);
                 /* send email */
-                var body = '<h3>' + i18n.__("You have created a new group") + '</h3>'
-                  + '<h4>' + i18n.__("Below is the group code.") + i18n.__("You can send the code to other teachers and parents to join group.") + '</h4>'
+                var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
+                  + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
                   + '<span style="color: blue; font-size: 20pt">' + doc.code + '</span>';
 
 
