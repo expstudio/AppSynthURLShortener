@@ -1272,7 +1272,10 @@ exports.getInvitations = function (db) {
     var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
 
     if (req.user.roles.indexOf('parent') > -1) {
-      query.invitees = { $elemMatch: { parent_id: req.user._id.toString() } };
+      quer = {$or: [
+                    invitees = { $elemMatch: { parent_id: req.user._id.toString() } },
+                    selectAllStudent = true
+                  ]};
     } else {
       query = { 'user._id': userid };
     }
