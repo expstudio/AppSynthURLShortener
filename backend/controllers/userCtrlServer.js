@@ -1280,6 +1280,8 @@ exports.getInvitations = function (db) {
       query = { 'user._id': userid };
     }
 
+    console.log(query);
+
     db.collection('invitations').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
