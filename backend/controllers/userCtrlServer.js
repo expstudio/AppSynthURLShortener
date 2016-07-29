@@ -1280,7 +1280,7 @@ exports.getInvitations = function (db) {
       query = { 'user._id': userid };
     }
 
-    console.log(query);
+    console.log("invitation", req.user.roles, query);
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
       if (err)
