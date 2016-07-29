@@ -1274,7 +1274,7 @@ exports.getInvitations = function (db) {
     if (req.user.roles.indexOf('parent') > -1) {
       quer = {$or: [
                     {invitees: { $elemMatch: { parent_id: req.user._id.toString() } }},
-                    {$and: [{selectAllStudent: true}, { groupID: req.user.groupID[0] }]}
+                    { selectAllStudent: true, groupID: req.user.groupID[0] }
                   ]};
     } else {
       query = { 'user._id': userid };
