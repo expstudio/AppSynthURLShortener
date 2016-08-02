@@ -1251,7 +1251,6 @@ exports.getEvents = function (db) {
         
         if (req.user.roles.indexOf('parent') > -1) {
           if (event.isPublished && !event.selectAllStudent && (event.invitees == null || event.invitees.length == 0) && (req.user.myChildren == null || req.user.myChildren.length == 0)) {
-            console.log(event);
             return true;
           }
         }
@@ -1273,14 +1272,12 @@ exports.getInvitations = function (db) {
 
     if (req.user.roles.indexOf('parent') > -1) {
       query = {$or: [
-                    {invitees: { $elemMatch: { parent_id: req.user._id.toString() } }},
+                    { invitees: { $elemMatch: { parent_id: req.user._id.toString() } } },
                     { selectAllStudent: true, groupID: req.user.groupID[0] }
                   ]};
     } else {
       query = { 'user._id': userid };
     }
-
-    console.log("invitation", req.user.roles, query);
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
       if (err)
@@ -1443,7 +1440,6 @@ exports.acceptEventInvitation = function(db) {
       {
         return res.json(result);
       }
-      console.log(invitation);
 
       db.collection('invitations').update({_id: invitation._id}, invitation, function (err, response) {
         if (err)
