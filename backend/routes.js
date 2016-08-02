@@ -39,6 +39,7 @@ module.exports = function(app, passport, db) {
     app.get('/api/events', userCtrl.getEvents(db));
     app.get('/api/invitations', userCtrl.getInvitations(db));
     app.put('/api/events', userCtrl.updateEvent(db));
+    app.put('/api/invitations', userCtrl.updateInvitation(db));
     app.delete('/api/events', userCtrl.deleteEvent(db));
     app.delete('/api/invitations', userCtrl.deleteInvitation(db));
 
@@ -86,6 +87,7 @@ module.exports = function(app, passport, db) {
 
     app.post('/saveEvent', userCtrl.saveEvent(db));
     app.post('/updateEvent', userCtrl.updateEvent(db));
+    app.post('/updateInvitation', userCtrl.updateInvitation(db));
     app.post('/acceptEvent', userCtrl.acceptEvent(db));    
     app.post('/saveEventInvitation', userCtrl.saveEventInvitation(db));
     app.post('/deleteEvent', userCtrl.deleteEvent(db));

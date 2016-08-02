@@ -2281,3 +2281,28 @@ exports.updateEvent = function (db) {
 
   }
 };
+
+exports.updateInvitation = function (db) {
+  return function (req, res) {
+    var invitation = req.body.data;
+    invitation._id = new ObjectID(invitation._id);
+    
+    /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
+     * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
+    invitation.groupID = req.user.groupID[0];
+
+    var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+
+    invitation.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
+
+    console.log(invitation);
+
+    db.collection('invitations').update({_id: invitation._id}, invitation, function (err, invitation) {
+      if (err)
+        throw err;
+
+      res.json({success: true, invitation: invitation});
+    })
+
+  }
+};
