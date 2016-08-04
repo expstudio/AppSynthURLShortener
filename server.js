@@ -58,21 +58,6 @@ var passport        = require('passport'),
         app.enable('trust proxy')
             .disable('x-powered-by')
             // get all data/stuff of the body (POST) parameters
-            // .use('/api', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/updateProfile', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/saveEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/acceptEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/deleteEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/deleteInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/declineInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/declineEvent', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/saveEventInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/acceptEventInvitation', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/images/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/attachment/upload', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/sendMessage', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/sendReplyMessage', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
-            // .use('/logout', expressJwt({secret: "op89uvzx348zxvbhlqw"}))
             .use(bodyParser.json()) // parse application/json
             .use(bodyParser.json({ type: 'application/vnd.api+json' })) // parse application/vnd.api+json as json
             .use(bodyParser.urlencoded({ extended: true })) // parse application/x-www-form-urlencoded
@@ -112,6 +97,8 @@ var passport        = require('passport'),
             '/activate', 
             '/activate/:token', 
             '/retrievePassword', 
+            '/resetPassword/:token',
+            /^\/resetPassword\/*/,
             '/signup', 
             '/login',
             /^\/activate\/*/

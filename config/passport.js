@@ -17,7 +17,7 @@ module.exports = function (db, passport) {
             i18n.setLocale(req.body.lang);
 
             if (savedUser.roles.indexOf('teacher') > -1) {
-                notice = '<p>' + i18n.__("Please note that you will receive a separate email including your group code. With that group code, parents and other day care personnel are able to join to the group you just created.") + '</p>';
+                notice = '<p>' + i18n.__("Please note that you will receive a separate email including your group code. With that group code parents are able to join to the group you just created.") + '</p>';
             }
             var body = '<h3>' + i18n.__("Welcome to the family of Tiny.") + '</h3>'
                 + notice
@@ -32,9 +32,9 @@ module.exports = function (db, passport) {
             
             if (savedUser.roles.indexOf('teacher') > -1) {
                 email.addTo('hello@tinyapp.biz');    
+            } else {
+                email.addTo(savedUser.local.email.toString());
             }
-
-            email.addTo(savedUser.local.email.toString());    
 
             sendgrid.send(email, function (err, json) {
                 if (err) {

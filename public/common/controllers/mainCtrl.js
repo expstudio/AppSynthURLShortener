@@ -124,6 +124,10 @@ APP.controller('mainController', function ($scope, $http, $q, identityService, s
         //$scope.newPassword is undefined ???
         $http.post('/resetPassword', {data: newPassword, token: $stateParams.token}).then(function(response) {
             if (response.data.success) {
+                newPassword = {
+                    new: "",
+                    confirmed: ""
+                };
                 //toastr.success($filter('translate')('PASSWORD_UPDATED_NOTI'));
                 if (response.data.redirect) {
                     if (window.location.href === response.data.redirect) {

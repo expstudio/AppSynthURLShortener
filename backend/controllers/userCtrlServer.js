@@ -93,8 +93,8 @@ exports.activateUser = function (db) {
               if (doc) {
                 i18n.setLocale(user.lang);
                 /* send email */
-                var body = '<h3>' + i18n.__("You have created a new group") + '</h3>'
-                  + '<h4>' + i18n.__("Below is the group code.") + i18n.__("You can send the code to other teachers and parents to join group.") + '</h4>'
+                var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
+                  + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
                   + '<span style="color: blue; font-size: 20pt">' + doc.code + '</span>';
 
 
@@ -791,7 +791,7 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 var sendPushNotification = function(message, db, req, res) {
   if(req.user.roles.indexOf('teacher') > -1) {
 
-    db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) { 
+    db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) {
       if (m) {
         var userIds = m.parents;
 
@@ -1254,13 +1254,13 @@ exports.getEvents = function (db) {
 
         if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
         
-        // if(start < today || isDecline || !isInvitee)
-        // {
-        //   console.log(start < today, isDecline, !isInvitee);
-        //   console.log(event);
-        // }
+        if (req.user.roles.indexOf('parent') > -1) {
+          if (event.isPublished && !event.selectAllStudent && (event.invitees == null || event.invitees.length == 0) && (req.user.myChildren == null || req.user.myChildren.length == 0)) {
+            return true;
+          }
+        }
 
-        return start < today || isDecline || !isInvitee;
+        return start < today || isDecline || (!isInvitee && (event.isPublished && !event.selectAllStudent));
       });
 
       // console.log(collection);
@@ -1276,7 +1276,10 @@ exports.getInvitations = function (db) {
     var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
 
     if (req.user.roles.indexOf('parent') > -1) {
-      query.invitees = { $elemMatch: { parent_id: req.user._id.toString() } };
+      query = {$or: [
+                    { invitees: { $elemMatch: { parent_id: req.user._id.toString() } } },
+                    { selectAllStudent: true, groupID: req.user.groupID[0] }
+                  ]};
     } else {
       query = { 'user._id': userid };
     }
@@ -1380,7 +1383,7 @@ exports.declineEvent = function(db) {
           throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(event.invitees, function(invitee) {
-        if(invitee.parent == req.user._id) {
+        if(invitee.parent_id == req.user._id.toString()) {
           invitee.name = req.user.fullName;
           invitee.email = req.user.local.email;
           invitee.decline = new Date();
@@ -1442,7 +1445,6 @@ exports.acceptEventInvitation = function(db) {
       {
         return res.json(result);
       }
-      console.log(invitation);
 
       db.collection('invitations').update({_id: invitation._id}, invitation, function (err, response) {
         if (err)
@@ -1517,6 +1519,10 @@ exports.saveEvent = function (db) {
     var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
     event.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
 
+    if (event.isPublished) {
+      event.color = "#24C27A";
+    }
+
     db.collection('events').insert(event, function (err, event) {
       if (err)
         throw err;
@@ -1556,25 +1562,6 @@ exports.saveEventInvitation = function (db) {
   }
 };
 
-exports.updateEvent = function (db) {
-  return function (req, res) {
-    var event = req.body;
-    event._id = new ObjectID(event._id);
-    event.groupID = event.groupID;
-    event.start = new Date(event.start);
-    event.end = new Date(event.end);
-    db.collection('events').update({_id: event._id}, event, function (err, response) {
-      if (err)
-        throw err;
-      if (response) {
-        res.json({success: true});
-      } else {
-        res.json({success: false});
-      }
-    })
-  }
-};
-
 exports.deleteEvent = function (db) {
   return function (req, res) {
     var objID = new ObjectID(req.query._id);
@@ -1593,7 +1580,7 @@ exports.uploadFile = function (db) {
 
       var grid = new Grid(db, 'fs');
       if(!files.myFile) {
-        return res.json({});        
+        return res.status(400).send('No file uploaded.'); 
       }
 
       var file = files.myFile[0];
@@ -2004,7 +1991,7 @@ exports.retrievePassword = function (db) {
             if (user.roles.indexOf('teacher') > -1) {
               db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
                 console.log(group);
-                if(group.staffs.length > 0) {
+                if(group.staffs && group.staffs.length > 0) {
                   email.addTo(group.staffs[0].email);
                 } else {
                   email.addTo(retrieveEmail);
@@ -2269,5 +2256,58 @@ exports.removeAllStaff = function (db) {
 
         res.json({success: true});
       });
+  }
+};
+
+exports.updateEvent = function (db) {
+  return function (req, res) {
+    var event = req.body.data;
+    event._id = new ObjectID(event._id);
+    event.user._id = new ObjectID(event.user._id);
+    event.modifiedAt = new Date();
+    delete event.eventDate;
+    delete event.startDate;
+    delete event.endDate;
+    delete event.startTime;
+    delete event.endTime;
+
+    if (event.isPublished) {
+      event.color = "#24C27A";
+    } else {
+      delete event.color;
+    }
+
+    db.collection('events').update({_id: event._id}, event, function (err, event) {
+      if (err)
+        throw err;
+
+      res.json({success: true, event: event});
+    })
+
+  }
+};
+
+exports.updateInvitation = function (db) {
+  return function (req, res) {
+    var invitation = req.body.data;
+    invitation._id = new ObjectID(invitation._id);
+    
+    /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
+     * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
+    invitation.groupID = req.user.groupID[0];
+
+    var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+
+    invitation.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
+
+    console.log(invitation);
+
+    db.collection('invitations').update({_id: invitation._id}, invitation, function (err, invitation) {
+      if (err)
+        throw err;
+
+      res.json({success: true, invitation: invitation});
+    })
+
   }
 };

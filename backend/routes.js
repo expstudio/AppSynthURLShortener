@@ -39,6 +39,7 @@ module.exports = function(app, passport, db) {
     app.get('/api/events', userCtrl.getEvents(db));
     app.get('/api/invitations', userCtrl.getInvitations(db));
     app.put('/api/events', userCtrl.updateEvent(db));
+    app.put('/api/invitations', userCtrl.updateInvitation(db));
     app.delete('/api/events', userCtrl.deleteEvent(db));
     app.delete('/api/invitations', userCtrl.deleteInvitation(db));
 
@@ -83,7 +84,10 @@ module.exports = function(app, passport, db) {
     app.post('/api/message/template', userCtrl.saveMessageTemplate(db));
     app.post('/updateProfile', parentCtrl.updateProfile(db));
     app.post('/addParent', parentCtrl.addParent(db));
+
     app.post('/saveEvent', userCtrl.saveEvent(db));
+    app.post('/updateEvent', userCtrl.updateEvent(db));
+    app.post('/updateInvitation', userCtrl.updateInvitation(db));
     app.post('/acceptEvent', userCtrl.acceptEvent(db));    
     app.post('/saveEventInvitation', userCtrl.saveEventInvitation(db));
     app.post('/deleteEvent', userCtrl.deleteEvent(db));
@@ -91,6 +95,7 @@ module.exports = function(app, passport, db) {
     app.post('/declineInvitation', userCtrl.declineInvitation(db));
     app.post('/declineEvent', userCtrl.declineEvent(db));
     app.post('/acceptEventInvitation', userCtrl.acceptEventInvitation(db));    
+
     app.post('/saveTodayStatus', teacherCtrl.saveTodayStatus(db));
     app.post('/retrievePassword', userCtrl.retrievePassword(db));
     app.post('/resetPassword', userCtrl.resetPassword(db));
@@ -101,7 +106,9 @@ module.exports = function(app, passport, db) {
 
     //admin
     app.get('/api/pendingUsers', authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));
-    
+    app.delete('/api/pendingUsers/:id', authServer.requiresRole('admin'), adminCtrl.removePendingUser(db));
+    app.get('/api/activate/:token', authServer.requiresRole('admin'), userCtrl.activateUser(db));
+
     app.all('/api/*', function(req, res) {
         res.send(404);
     });
