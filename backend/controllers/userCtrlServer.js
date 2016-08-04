@@ -1353,7 +1353,7 @@ exports.declineInvitation = function(db) {
           throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(invitation.invitees, function(invitee) {
-        if(invitee.parent == req.user._id) {
+        if(invitee.parent_id == req.user._id) {
           invitee.name = req.user.fullName;
           invitee.email = req.user.local.email;
           invitee.decline = new Date();
