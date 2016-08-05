@@ -156,11 +156,8 @@ exports.loginUser = function (db) {
       if (err) {
         return next(err);
       }
-      if (!user) {
-        return res.status(401).json({success: false, message: "no user"});
-      }
       
-      if (user.local.username != req.body.username) {
+      if (!user) {
         return res.status(401).json({success: false, message: "no user"});
       }
 
