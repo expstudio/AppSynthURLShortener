@@ -139,7 +139,7 @@ exports.activateUser = function (db) {
                 throw err;
               }
               //return res.send({redirect: '/'});
-              return res.redirect(frontendAddress + '/inform');
+              return res.redirect(frontendAddress + '/login');
               // return res.status(200).json(user);
               //logged in the same user even activate different users
             });
