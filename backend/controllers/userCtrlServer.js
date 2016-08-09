@@ -35,8 +35,8 @@ var Auth = require('../servers/authServer.js');
 AWS.config.loadFromPath(rootPath + 'aws.json');
 var secret = "op89uvzx348zxvbhlqw";
 
-var frontendAddress = "https://tinyappmobile.herokuapp.com/#";
-
+var frontendAddress = require('../../config/frontend-address')[process.env.NODE_ENV || 'development'].address;
+console.log(frontendAddress);
 function validateEmail(email) {
   var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return regex.test(email);
