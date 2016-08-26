@@ -3,7 +3,7 @@ var rootPath = path.normalize(__dirname + '/../');
 
 module.exports = {
   development: {
-    address: 'https://tinyappmobile.herokuapp.com/#'
+    address: 'http://app.tinyapp.biz/#'
   },
   production: {
     address: 'http://app.tinyapp.biz/#'
