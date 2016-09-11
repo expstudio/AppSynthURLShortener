@@ -48,21 +48,21 @@ module.exports = function (db, passport) {
 
     // Maintaining persistent login sessions
     // serialized  authenticated user to the session
-    db.collection('user').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {
+    /*db.collection('user').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {
         if (err) {
             next(err);
         }
-    });
+    });*/
     /*
      shouldn't name the collection "group" because "group" is a method on a database object. If still want to use
      "group" to name the collection, refer to the collection like this: db.getCollection('group').methodhere
      instead of db.group.find()
      */
-    db.collection('groups').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {
+    /*db.collection('groups').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {
         if (err) {
             next(err);
         }
-    });
+    });*/
 
     passport.serializeUser(function (user, done) {
         done(null, user._id.toString());
