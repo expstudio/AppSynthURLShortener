@@ -217,6 +217,7 @@ exports.signupUser = function (req, res, next) {
 
   passport.authenticate('local-signup', function (err, user, info) {
     if (err) {
+      console.log(err);
       return next(err);
     }
 
@@ -1257,7 +1258,7 @@ exports.getEvents = function (db) {
           }
         }
 
-        return start < today || isDecline || (!isInvitee && (event.isPublished && !event.selectAllStudent));
+        return isDecline || (!isInvitee && (event.isPublished && !event.selectAllStudent));
       });
 
       // console.log(collection);

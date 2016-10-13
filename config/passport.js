@@ -22,7 +22,8 @@ module.exports = function (db, passport) {
             var body = '<h3>' + i18n.__("Welcome to the family of Tiny.") + '</h3>'
                 + notice
                 + '<h4>' + i18n.__("Please click here to activate your account.") + '</h4>'
-                + '<a href="' + url + '">' + url + '</a>';
+                + '<a href="' + url + '">' + url + '</a>'
+                + '<br><br><p>after you activate your account you can sign in with username: <strong>' + savedUser.local.username + '</strong></p>';
 
             var email = new sendgrid.Email({
                 from: 'tinyapp@noreply.fi',
