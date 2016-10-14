@@ -629,6 +629,8 @@ var sendGroupNotification = function(groupID, message, db, req, res) {
       "sound": "default"
     };
 
+    console.log("Group", notiOptions);
+    
     Notification.send(deviceTokenArr, notiOptions);
 
     return res.json(message);
@@ -779,6 +781,8 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
       "badge": badge,
       "sound": "default"
     };
+
+    console.log(notiOptions);
 
     Notification.send(deviceTokenArr, notiOptions);
 
