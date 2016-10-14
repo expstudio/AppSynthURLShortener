@@ -798,7 +798,7 @@ var sendPushNotification = function(message, db, req, res) {
       if (m) {
         var userIds = m.parents;
 
-        sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByTeacher);
+        sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByParent);
       }
     });
   } else {
@@ -808,7 +808,7 @@ var sendPushNotification = function(message, db, req, res) {
       if(group) {
         var userIds = group.teachers;
 
-        sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByParent);
+        sendNotification(userIds, req.user.fullName, message, db, res, 0);
       }
     })
   }
