@@ -808,7 +808,7 @@ var sendPushNotification = function(message, db, req, res) {
       if(group) {
         var userIds = group.teachers;
 
-        sendNotification(userIds, req.user.fullName, message, db, res, 0);
+        sendNotification(userIds, req.user.fullName, message, db, res, 1);
       }
     })
   }
