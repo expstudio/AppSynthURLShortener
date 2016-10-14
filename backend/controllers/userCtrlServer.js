@@ -759,7 +759,7 @@ exports.getChatRoom = function(db) {
   }
 }
 
-var sendNotification = function(userIds, receiverName, message, db, res) {
+var sendNotification = function(userIds, receiverName, message, db, res, badge) {
 
   userIds = _.map(userIds, function(id) {
     return new ObjectID(id);
@@ -776,7 +776,7 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 
     var notiOptions = {
       "message": receiverName + " sent you a new message.",
-      "badge": (req.user.roles.indexOf('teacher') > -1 ? message.unseenByTeacher : message.unseenByParent),
+      "badge": badge,
       "sound": "default"
     };
 
@@ -794,7 +794,7 @@ var sendPushNotification = function(message, db, req, res) {
       if (m) {
         var userIds = m.parents;
 
-        sendNotification(userIds, req.user.fullName, message, db, res);
+        sendNotification(userIds, req.user.fullName, message, db, res, message.unseenByTeacher);
       }
     });
   } else {
@@ -804,7 +804,7 @@ var sendPushNotification = function(message, db, req, res) {
       if(group) {
         var userIds = group.teachers;
 
-        sendNotification(userIds, req.user.fullName, message, db, res);
+        sendNotification(userIds, req.user.fullName, message, db, res, message.unseenByParent);
       }
     })
   }
