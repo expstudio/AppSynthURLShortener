@@ -808,7 +808,12 @@ var sendPushNotification = function(message, db, req, res) {
       if(group) {
         var userIds = group.teachers;
 
-        sendNotification(userIds, req.user.fullName, message, db, res, 1);
+        db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) {
+          if (m) {
+            sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByTeacher);
+          }
+        });
+        
       }
     })
   }
