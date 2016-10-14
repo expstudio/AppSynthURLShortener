@@ -776,7 +776,7 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 
     var notiOptions = {
       "message": receiverName + " sent you a new message.",
-      "badge": 1,
+      "badge": (req.user.roles.indexOf('teacher') > -1 ? message.unseenByTeacher : message.unseenByParent),
       "sound": "default"
     };
 
