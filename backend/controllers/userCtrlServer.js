@@ -630,7 +630,7 @@ var sendGroupNotification = function(groupID, message, db, req, res) {
     };
 
     console.log("Group", notiOptions);
-    
+
     Notification.send(deviceTokenArr, notiOptions);
 
     return res.json(message);
@@ -782,7 +782,7 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
       "sound": "default"
     };
 
-    console.log(notiOptions);
+    console.log(message, notiOptions);
 
     Notification.send(deviceTokenArr, notiOptions);
 
@@ -798,7 +798,7 @@ var sendPushNotification = function(message, db, req, res) {
       if (m) {
         var userIds = m.parents;
 
-        sendNotification(userIds, req.user.fullName, message, db, res, message.unseenByTeacher);
+        sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByTeacher);
       }
     });
   } else {
@@ -808,7 +808,7 @@ var sendPushNotification = function(message, db, req, res) {
       if(group) {
         var userIds = group.teachers;
 
-        sendNotification(userIds, req.user.fullName, message, db, res, message.unseenByParent);
+        sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByParent);
       }
     })
   }
