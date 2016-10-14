@@ -14,9 +14,17 @@ exports.send = function (arrOfTokens, notification) {
       return item != null && item != "";
     });
 
-    notification.ios = notification;
+    notification.ios = {
+      "message": notification.message,
+      "sound": "default",
+      "badge": notification.badge,
+    };
 
-    notification.android = notification;
+    notification.android = {
+      "message": notification.message,
+      "sound": "default",
+      "badge": notification.badge,
+    };
 
     // Build the request object
     var postData = JSON.stringify({
