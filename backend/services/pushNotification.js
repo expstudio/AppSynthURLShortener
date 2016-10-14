@@ -17,12 +17,13 @@ exports.send = function (arrOfTokens, notification) {
     notification.ios = {
       "message": notification.message,
       "sound": "default",
-      "badge": 1,
+      "badge": notiOptions.badge,
     };
 
     notification.android = {
       "message": notification.message,
-      "sound": "default"
+      "sound": "default",
+      "badge": notiOptions.badge,
     };
 
     // Build the request object
