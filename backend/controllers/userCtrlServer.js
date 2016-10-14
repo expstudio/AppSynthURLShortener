@@ -159,7 +159,7 @@ exports.loginUser = function (db) {
       }
       
       if (!user) {
-        return res.status(401).json({success: false, message: "no user"});
+        return res.status(401).json("Error: User not found");
       }
 
       req.logIn(user, function (err) {
