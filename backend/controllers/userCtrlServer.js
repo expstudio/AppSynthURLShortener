@@ -155,7 +155,7 @@ exports.loginUser = function (db) {
     passport.authenticate('local-login', function (err, user, info) {
       if (err) {
         console.log("error", err);
-        return next(err);
+        return res.status(500).json({success: false, message: err});
       }
       
       if (!user) {
