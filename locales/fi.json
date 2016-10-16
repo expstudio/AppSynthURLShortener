@@ -10,7 +10,7 @@
 	"Please reply to the invitation by clicking the buttons below.": "Hyväksy kutsu klikkaamalla alla olevaa linkkiä, kiitos.",
 	"Accept": "Hyväksy",
 	"has sent you an invitation to be a representative of his/her child in TinyApp.": "on lähettänyt sinulle kutsun toimia lapsen toisena edustajana TinyApp-palvelussa.",
-	"You have created a new group to TinyApp.": "You have created a new group to TinyApp.",
-	"Below is the group code. Please share the code with the relevant parents to join the group.": "Below is the group code. Please share the code with the relevant parents to join the group.",
+	"You have created a new group to TinyApp.": "Olet luonut uuden ryhmän TinyApp-sovellukseen.",
+	"Below is the group code. Please share the code with the relevant parents to join the group.": "Tässä on ryhmäsi koodi.  Tämän koodin avulla ryhmäsi lasten vanhemmat voivat liittyä ryhmään. Jaa koodi vain asianomaisille vanhemmille.",
 	"Welcome, {{name}}": "Tervetuloa, {{name}}"
 }
