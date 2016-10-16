@@ -9,21 +9,23 @@ var i18n = require("i18n");
 module.exports = function (db, passport) {
     var saveUser = function (req, userObj, done) {
         db.collection('user').save(userObj, function (err, savedUser) {
-            if (err)
+            if (err) {
                 return done(err);
+            }
+
             /* send email */
-            var url = req.protocol + '://' + req.get('host') + '/activate/' + savedUser._id;
+            var url = req.protocol + '://' + req.get('host') + '/activate/' + savedUser._id + '/' + savedUser.verification.token;
             var notice = '';
-            i18n.setLocale(req.body.lang);
+            var lang = req.body.lang || 'fi';
+            i18n.setLocale(lang);
 
             if (savedUser.roles.indexOf('teacher') > -1) {
                 notice = '<p>' + i18n.__("Please note that you will receive a separate email including your group code. With that group code parents are able to join to the group you just created.") + '</p>';
             }
-            var body = '<h3>' + i18n.__("Welcome to the family of Tiny.") + '</h3>'
-                + notice
-                + '<h4>' + i18n.__("Please click here to activate your account.") + '</h4>'
+            var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: savedUser.local.username}) + '</h3>'
+                + '<h4>' + i18n.__("Welcome to the family of Tiny. Please click here to activate your account.") + '</h4>'
                 + '<a href="' + url + '">' + url + '</a>'
-                + '<br><br><p>after you activate your account you can sign in with username: <strong>' + savedUser.local.username + '</strong></p>';
+                + notice;
 
             var email = new sendgrid.Email({
                 from: 'tinyapp@noreply.fi',
@@ -31,8 +33,8 @@ module.exports = function (db, passport) {
                 html: body
             });
             
-            if (savedUser.roles.indexOf('teacher') > -1) {
-                email.addTo('hello@tinyapp.biz');    
+            if (savedUser.roles.indexOf('teacher') > -1 && process.env.NODE_ENV === 'production') {
+                email.addTo('hello@tinyapp.biz');
             } else {
                 email.addTo(savedUser.local.email.toString()); 
             }
@@ -138,6 +140,11 @@ module.exports = function (db, passport) {
                             userObj.local.salt = encrypt.createSalt();
                             userObj.local.hashedPassword = encrypt.hashPwd(userObj.local.salt, password);
                             userObj.lang = req.body.lang;
+                            userObj.verification = {
+                                token: encrypt.generateToken(16),
+                                expireDate: new Date().getTime() + (7 * 24 * 60 * 60 * 1000),
+                                type: 'activate'
+                            };
 
                             /*if groupcode is not entered => create new group*/
                             if (req.body.groupCode === undefined || req.body.groupCode === '') {
@@ -148,23 +155,25 @@ module.exports = function (db, passport) {
                                 groupObj.kindergarten = req.body.kindergarten;
                                 groupObj.teachers = new Array;
                                 groupObj.students = new Array;
+                                groupObj.code = encrypt.generateToken(8);
+                                groupObj.verification = {
+                                    token: encrypt.generateToken(16),
+                                    expireDate: new Date().getTime() + (7 * 24 * 60 * 60 * 1000),
+                                    type: 'activate'
+                                }
 
-                                crypto.randomBytes(8, function (ex, buf) {
-                                    groupObj.code = buf.toString('hex');
+                                db.collection('groups').save(groupObj, function (err, savedGroup) {
+                                    if (err)
+                                        return done(err);
 
-                                    db.collection('groups').save(groupObj, function (err, savedGroup) {
-                                        if (err)
-                                            return done(err);
-
-                                        userObj.groupID = new Array(savedGroup._id.toString());
-                                        saveUser(req, userObj, done);
-                                    })
+                                    userObj.groupID = new Array(savedGroup._id.toString());
+                                    saveUser(req, userObj, done);
                                 });
 
                             } else { /* if groupcode is entered => join existing group */
                                 db.collection('groups').findOne({
                                     'code': req.body.groupCode,
-                                    'createdAt': {$exists: false}
+                                    'verification.token': {$ne: null}
                                 }, function (err, savedGroup) {
                                     if (err)
                                         return done(err);

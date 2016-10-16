@@ -54,7 +54,7 @@ module.exports = function(app, passport, db) {
 
     app.get('/logout', userCtrl.logout(db));
 
-    app.get('/activate/:token', userCtrl.activateUser(db));
+    app.get('/activate/:userId/:token', userCtrl.activateUser(db));
 
     app.post('/login', userCtrl.loginUser(db));
     app.post('/logout', userCtrl.logout);
@@ -107,7 +107,8 @@ module.exports = function(app, passport, db) {
     //admin
     app.get('/api/pendingUsers', authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));
     app.delete('/api/pendingUsers/:id', authServer.requiresRole('admin'), adminCtrl.removePendingUser(db));
-    app.get('/api/activate/:token', authServer.requiresRole('admin'), userCtrl.activateUser(db));
+    app.get('/api/activate/:userId/:token', authServer.requiresRole('admin'), userCtrl.activateUser(db));
+    app.get('/api/recentUsers', authServer.requiresRole('admin'), adminCtrl.getRecentUsers(db));
 
     app.all('/api/*', function(req, res) {
         res.send(404);
