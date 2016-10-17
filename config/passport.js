@@ -75,7 +75,7 @@ module.exports = function (db, passport) {
                 username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
             process.nextTick(function () {
                 db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': username}],
-                    'verification': {$ne: null}
+                    'verification': null
                 }, function (err, user) {
                     if (err)
                         return done(err);
