@@ -49,24 +49,6 @@ module.exports = function (db, passport) {
         });
     }
 
-    // Maintaining persistent login sessions
-    // serialized  authenticated user to the session
-    /*db.collection('user').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {
-        if (err) {
-            next(err);
-        }
-    });*/
-    /*
-     shouldn't name the collection "group" because "group" is a method on a database object. If still want to use
-     "group" to name the collection, refer to the collection like this: db.getCollection('group').methodhere
-     instead of db.group.find()
-     */
-    /*db.collection('groups').ensureIndex({"createdAt": 1}, {expireAfterSeconds: 3600 * 24}, function (err, result) {
-        if (err) {
-            next(err);
-        }
-    });*/
-
     passport.serializeUser(function (user, done) {
         done(null, user._id.toString());
     });
@@ -93,7 +75,7 @@ module.exports = function (db, passport) {
                 username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
             process.nextTick(function () {
                 db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': username}],
-                    'createdAt': {$exists: false}
+                    'verification': {$ne: null}
                 }, function (err, user) {
                     if (err)
                         return done(err);
@@ -132,7 +114,6 @@ module.exports = function (db, passport) {
                             return done(err.toString());
                         } else { /* user doesn't exist, create new user*/
                             var userObj = {local: {}};
-                            userObj.createdAt = new Date();
                             userObj.roles = new Array(req.body.role);
                             userObj.fullName = req.body.fullName;
                             userObj.local.username = username;
@@ -149,7 +130,6 @@ module.exports = function (db, passport) {
                             /*if groupcode is not entered => create new group*/
                             if (req.body.groupCode === undefined || req.body.groupCode === '') {
                                 var groupObj = {};
-                                groupObj.createdAt = new Date();
                                 groupObj.name = req.body.groupName;
                                 groupObj.city = req.body.city;
                                 groupObj.kindergarten = req.body.kindergarten;
