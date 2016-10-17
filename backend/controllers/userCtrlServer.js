@@ -65,16 +65,24 @@ var contentTypeSupported = [
 
 exports.activateUser = function (db) {
   return function (req, res) {
-    var objID = new ObjectID(req.params.token.toString());
+    var objID = new ObjectID(req.params.userId.toString());
+    var token = req.params.token;
 
-    db.collection('user').findOne({_id: objID}, function (err, user) {
+    db.collection('user').findOne({_id: objID, 'verification.token': token}, function (err, user) {
       if (err) throw err;
 
-      if (!user || user.createdAt === undefined) {
+      if (!user || !user.verification) {
         console.log('Activation failed!', user);
-        res.end();
+        res.send(404);
       } else {
-        db.collection('user').update({_id: objID}, {$unset: {createdAt: 1}}, function (err, updated) {
+        db.collection('user').update({
+          _id: objID
+        }, {
+          $set: {
+            'verification': null, 
+            created: new Date()
+          }
+        }, function (err, updated) {
           if (err) {
             throw err;
           }
@@ -83,20 +91,27 @@ exports.activateUser = function (db) {
           /*if the group is not activated, activate it then*/
           var groupID = new ObjectID(user.groupID[0]);
           db.collection('groups').findAndModify(
-            {_id: groupID, 'createdAt': {$exists: true}},
+            {_id: groupID, 'verification.token': {$ne: null}},
             [],
-            {$unset: {createdAt: 1}, $push: {teachers: user._id.toString()}}, function (err, doc) {
+            {
+              $set: {
+                'verification': null,
+                'created': new Date()
+              }, 
+              $push: {
+                teachers: user._id.toString()
+              }
+            }, function (err, doc) {
               if (err) {
                 console.warn(err.message);  // returns error if no matching object found
               }
 
               if (doc) {
-                i18n.setLocale(user.lang);
+                i18n.setLocale(user.lang || 'fi');
                 /* send email */
                 var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
                   + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
                   + '<span style="color: blue; font-size: 20pt">' + doc.code + '</span>';
-
 
                 var email = new sendgrid.Email({
                   from: 'tinyapp@noreply.fi',
