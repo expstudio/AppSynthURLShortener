@@ -3,9 +3,9 @@ var rootPath = path.normalize(__dirname + '/../');
 
 module.exports = {
   development: {
-    address: 'http://app.tinyapp.biz/#'
+    address: 'https://app.tinyapp.biz/#'
   },
   production: {
-    address: 'http://app.tinyapp.biz/#'
+    address: 'https://app.tinyapp.biz/#'
   }
 }
