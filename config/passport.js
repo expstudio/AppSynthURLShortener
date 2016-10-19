@@ -153,7 +153,7 @@ module.exports = function (db, passport) {
                             } else { /* if groupcode is entered => join existing group */
                                 db.collection('groups').findOne({
                                     'code': req.body.groupCode,
-                                    'verification.token': {$ne: null}
+                                    'verification.token': null
                                 }, function (err, savedGroup) {
                                     if (err)
                                         return done(err);
