@@ -110,8 +110,8 @@ module.exports = function (db, passport) {
                         if (err)
                             return done(err);
                         if (user) { /* if user exists => username is in use*/
-                            err = new Error('Username or email is in use');
-                            return done(err.toString());
+                            var exist_err = new Error('Username or email is in use');
+                            return done(exist_err.toString());
                         } else { /* user doesn't exist, create new user*/
                             var userObj = {local: {}};
                             userObj.roles = new Array(req.body.role);

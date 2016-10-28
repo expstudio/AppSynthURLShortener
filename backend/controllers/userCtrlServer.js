@@ -807,6 +807,7 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
 }
 
 var sendPushNotification = function(message, db, req, res) {
+  console.log('message');
   if(req.user.roles.indexOf('teacher') > -1) {
 
     db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) {
@@ -1722,6 +1723,7 @@ function sendAttachmentMessage(db, req, res, data) {
 
   var message = data;
   var chatId = data._id;
+  req.body._id = data._id;
   message._id = new ObjectID();
   var unseenByTeacher = message.unseenByTeacher;
   var unseenByParent = message.unseenByParent;
@@ -1843,6 +1845,7 @@ function sendGroupAttachmentMessage(db, req, res, data) {
   var message = data;
   var chatId = data._id;
   message._id = new ObjectID();
+  req.body._id = data._id;
 
   db.collection('group_messages').update({_id: new ObjectID(chatId)}, 
     { $addToSet: {messages: data}, 
