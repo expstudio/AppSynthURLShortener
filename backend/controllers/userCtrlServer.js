@@ -35,8 +35,8 @@ var Auth = require('../servers/authServer.js');
 AWS.config.loadFromPath(rootPath + 'aws.json');
 var secret = "op89uvzx348zxvbhlqw";
 
-var frontendAddress = "https://tinyappmobile.herokuapp.com/#";
-
+var frontendAddress = require('../../config/frontend-address')[process.env.NODE_ENV || 'development'].address;
+console.log(frontendAddress);
 function validateEmail(email) {
   var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return regex.test(email);
@@ -65,16 +65,24 @@ var contentTypeSupported = [
 
 exports.activateUser = function (db) {
   return function (req, res) {
-    var objID = new ObjectID(req.params.token.toString());
+    var objID = new ObjectID(req.params.userId.toString());
+    var token = req.params.token;
 
-    db.collection('user').findOne({_id: objID}, function (err, user) {
+    db.collection('user').findOne({_id: objID, 'verification.token': token}, function (err, user) {
       if (err) throw err;
 
-      if (!user || user.createdAt === undefined) {
+      if (!user || !user.verification) {
         console.log('Activation failed!', user);
-        res.end();
+        res.send(404);
       } else {
-        db.collection('user').update({_id: objID}, {$unset: {createdAt: 1}}, function (err, updated) {
+        db.collection('user').update({
+          _id: objID
+        }, {
+          $set: {
+            'verification': null, 
+            created: new Date()
+          }
+        }, function (err, updated) {
           if (err) {
             throw err;
           }
@@ -83,20 +91,27 @@ exports.activateUser = function (db) {
           /*if the group is not activated, activate it then*/
           var groupID = new ObjectID(user.groupID[0]);
           db.collection('groups').findAndModify(
-            {_id: groupID, 'createdAt': {$exists: true}},
+            {_id: groupID, 'verification.token': {$ne: null}},
             [],
-            {$unset: {createdAt: 1}, $push: {teachers: user._id.toString()}}, function (err, doc) {
+            {
+              $set: {
+                'verification': null,
+                'created': new Date()
+              }, 
+              $push: {
+                teachers: user._id.toString()
+              }
+            }, function (err, doc) {
               if (err) {
                 console.warn(err.message);  // returns error if no matching object found
               }
 
               if (doc) {
-                i18n.setLocale(user.lang);
+                i18n.setLocale(user.lang || 'fi');
                 /* send email */
                 var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
                   + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
                   + '<span style="color: blue; font-size: 20pt">' + doc.code + '</span>';
-
 
                 var email = new sendgrid.Email({
                   from: 'tinyapp@noreply.fi',
@@ -139,7 +154,7 @@ exports.activateUser = function (db) {
                 throw err;
               }
               //return res.send({redirect: '/'});
-              return res.redirect(frontendAddress + '/inform');
+              return res.redirect(frontendAddress + '/login');
               // return res.status(200).json(user);
               //logged in the same user even activate different users
             });
@@ -154,11 +169,14 @@ exports.loginUser = function (db) {
   return function(req, res, next) {
     passport.authenticate('local-login', function (err, user, info) {
       if (err) {
-        return next(err);
+        console.log("error", err);
+        return res.status(500).json(err);
       }
+      
       if (!user) {
-        return res.status(401).json({success: false, message: "no user"});
+        return res.status(401).json("Error: User not found");
       }
+
       req.logIn(user, function (err) {
         if (err) {
           return next(err);
@@ -215,6 +233,7 @@ exports.signupUser = function (req, res, next) {
 
   passport.authenticate('local-signup', function (err, user, info) {
     if (err) {
+      console.log(err);
       return next(err);
     }
 
@@ -625,6 +644,8 @@ var sendGroupNotification = function(groupID, message, db, req, res) {
       "sound": "default"
     };
 
+    console.log("Group", notiOptions);
+
     Notification.send(deviceTokenArr, notiOptions);
 
     return res.json(message);
@@ -755,29 +776,29 @@ exports.getChatRoom = function(db) {
   }
 }
 
-var sendCalendarNotification = function(teacherId, parentName, message, db, res) {
-  db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
-    if(err) {
-      return res.send(500, err);
-    } 
+// var sendCalendarNotification = function(teacherId, parentName, message, db, res) {
+//   db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+//     if(err) {
+//       return res.send(500, err);
+//     } 
 
-    var deviceTokenArr = _.map(users, function (user) {
-      return user.deviceToken;
-    });
+//     var deviceTokenArr = _.map(users, function (user) {
+//       return user.deviceToken;
+//     });
 
-    var notiOptions = {
-      "message": message,
-      "badge": 1,
-      "sound": "default"
-    };
+//     var notiOptions = {
+//       "message": message,
+//       "badge": 1,
+//       "sound": "default"
+//     };
 
-    Notification.send(deviceTokenArr, notiOptions);
+//     Notification.send(deviceTokenArr, notiOptions);
 
-    return res.json(message);
-  });
-}
+//     return res.json(message);
+//   });
+// }
 
-var sendNotification = function(userIds, receiverName, message, db, res) {
+var sendNotification = function(userIds, receiverName, message, db, res, badge) {
 
   userIds = _.map(userIds, function(id) {
     return new ObjectID(id);
@@ -794,9 +815,11 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 
     var notiOptions = {
       "message": receiverName + " sent you a new message.",
-      "badge": 1,
+      "badge": badge,
       "sound": "default"
     };
+
+    console.log(message, notiOptions);
 
     Notification.send(deviceTokenArr, notiOptions);
 
@@ -806,13 +829,14 @@ var sendNotification = function(userIds, receiverName, message, db, res) {
 }
 
 var sendPushNotification = function(message, db, req, res) {
+  console.log('message');
   if(req.user.roles.indexOf('teacher') > -1) {
 
     db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) {
       if (m) {
         var userIds = m.parents;
 
-        sendNotification(userIds, req.user.fullName, message, db, res);
+        sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByParent);
       }
     });
   } else {
@@ -822,7 +846,12 @@ var sendPushNotification = function(message, db, req, res) {
       if(group) {
         var userIds = group.teachers;
 
-        sendNotification(userIds, req.user.fullName, message, db, res);
+        db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) {
+          if (m) {
+            sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByTeacher);
+          }
+        });
+        
       }
     })
   }
@@ -1277,7 +1306,7 @@ exports.getEvents = function (db) {
           }
         }
 
-        return start < today || isDecline || (!isInvitee && (event.isPublished && !event.selectAllStudent));
+        return isDecline || (!isInvitee && (event.isPublished && !event.selectAllStudent));
       });
 
       // console.log(collection);
@@ -1370,8 +1399,8 @@ exports.declineInvitation = function(db) {
           throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(invitation.invitees, function(invitee) {
-        if(invitee.parent == req.user._id) {
-          invitee.name = req.user.fullName;
+        if(invitee.parent_id == req.user._id) {
+          invitee.parent_name = req.user.fullName;
           invitee.email = req.user.local.email;
           invitee.decline = new Date();
           delete invitee.meetingAt;          
@@ -1716,6 +1745,7 @@ function sendAttachmentMessage(db, req, res, data) {
 
   var message = data;
   var chatId = data._id;
+  req.body._id = data._id;
   message._id = new ObjectID();
   var unseenByTeacher = message.unseenByTeacher;
   var unseenByParent = message.unseenByParent;
@@ -1837,6 +1867,7 @@ function sendGroupAttachmentMessage(db, req, res, data) {
   var message = data;
   var chatId = data._id;
   message._id = new ObjectID();
+  req.body._id = data._id;
 
   db.collection('group_messages').update({_id: new ObjectID(chatId)}, 
     { $addToSet: {messages: data}, 
