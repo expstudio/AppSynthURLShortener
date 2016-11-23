@@ -755,6 +755,28 @@ exports.getChatRoom = function(db) {
   }
 }
 
+var sendCalendarNotification = function(teacherId, parentName, message, db, res) {
+  db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+    if(err) {
+      return res.send(500, err);
+    } 
+
+    var deviceTokenArr = _.map(users, function (user) {
+      return user.deviceToken;
+    });
+
+    var notiOptions = {
+      "message": message,
+      "badge": 1,
+      "sound": "default"
+    };
+
+    Notification.send(deviceTokenArr, notiOptions);
+
+    return res.json(message);
+  });
+}
+
 var sendNotification = function(userIds, receiverName, message, db, res) {
 
   userIds = _.map(userIds, function(id) {

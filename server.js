@@ -42,7 +42,13 @@ var passport        = require('passport'),
 
             socket.on('newMessage', function(listeners) {
                 _.each(listeners, function (listener) {
-                    io.to(listener).emit('newMessage', {message: "New Notification"});
+                    io.to(listener).emit('newMessage', {message: "New message received"});
+                });
+            });
+
+            socket.on('responseInvitation', function(listeners) {
+                _.each(listeners, function (listener) {
+                    io.to(listener).emit('responseInvitation', {message: "Invitation has been responded"});
                 });
             });
         });
