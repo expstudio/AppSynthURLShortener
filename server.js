@@ -19,6 +19,7 @@ var passport        = require('passport'),
 
     expressJwt = require('express-jwt'),
     jwt = require('jsonwebtoken'),
+    ObjectID = require('mongodb').ObjectID,
 
     allowCrossDomain = function(req, res, next) {
         res.header('Access-Control-Allow-Origin', '*');
@@ -36,20 +37,30 @@ var passport        = require('passport'),
             socket.broadcast.emit('user connected');
 
             socket.on('createRoom', function (data) {
-                console.log('room created', data.id);
-                socket.join(data.id);
+              console.log('room created', data.id);
+              socket.join(data.id);
             });
 
             socket.on('newMessage', function(listeners) {
-                _.each(listeners, function (listener) {
-                    io.to(listener).emit('newMessage', {message: "New message received"});
-                });
+              _.each(listeners, function (listener) {
+                  io.to(listener).emit('newMessage', {message: "New message received"});
+              });
             });
 
             socket.on('responseInvitation', function(listeners) {
-                _.each(listeners, function (listener) {
-                    io.to(listener).emit('responseInvitation', {message: "Invitation has been responded"});
+              var receivers = _.map(listeners, function(listener) { return new ObjectID(listener); });
+              var parents = [];
+              db.collection('students').find({_id: {$in: receivers}}).toArray(function (err, students) {
+                _.each(students, function(student) {
+                  parents = parents.concat(student.parents); 
                 });
+                 
+                listeners = listeners.concat(parents);
+                
+                _.each(listeners, function (listener) {   
+                  io.to(listener).emit('responseInvitation', {message: "Invitation has been responded"});
+                });
+              });
             });
         });
 
