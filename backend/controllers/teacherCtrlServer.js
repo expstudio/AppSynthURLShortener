@@ -66,9 +66,9 @@ exports.getStatusReport = function (db) {
             if (start !== undefined && end !== undefined && start < end) {
                 query = {groupID: groupID, date: {$gte: start, $lte: end}};
             } else if (start !== undefined && end !== undefined && start == end) {
-                start = new Date(req.query.start.substr(0,10)),
-                end = new Date(req.query.end.substr(0,10));
-                start.setUTCHours(0,0,0,0);
+                start = new Date(req.query.start),
+                end = new Date(req.query.end);
+                start.setDate(start.getDate() - 1);
                 
                 console.log(start, end);
             
