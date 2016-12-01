@@ -56,8 +56,15 @@ exports.getStatusReport = function (db) {
     return function (req, res) {
         var groupID = req.user.groupID[0];
         var query = {groupID: groupID};
-        if (req.query.date) {
-            query.date = req.query.date;
+        var query_date = null;
+        if (req.query.start == req.query.end) {
+            query_date = req.query.start;
+        } else {
+            query_date = req.query.date;
+        }
+
+        if (query_date) {
+            query.date = query_date;
         } else {
             var start = req.query.start,
                 end = req.query.end;
