@@ -660,7 +660,7 @@ exports.sendGroupMessage = function (db) {
     var message = req.body.message;
     message._id = new ObjectID();
 
-    db.collection('group_messages').update({_id: groupID}, {$addToSet: {messages: message}, $set: {seenBy: []}}, function (err, count) {
+    db.collection('group_messages').update({_id: groupID}, {$addToSet: {messages: message}}, function (err, count) {
       if (err) {
         throw err;
       }
@@ -1220,19 +1220,46 @@ exports.updateGroupMessage = function (db) {
 
     if (req.user.roles.indexOf('parent') > -1) {
       updateID = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+    
+
+      db.collection('group_messages').findOne({_id: objID}, function (err, group_message) {
+        if (err)
+            throw err;
+
+        var last_group_message_id = group_message.messages ? group_message.messages[group_message.messages.length - 1]._id : null;
+
+        var seenBy = { userID: updateID, last_group_message_id: last_group_message_id};
+
+        var criteria = {};
+        var updateCondition = {};
+
+        var isSeenBy = _.filter(group_message.seenBy, function (seenBy) {
+          return seenBy.userID && seenBy.userID.toString() == updateID.toString();
+        }).length;
+
+        if (isSeenBy > 0) {
+          criteria = {_id: objID, 'seenBy.userID': updateID};
+          updateCondition = {$set: {'seenBy.$.last_group_message_id': last_group_message_id}};
+        } else {
+          criteria = {_id: objID};
+          updateCondition = {$addToSet: {seenBy: seenBy}};
+        }
+          
+        db.collection('group_messages').update(criteria, updateCondition, function (err, numOfDoc) {
+          if (err)
+            return res.send(err.toString());
+
+          if (numOfDoc == 0) {
+            return res.send({success: false});
+          } else {
+            return res.send({success: true});
+          }
+        });
+
+      });
+    } else {
+      return res.send({success: true});
     }
-    console.log(objID, updateID);
-
-    db.collection('group_messages').update({_id: objID}, {$addToSet: {seenBy: updateID}}, function (err, numOfDoc) {
-      if (err)
-        return res.send(err.toString());
-
-      if (numOfDoc == 0) {
-        return res.send({success: false});
-      } else {
-        return res.send({success: true});
-      }
-    });
   }
 };
 

@@ -42,8 +42,23 @@ var passport        = require('passport'),
             });
 
             socket.on('newMessage', function(listeners) {
+            console.log(listeners);
               _.each(listeners, function (listener) {
                   io.to(listener).emit('newMessage', {message: "New message received"});
+              });
+              
+              var receivers = _.map(listeners, function(listener) { return new ObjectID(listener); });
+              var parents = [];
+              db.collection('students').find({_id: {$in: receivers}}).toArray(function (err, students) {
+                _.each(students, function(student) {
+                  parents = parents.concat(student.parents); 
+                });
+                 
+                listeners = listeners.concat(parents);
+                
+                _.each(listeners, function (listener) {   
+                  io.to(listener).emit('newMessage', {message: "New message received"});
+                });
               });
             });
 
