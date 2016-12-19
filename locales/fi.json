@@ -12,5 +12,6 @@
 	"has sent you an invitation to be a representative of his/her child in TinyApp.": "on lähettänyt sinulle kutsun toimia lapsen toisena edustajana TinyApp-palvelussa.",
 	"You have created a new group to TinyApp.": "Olet luonut uuden ryhmän TinyApp-sovellukseen.",
 	"Below is the group code. Please share the code with the relevant parents to join the group.": "Tässä on ryhmäsi koodi.  Tämän koodin avulla ryhmäsi lasten vanhemmat voivat liittyä ryhmään. Jaa koodi vain asianomaisille vanhemmille.",
-	"Welcome, {{name}}": "Tervetuloa, {{name}}"
+	"Welcome, {{name}}": "Tervetuloa, {{name}}",
+	"Please note that you will receive a separate email including your group code. With that group code parents are able to join to the group you just created.": "Please note that you will receive a separate email including your group code. With that group code parents are able to join to the group you just created."
 }

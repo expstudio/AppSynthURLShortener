@@ -1234,7 +1234,7 @@ exports.updateGroupMessage = function (db) {
         var updateCondition = {};
 
         var isSeenBy = _.filter(group_message.seenBy, function (seenBy) {
-          return seenBy.userID && seenBy.userID.toString() == updateID.toString();
+          return seenBy && seenBy.userID && seenBy.userID.toString() == updateID.toString();
         }).length;
 
         if (isSeenBy > 0) {
