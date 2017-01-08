@@ -10,6 +10,7 @@
     "async": "^2.1.4",
     "aws-sdk": "^2.1.23",
     "bcrypt-nodejs": "0.0.3",
+    "bluebird": "^3.4.7",
     "body-parser": "~1.4.2",
     "connect": "3.3.3",
     "connect-flash": "^0.1.1",
