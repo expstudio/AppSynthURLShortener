@@ -20,7 +20,6 @@ var uuid = require('node-uuid');
 var encrypt = require('../services/encrypt.js');
 var crypto = require('crypto');
 var lwip = require('lwip');
-var lwipJpegAutorotate = require('lwip-jpeg-autorotate');
 var AWS = require('aws-sdk');
 var config = require(rootPath + 'aws.json');
 var zlib = require('zlib');
