@@ -7,7 +7,7 @@ var i18n = require('i18n');
 module.exports = {
   sendActivationEmail: sendActivationEmail,
   sendGroupCode: sendGroupCode
-}
+};
 
 function sendActivationEmail(user) {
 

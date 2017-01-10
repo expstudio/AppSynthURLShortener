@@ -24,6 +24,7 @@ module.exports = function (db, passport) {
   });
 
   passport.deserializeUser(function (id, done) {
+    //TODO: never gets here
     try {
       var mongoId = require('mongodb').ObjectID.createFromHexString(id);
       db.collection('user').findOne({_id: mongoId}, function (err, user) {
@@ -94,34 +95,14 @@ module.exports = function (db, passport) {
               userObj.kindergarten = req.body.kindergarten;
               userObj.verification = {
                 token: encrypt.generateToken(16),
-                expireDate: new Date().getTime() + (7 * 24 * 60 * 60 * 1000),
+                expireDate: new Date(new Date().getTime() + (7 * 24 * 60 * 60 * 1000)),
                 type: 'activate'
               };
 
                 /*if groupcode is not entered => create new group*/
               if (req.body.groupCode === undefined || req.body.groupCode === '') {
-                var groupObj = {};
-                groupObj.name = req.body.groupName;
-                groupObj.city = req.body.city;
-                groupObj.kindergarten = req.body.kindergarten;
-                groupObj.teachers = [];
-                groupObj.students = [];
-                groupObj.code = encrypt.generateToken(8);
-                groupObj.verification = {
-                  token: encrypt.generateToken(16),
-                  expireDate: new Date().getTime() + (7 * 24 * 60 * 60 * 1000),
-                  type: 'activate'
-                };
-
-                db.collection('groups').insert(groupObj, function (err, savedGroup) {
-                  if (err) {
-                    return done(err);
-                  }
-
-                  userObj.groupID = new Array(savedGroup._id.toString());
-                  saveUser(req, userObj, done);
-                });
-
+                userObj.groupID = [];
+                saveUser(req, userObj, done);
               } else { /* if groupcode is entered => join existing group */
                 db.collection('groups').findOne({
                   'code': req.body.groupCode,

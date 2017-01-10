@@ -87,63 +87,6 @@ exports.activateUser = function (db) {
           }
 
           console.log('Activation successful!');
-          /*if the group is not activated, activate it then*/
-          var groupID = new ObjectID(user.groupID[0]);
-          db.collection('groups').findAndModify(
-            {_id: groupID, 'verification.token': {$ne: null}},
-            [],
-            {
-              $set: {
-                'verification': null,
-                'created': new Date()
-              }, 
-              $push: {
-                teachers: user._id.toString()
-              }
-            }, function (err, doc) {
-              if (err) {
-                console.warn(err.message);  // returns error if no matching object found
-              }
-
-              if (doc) {
-                i18n.setLocale(user.lang || 'fi');
-                /* send email */
-                var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
-                  + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
-                  + '<span style="color: blue; font-size: 20pt">' + doc.code + '</span>';
-
-                var email = new sendgrid.Email({
-                  from: 'tinyapp@noreply.fi',
-                  subject: i18n.__('Tiny group code'),
-                  html: body
-                });
-                email.addTo(user.local.email.toString());
-
-                sendgrid.send(email, function (err, json) {
-                  if (err) {
-                    return console.error(err);
-                  }
-                  console.log(json);
-                });
-                
-                db.collection('daycares').find(
-                  { name: doc.kindergarten }).toArray(function (err, collection) {                    
-                    if (collection && collection.length > 0) {
-                      console.log(collection);
-                    } else {
-                       db.collection('daycares').insert({name: doc.kindergarten, city: doc.city}, function (err, doc) {
-                        if (err)
-                          throw err;
-
-                        return;                        
-                      });
-                    }
-                  }
-                );
-
-              }
-            });
-
 
           if (req.user && Auth.isAdmin(req.user)) {
             return res.send(user);
@@ -176,7 +119,7 @@ exports.loginUser = function (db) {
         return res.status(401).json("Error: User not found");
       }
 
-      req.logIn(user, function (err) {
+      req.login(user, function (err) {
         if (err) {
           return next(err);
         }
