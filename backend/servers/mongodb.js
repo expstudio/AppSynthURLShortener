@@ -30,7 +30,7 @@ var gfs = null;
 module.exports = function(callback) {
   if( db && gfs )
     return callback(db,gfs);
-  console.log('mongodb URI is '+URI);
+  console.log('mongodb URI is '+ URI);
   MongoClient.connect(URI, {
     server: {
       auto_reconnect:true

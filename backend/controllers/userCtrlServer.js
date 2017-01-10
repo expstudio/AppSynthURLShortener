@@ -2385,3 +2385,26 @@ exports.updateInvitation = function (db) {
 
   }
 };
+
+exports.updateChildStatus = function(db) {
+  return function(req, res) {
+    var user = req.user;
+    var studentId = req.params.id;
+    var status = req.body.status;
+
+    db.collection('students').update({
+      _id: new ObjectID(studentId)
+    }, {
+      $set: {status: [status]}
+    }, function(err, nModifed) {
+      if (err) {
+        throw err;
+      }
+
+      if (!nModifed) {
+        return res.sendStatus(400);
+      }
+      return res.sendStatus(200);
+    });
+  }
+};

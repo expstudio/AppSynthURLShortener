@@ -11,7 +11,6 @@ module.exports = {
 
 function sendActivationEmail(user) {
 
-  console.log(config);
   var url = config.ROOT_URL + '/activate/' + user._id.toString() + '/' + user.verification.token;
   var notice = '';
   var lang = user.lang || 'fi';

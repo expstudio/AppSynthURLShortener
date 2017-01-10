@@ -23,7 +23,7 @@ var passport        = require('passport'),
 
     allowCrossDomain = function(req, res, next) {
         res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Methods', 'POST, GET, PUT, PATCH, DELETE, OPTIONS');
         res.header("Access-Control-Allow-Headers", "X-Requested-With");
         res.header('Access-Control-Allow-Credentials', false);
         res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, my-header');
@@ -119,7 +119,7 @@ var passport        = require('passport'),
             .use(passport.session());
 
         app.options('*', function(req, res) {
-            res.send(200);
+            res.sendStatus(200);
         });
 
         app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: [
