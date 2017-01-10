@@ -142,8 +142,6 @@ exports.joinGroup = function(db) {
     var user = req.user;
     var groupId = req.params.id;
 
-    console.log(user.groupID, groupId);
-
     if (!user) {
       return res.status(400).send({message: 'Authentication failed.'});
     }
@@ -190,12 +188,10 @@ exports.joinGroup = function(db) {
             throw err;
           }
 
-          console.log(_user);
-          /*if (!result.modifiedCount) {
-            return res.status(400).send({message: 'Action failed 3'});
-          }*/
-
           req.login(_user, function(err) {
+            if (err) {
+              throw err;
+            }
             return res.sendStatus(200);
           });
         });
