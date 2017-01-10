@@ -104,9 +104,9 @@ port            = dbConf.port,
     .engine('html', require('ejs').renderFile)
     .set('trust proxy', 1)
     .use(session({
-      // cookie  : {
-      //   maxAge: new Date(Date.now() + 24*60*60*14*1000)
-      // },
+      cookie  : {
+        maxAge: new Date(Date.now() + 24*60*60*14*1000)
+      },
       secret  : 'stone-giant',
       key   : 'tiny',
       saveUninitialized: true,

@@ -91,15 +91,7 @@ exports.activateUser = function (db) {
           if (req.user && Auth.isAdmin(req.user)) {
             return res.send(user);
           } else {
-            req.logIn(user, function (err) {
-              if (err) {
-                throw err;
-              }
-              //return res.send({redirect: '/'});
-              return res.redirect(frontendAddress + '/login');
-              // return res.status(200).json(user);
-              //logged in the same user even activate different users
-            });
+            return res.redirect(frontendAddress + '/login');
           }
         });
       }
@@ -109,7 +101,7 @@ exports.activateUser = function (db) {
 
 exports.loginUser = function (db) {
   return function(req, res, next) {
-    passport.authenticate('local-login', function (err, user, info) {
+    passport.authenticate('local', {session: false}, function (err, user, info) {
       if (err) {
         console.log("error", err);
         return res.status(500).json(err);
@@ -279,9 +271,6 @@ exports.getStudents = function (db) {
 exports.getParents = function (db) {
 
   return function (req, res) {
-    var query = {};
-    var parents = new Array();
-
     query = {$and: [
       {groupID: {$elemMatch: {$in: req.user.groupID}}},
       {roles: {$elemMatch: {$in: [req.query.role]}}}

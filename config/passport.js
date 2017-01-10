@@ -36,7 +36,7 @@ module.exports = function (db, passport) {
     }
   });
 
-  passport.use('local-login', new LocalStrategy({
+  passport.use(new LocalStrategy({
       usernameField: 'username',
       passwordField: 'password',
       passReqToCallback: true // allows us to pass in the req from our route (lets us check if a user is logged in or not)
