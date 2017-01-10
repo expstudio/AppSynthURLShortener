@@ -128,7 +128,7 @@ exports.createGroup = function(db) {
       students: [],
       staffs: []
     };
-    db.collection('groups').insert(newGroup, function (err, _group) {
+    db.collection('groups').save(newGroup, function (err, _group) {
       if (err) {
         throw err;
       }
