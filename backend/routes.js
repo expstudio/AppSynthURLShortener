@@ -119,7 +119,7 @@ module.exports = function(app, passport, db) {
   app.get('/api/recentUsers', authServer.requiresRole('admin'), adminCtrl.getRecentUsers(db));
 
   app.all('/api/*', function(req, res) {
-    res.send(404);
+    res.sendStatus(404);
   });
 
   app.get('/*', function(req, res) { /*enable express to work with html5Mode*/

@@ -199,7 +199,7 @@ exports.getGroups = function (db) {
 
     db.collection('groups').find(query).toArray(function (err, collection) {
       if (req.user.roles.indexOf('teacher') > -1 && collection.length > 0) {
-        db.collection('groups').find({kindergarten: collection[0].kindergarten}).toArray(function (err, docs) {
+        db.collection('groups').find({'kindergarten._id': collection[0].kindergarten._id}).toArray(function (err, docs) {
           res.send(docs);
         })
       } else {
@@ -532,7 +532,10 @@ exports.getSentMessages = function (db) {
 
 exports.getGroupMessage = function (db) {
   return function (req, res) {
-    var groupID = new ObjectID(req.user.groupID.toString());
+    // var groupID = new ObjectID(req.user.groupID.toString());
+    var groupID = new ObjectID(req.params.id.toString());
+
+    console.log(req.user.groupID, req.params.id)
 
     db.collection('group_messages').findOne({_id: groupID}, function (err, groupMessage) {
       if (err) {
