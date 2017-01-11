@@ -198,13 +198,14 @@ exports.getGroups = function (db) {
     }
 
     db.collection('groups').find(query).toArray(function (err, collection) {
-      if (req.user.roles.indexOf('teacher') > -1 && collection.length > 0) {
+      res.send(collection);
+      /*if (req.user.roles.indexOf('teacher') > -1 && collection.length > 0) {
         db.collection('groups').find({'kindergarten._id': collection[0].kindergarten._id}).toArray(function (err, docs) {
           res.send(docs);
         })
       } else {
         res.send(collection);
-      }
+      }*/
     })
   }
 };
@@ -535,8 +536,6 @@ exports.getGroupMessage = function (db) {
     // var groupID = new ObjectID(req.user.groupID.toString());
     var groupID = new ObjectID(req.params.id.toString());
 
-    console.log(req.user.groupID, req.params.id)
-
     db.collection('group_messages').findOne({_id: groupID}, function (err, groupMessage) {
       if (err) {
         throw err;
@@ -589,8 +588,8 @@ var sendGroupNotification = function(groupID, message, db, req, res) {
 
 exports.sendGroupMessage = function (db) {
   return function (req, res) {
-    var groupID = new ObjectID(req.user.groupID.toString());
 
+    var groupID = new ObjectID(req.body.groupID);
     var message = req.body.message;
     message._id = new ObjectID();
 
@@ -797,7 +796,17 @@ exports.sendMessage = function (db) {
     var message = req.body.message;
     message._id = new ObjectID();
 
-    db.collection('messages').update({_id: new ObjectID(req.body._id)}, {$addToSet: {messages: message}, $inc: {unseenByParent: req.body.unseenByParent, unseenByTeacher: req.body.unseenByTeacher}}, function (err, count) {
+    db.collection('messages').update({
+      _id: new ObjectID(req.body._id)
+    }, {
+      $addToSet: {
+        messages: message
+      },
+      $inc: {
+        unseenByParent: req.body.unseenByParent,
+        unseenByTeacher: req.body.unseenByTeacher
+      }
+    }, function (err, count) {
       if (err) {
         throw err;
       }
