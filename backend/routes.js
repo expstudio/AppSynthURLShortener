@@ -54,7 +54,7 @@ module.exports = function(app, passport, db) {
   app.get('/api/drafts', userCtrl.getDraftMessages(db));
   app.get('/api/sentMessages', userCtrl.getSentMessages(db));
   app.post('/subscribe', userCtrl.subscribe(db));
-  app.get('/api/status', teacherCtrl.getStatusReport(db));
+  app.get('/api/status/:groupID', teacherCtrl.getStatusReport(db));
 
   app.post('/api/addStaff', userCtrl.addStaff(db));
   app.post('/api/removeStaff', userCtrl.removeStaff(db));
@@ -104,7 +104,7 @@ module.exports = function(app, passport, db) {
   app.post('/declineEvent', userCtrl.declineEvent(db));
   app.post('/acceptEventInvitation', userCtrl.acceptEventInvitation(db));
 
-  app.post('/saveTodayStatus', teacherCtrl.saveTodayStatus(db));
+  app.post('/saveTodayStatus/:groupID', teacherCtrl.saveTodayStatus(db));
   app.post('/retrievePassword', userCtrl.retrievePassword(db));
   app.post('/resetPassword', userCtrl.resetPassword(db));
   app.post('/joinGroup', parentCtrl.joinGroup(db));

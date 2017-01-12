@@ -40,9 +40,21 @@ exports.createStudents = function(db) {
 
 exports.saveTodayStatus = function (db) {
   return function (req, res) {
-    var obj = req.body.data;
-    obj.status._id = new ObjectID(obj.status._id);
-    db.collection('historyRecords').update({date: obj.date, groupID: obj.groupID}, obj, {upsert: true}, function (err, response) {
+    var record = req.body;
+    var groupID = req.params.groupID;
+
+    var newRecord = {
+      teachers: record.teachers,
+      students: record.students,
+      date: record.date,
+      groupID: groupID
+    };
+
+    db.collection('historyRecords').update({
+      date: record.date, groupID: groupID
+    }, newRecord, {
+      upsert: true
+    }, function (err, response) {
       if (err)
         throw err;
       if (response) {
@@ -56,28 +68,26 @@ exports.saveTodayStatus = function (db) {
 
 exports.getStatusReport = function (db) {
   return function (req, res) {
-    var groupID = req.user.groupID[0];
+    var groupID = req.params.groupID;
     var query = {groupID: groupID};
 
     if (req.query.date) {
       query.date = req.query.date;
     } else {
-      var start = req.query.start,
-        end = req.query.end;
+      var start = req.query.start;
+      var end = req.query.end;
 
       if (start !== undefined && end !== undefined && start < end) {
-        query = {groupID: groupID, date: {$gte: start, $lte: end}};
+        query.date = {$gte: start, $lte: end}
       } else if (start !== undefined && end !== undefined && start == end) {
-        start = new Date(req.query.start),
-          end = new Date(req.query.end);
+        start = new Date(req.query.start);
+        end = new Date(req.query.end);
         start.setDate(start.getDate() - 1);
 
-        console.log(start, end);
-
-        query = {groupID: groupID, date: {$gte: start.toISOString(), $lte: end.toISOString()}};
+        query.date = {$gte: start.toISOString(), $lte: end.toISOString()};
       }
     }
-    console.log(query);
+
     db.collection('historyRecords').find(query).toArray(function(err, doc) {
       if (err) {
         throw err;
