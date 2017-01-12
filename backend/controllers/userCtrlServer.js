@@ -1457,7 +1457,7 @@ exports.declineEvent = function(db) {
       // TO-DO update invitation invitees and available time
       _.forEach(event.invitees, function(invitee) {
         if(invitee.parent_id == req.user._id.toString()) {
-          invitee.name = req.user.fullName;
+          invitee.acceptedBy = req.user.fullName;
           invitee.email = req.user.local.email;
           invitee.decline = new Date();
           delete invitee.meetingAt;          
@@ -2375,14 +2375,23 @@ exports.updateInvitation = function (db) {
 
     invitation.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
 
-    console.log(invitation);
+    db.collection('invitations').findOne({_id: invitation._id}, function (err, originalInvitation) {
+      invitation.invitees = originalInvitation.invitees;
 
-    db.collection('invitations').update({_id: invitation._id}, invitation, function (err, invitation) {
-      if (err)
-        throw err;
+      console.log(invitation);
 
-      res.json({success: true, invitation: invitation});
-    })
+      db.collection('invitations').update({_id: invitation._id}, invitation, function (err, count) {
+        if (err)
+          throw err;
 
+        db.collection('events').update({invitation_id: invitation._id}, {$set: {'title': invitation.title, 'description': invitation.description}}, {w:1, multi: true}, function (err, count) {
+          if (err)
+            throw err;
+          
+          res.json({success: true, invitation: invitation});
+        });
+      });
+
+    });
   }
 };
