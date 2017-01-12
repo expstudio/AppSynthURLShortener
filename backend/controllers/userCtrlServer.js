@@ -1,5 +1,4 @@
 var async = require('async');
-var helper = require('../helpers');
 var validator = require('validator');
 var ObjectID = require('mongodb').ObjectID;
 var passport = require('passport');
@@ -7,12 +6,7 @@ var _ = require('underscore');
 var mv = require('mv');
 var sendgrid = require('sendgrid')('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');
 var multiparty = require('multiparty');
-var http = require('http');
 var util = require('util');
-var fs = require('fs');
-var GridStore = require('mongodb').GridStore;
-var Grid = require('mongodb').Grid;
-var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
 var rootPath = path.normalize(__dirname + '/../../config/');
@@ -24,12 +18,9 @@ var AWS = require('aws-sdk');
 var config = require(rootPath + 'aws.json');
 var zlib = require('zlib');
 var i18n = require('i18n');
-var expressJwt = require('express-jwt');
 var jwt = require('jsonwebtoken');
-var http = require('https');
 var Notification = require('../services/pushNotification');
 var Auth = require('../servers/authServer.js');
-//sendMail = require('../../backend/services/sendMail.js');
 
 AWS.config.loadFromPath(rootPath + 'aws.json');
 var secret = "op89uvzx348zxvbhlqw";
@@ -67,14 +58,14 @@ exports.activateUser = function (db) {
     var objID = new ObjectID(req.params.userId.toString());
     var token = req.params.token;
 
-    db.collection('user').findOne({_id: objID, 'verification.token': token}, function (err, user) {
+    db.collection('users').findOne({_id: objID, 'verification.token': token}, function (err, user) {
       if (err) throw err;
 
       if (!user || !user.verification) {
         console.log('Activation failed!', user);
         res.send(404);
       } else {
-        db.collection('user').update({
+        db.collection('users').update({
           _id: objID
         }, {
           $set: {
@@ -101,7 +92,7 @@ exports.activateUser = function (db) {
 
 exports.loginUser = function (db) {
   return function(req, res, next) {
-    passport.authenticate('local', {session: false}, function (err, user, info) {
+    passport.authenticate('local', function (err, user, info) {
       if (err) {
         console.log("error", err);
         return res.status(500).json(err);
@@ -147,7 +138,7 @@ exports.logout = function(db) {
     var updateData = req.body;
     updateData._id = new ObjectID(req.user._id);
 
-    db.collection('user').findAndModify(
+    db.collection('users').findAndModify(
       {_id: updateData._id},
       [],
       {$unset: {deviceToken: "", deviceRegistered: ""}},
@@ -180,7 +171,7 @@ exports.signupUser = function (req, res, next) {
 
 exports.getUsers = function (db) {
   return function (req, res) {
-    db.collection('user').find({}, {"local.hashedPassword": 0, "local.salt": 0}).toArray(function (err, collection) {
+    db.collection('users').find({}, {"local.hashedPassword": 0, "local.salt": 0}).toArray(function (err, collection) {
       res.send(collection);
     })
   }
@@ -276,7 +267,7 @@ exports.getParents = function (db) {
       {roles: {$elemMatch: {$in: [req.query.role]}}}
     ]};
 
-    db.collection('user').find(query, {_id: 1, fullName: 1, profilePicture: 1}).toArray(function (err, collection) {
+    db.collection('users').find(query, {_id: 1, fullName: 1, profilePicture: 1}).toArray(function (err, collection) {
       if (err) throw err;
       if (collection) {
         res.send(collection);
@@ -326,7 +317,7 @@ exports.getMessages = function (db) {
         async.each(collection, function (obj, done) {
           var objID = new ObjectID(obj.sender);
           var index = collection.indexOf(obj);
-          db.collection('user').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
+          db.collection('users').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
             if (err) {
               done(err);
             }
@@ -393,7 +384,7 @@ exports.getChatMessages = function (db) {
           var index = collection.indexOf(obj);
           var error = null;
 
-          db.collection('user').find({_id: objID}, {fullName: 1, roles: 1}).toArray(function (err, doc) {
+          db.collection('users').find({_id: objID}, {fullName: 1, roles: 1}).toArray(function (err, doc) {
             if (err){
               done(err);
             }
@@ -429,7 +420,7 @@ exports.getChatMessages = function (db) {
                   obj.contactDetails.id = obj.receivers[0];
                   obj.contactDetails.type = "receiver";
                   var receiverID = new ObjectID(obj.receivers[0]);
-                  db.collection('user').findOne({_id: receiverID}, function (err, usr) {
+                  db.collection('users').findOne({_id: receiverID}, function (err, usr) {
                     if (err || usr == null){
 
                       done(err);
@@ -559,7 +550,7 @@ exports.getGroupMessage = function (db) {
 };
 
 var sendGroupNotification = function(groupID, message, db, req, res) {
-  db.collection('user').find({groupID: groupID.toString(), roles: ['parent']}).toArray(function(err, users) {
+  db.collection('users').find({groupID: groupID.toString(), roles: ['parent']}).toArray(function(err, users) {
     if(err) {
       return res.send(500, err);
     }
@@ -701,10 +692,10 @@ exports.getChatRoom = function(db) {
       });
     });
   }
-}
+};
 
 // var sendCalendarNotification = function(teacherId, parentName, message, db, res) {
-//   db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+//   db.collection('users').find({_id: {$in: userIds}}).toArray(function(err, users) {
 //     if(err) {
 //       return res.send(500, err);
 //     } 
@@ -731,7 +722,7 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
     return new ObjectID(id);
   });
 
-  db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {
+  db.collection('users').find({_id: {$in: userIds}}).toArray(function(err, users) {
     if(err) {
       return res.send(500, err);
     }
@@ -1579,7 +1570,6 @@ exports.uploadFile = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      var grid = new Grid(db, 'fs');
       if(!files.myFile) {
         return res.status(400).send('No file uploaded.');
       }
@@ -1600,8 +1590,7 @@ exports.uploadFile = function (db) {
       if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'image/png|jpeg') {
         fs.unlink(tmpPath);
         return res.status(400).send('Unsupported file type.');
-      }
-      ;
+      };
 
       var folder = uuid.v4();
       var s3 = new AWS.S3({
@@ -1725,7 +1714,6 @@ exports.uploadAttachment = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      var grid = new Grid(db, 'fs');
       var file = files.attachmentFile[0];
       /* using file system */
       var contentType = file.headers['content-type'];
@@ -1841,7 +1829,6 @@ exports.uploadGroupAttachment = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      var grid = new Grid(db, 'fs');
       var file = files.attachmentFile[0];
       /* using file system */
       var contentType = file.headers['content-type'];
@@ -1965,7 +1952,7 @@ exports.retrievePassword = function (db) {
     var retrieveEmail = req.body.data;
     crypto.randomBytes(12, function (ex, buf) {
       var randomToken = buf.toString('hex');
-      db.collection('user').findAndModify(
+      db.collection('users').findAndModify(
         {'local.email': retrieveEmail},
         [],
         {$set: {resetPasswordToken: randomToken}},
@@ -2027,7 +2014,7 @@ exports.resetPassword = function (db) {
     var token = req.body.token;
     var salt = encrypt.createSalt();
     var hashedPwd = encrypt.hashPwd(salt, newPassword);
-    db.collection('user').findAndModify(
+    db.collection('users').findAndModify(
       {resetPasswordToken: token},
       [],
       {$unset: {resetPasswordToken: 1}, $set: {'local.salt': salt, 'local.hashedPassword': hashedPwd}},
@@ -2083,7 +2070,7 @@ exports.updateUser = function (db) {
     }
     ;
 
-    db.collection('user').findAndModify(
+    db.collection('users').findAndModify(
       {_id: updateData._id},
       [],
       {$set: updateData},
@@ -2126,7 +2113,7 @@ exports.removeUser = function (db) {
   return function (req, res) {
     var id = req.params.id.toString();
 
-    db.collection('user').findOne({_id: new ObjectID(id)}, function (err, user) {
+    db.collection('users').findOne({_id: new ObjectID(id)}, function (err, user) {
       if (user.roles.indexOf('teacher') > -1) {
         var groupID = user.groupID;
         _.each(groupID, function (group_id) {
@@ -2152,7 +2139,7 @@ exports.removeUser = function (db) {
       }
       ;
 
-      db.collection('user').remove({_id: new ObjectID(id)}, function (err, doc) {
+      db.collection('users').remove({_id: new ObjectID(id)}, function (err, doc) {
         if (err) throw err;
         res.json({success: true});
       });
@@ -2164,7 +2151,7 @@ exports.registerDevice = function (db) {
   return function (req, res) {
     var user = req.body.user;
     var token = req.body.token;
-    db.collection('user').findAndModify(
+    db.collection('users').findAndModify(
       {_id: new ObjectID(user._id)},
       [],
       {
@@ -2298,7 +2285,6 @@ exports.updateInvitation = function (db) {
 
       res.json({success: true, invitation: invitation});
     })
-
   }
 };
 
@@ -2307,12 +2293,20 @@ exports.updateChildStatus = function(db) {
     var user = req.user;
     var studentId = req.params.id;
     var status = req.body.status;
+    var date = req.body.date;
 
+    var update = {
+      $set: {status: [status]}
+    };
+
+    if (status === 'checked-in') {
+      update.$set.checkedInAt = date || new Date();
+    } else if  (status === 'checked-out') {
+      update.$set.checkedOutAt = date || new Date();
+    }
     db.collection('students').update({
       _id: new ObjectID(studentId)
-    }, {
-      $set: {status: [status]}
-    }, function(err, nModifed) {
+    }, update, function(err, nModifed) {
       if (err) {
         throw err;
       }
@@ -2320,6 +2314,7 @@ exports.updateChildStatus = function(db) {
       if (!nModifed) {
         return res.sendStatus(400);
       }
+
       return res.sendStatus(200);
     });
   }

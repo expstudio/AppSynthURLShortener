@@ -14,7 +14,7 @@ function addRepresentative (db, sender, child, callback) {
                 representativeEmailArr.push(item.email);
             }
         });
-        db.collection('user').find({'local.email': {$in : representativeEmailArr}}).toArray(function (err, doc) {
+        db.collection('users').find({'local.email': {$in : representativeEmailArr}}).toArray(function (err, doc) {
             if (err)
                 throw err;
             if (doc.length < representativeEmailArr.length) {
@@ -92,7 +92,7 @@ exports.updateProfile = function(db) {
                 callback(null);
             });
         }, function (callback) {
-            db.collection('user').update({_id: userID}, {$push: {myChildren: data._id.toString()}}, function(err, response) {
+            db.collection('users').update({_id: userID}, {$push: {myChildren: data._id.toString()}}, function(err, response) {
                 if (err)
                     return res.json({success: false, err: err.toString()});
                 return res.json({success: true, listeners: sentTo});
@@ -143,7 +143,7 @@ exports.addParent = function(db) {
                     callback(null, doc);
                 })
         }, function(callback) {
-            db.collection('user').update({_id: userID}, {$addToSet: {myChildren: req.body.target} }, function(err, numOfDoc) {
+            db.collection('users').update({_id: userID}, {$addToSet: {myChildren: req.body.target} }, function(err, numOfDoc) {
                 if (err)
                     throw err;
                 callback(null);
@@ -166,7 +166,7 @@ exports.joinGroup = function (db) {
                 })
             },
             function (group, callback) {
-                db.collection('user').findAndModify(
+                db.collection('users').findAndModify(
                     {_id: new ObjectID(req.user._id)},
                     [],
                     {$addToSet: {groupID: group._id.toString()}},

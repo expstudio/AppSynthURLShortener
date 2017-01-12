@@ -43,6 +43,13 @@ exports.saveTodayStatus = function (db) {
     var record = req.body;
     var groupID = req.params.groupID;
 
+    record.teachers.forEach(function(teacher) {
+      validateData(teacher);
+    });
+    record.students.forEach(function(student) {
+      validateData(student);
+    });
+
     var newRecord = {
       teachers: record.teachers,
       students: record.students,
@@ -188,7 +195,7 @@ exports.joinGroup = function(db) {
           return res.status(400).send({message: 'Action failed 2'});
         }
 
-        db.collection('user').findAndModify(
+        db.collection('users').findAndModify(
           { _id: new ObjectID(user._id.toString())},
           [],
           { $set: {groupID: [groupId]} },
@@ -225,7 +232,7 @@ exports.getGroupMembers = function(db) {
 
     async.parallel({
       teachers: function(callback) {
-        db.collection('user').find({
+        db.collection('users').find({
           roles: 'teacher',
           groupID: groupId
         }).toArray(function(err, teachers) {
@@ -257,12 +264,21 @@ exports.updateTeacherStatus = function(db) {
     var user = req.user;
     var teacherId = req.params.id;
     var status = req.body.status;
+    var date = req.body.date;
 
-    db.collection('user').update({
-      _id: new ObjectID(teacherId)
-    }, {
+    var update = {
       $set: {status: status}
-    }, function(err, nModifed) {
+    };
+
+    if (status === 'checked-in') {
+      update.$set.checkedInAt = date || new Date();
+    } else if  (status === 'checked-out') {
+      update.$set.checkedOutAt = date || new Date();
+    }
+
+    db.collection('users').update({
+      _id: new ObjectID(teacherId)
+    }, update, function(err, nModifed) {
       if (err) {
         throw err;
       }
@@ -272,5 +288,17 @@ exports.updateTeacherStatus = function(db) {
       }
       return res.sendStatus(200);
     });
+  }
+};
+
+
+/////Helpers
+
+function validateData(item) {
+  if (!item.checkedInAt || item.checkedInAt > item.checkedOutAt) {
+    item.checkedOutAt = undefined;
+  }
+  if (item.status === 'checked-out' && item.checkedInAt) {
+    item.status = 'checked-in';
   }
 }

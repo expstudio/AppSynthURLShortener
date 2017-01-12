@@ -9,7 +9,7 @@ var EmailSvc = require('../backend/services/email.service.js');
 
 module.exports = function (db, passport) {
   var saveUser = function (req, userObj, done) {
-    db.collection('user').save(userObj, function (err, savedUser) {
+    db.collection('users').save(userObj, function (err, savedUser) {
       if (err) {
         return done(err);
       }
@@ -27,7 +27,7 @@ module.exports = function (db, passport) {
     //TODO: never gets here
     try {
       var mongoId = require('mongodb').ObjectID.createFromHexString(id);
-      db.collection('user').findOne({_id: mongoId}, function (err, user) {
+      db.collection('users').findOne({_id: mongoId}, function (err, user) {
         done(err, user);
       });
     } catch (e) {
@@ -45,7 +45,7 @@ module.exports = function (db, passport) {
       if (username)
         username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
       process.nextTick(function () {
-        db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': username}],
+        db.collection('users').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': username}],
           'verification': null
         }, function (err, user) {
           if (err)
@@ -77,7 +77,7 @@ module.exports = function (db, passport) {
         username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
       process.nextTick(function () {
         if (!req.user) {
-          db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': req.body.email}]}, function (err, user) {
+          db.collection('users').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': req.body.email}]}, function (err, user) {
             if (err)
               return done(err);
             if (user) { /* if user exists => username is in use*/
@@ -126,7 +126,7 @@ module.exports = function (db, passport) {
         } else if (!req.user.local.username) {
           // ...presumably they're trying to connect a local account
           // BUT let's check if the email used to connect a local account is being used by another user
-          db.collection('user').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': req.body.email}]}, function (err, user) {
+          db.collection('users').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': req.body.email}]}, function (err, user) {
             if (err)
               return done(err);
             if (user) {
