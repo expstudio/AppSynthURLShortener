@@ -9,6 +9,15 @@ var adminCtrl = require('./controllers/adminCtrlServer');
 module.exports = function(app, passport, db) {
 // server routes ===========================================================
   /*New APIs*/
+  //admin
+  app.get('/api/pendingUsers', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));
+  app.delete('/api/pendingUsers/:id', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.removePendingUser(db));
+  app.get('/api/activate/:userId/:token', authServer.requiresApiLogin, authServer.requiresRole('admin'), userCtrl.activateUser(db));
+  app.get('/api/recentUsers', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.getRecentUsers(db));
+  app.get('/api/nursery', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.getNurseries(db));
+  app.post('/api/nursery', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.createNursery(db));
+  app.delete('/api/nursery/:id', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.removeNursery(db));
+
   app.get('/api/group', authServer.requiresApiLogin, teacherCtrl.getGroups(db));
   app.post('/api/group', authServer.requiresApiLogin, authServer.requiresRole('teacher'), teacherCtrl.createGroup(db));
   app.patch('/api/group/:id/join', authServer.requiresApiLogin, authServer.requiresRole('teacher'), teacherCtrl.joinGroup(db));
@@ -114,13 +123,7 @@ module.exports = function(app, passport, db) {
   app.post('/joinGroup', parentCtrl.joinGroup(db));
   app.post('/api/feedback', userCtrl.sendFeedback(db));
 
-  app.get('/api/nursery', dataCtrl.getDaycareCenters(db));
-
-  //admin
-  app.get('/api/pendingUsers', authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));
-  app.delete('/api/pendingUsers/:id', authServer.requiresRole('admin'), adminCtrl.removePendingUser(db));
-  app.get('/api/activate/:userId/:token', authServer.requiresRole('admin'), userCtrl.activateUser(db));
-  app.get('/api/recentUsers', authServer.requiresRole('admin'), adminCtrl.getRecentUsers(db));
+  app.get('/api/public/nursery', dataCtrl.getNurseries(db));
 
   app.all('/api/*', function(req, res) {
     res.sendStatus(404);

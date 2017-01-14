@@ -1,8 +1,6 @@
-var ObjectID 	= require('mongodb').ObjectID;
-
-exports.getDaycareCenters = function(db) {
+exports.getNurseries = function(db) {
 	return function (req, res) {
-    db.collection('nurseries').find({}).toArray(function(err, doc) {
+    db.collection('nurseries').find({}, {name: 1, city: 1}).toArray(function(err, doc) {
       if (err) {
         throw err;
       }

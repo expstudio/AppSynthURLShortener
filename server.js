@@ -123,7 +123,7 @@ port            = dbConf.port,
 
     app.use(expressJwt({ secret: 'op89uvzx348zxvbhlqw'}).unless({path: [
       '/',
-      '/api/nursery',
+      '/api/public/nursery',
       '/resetPassword',
       '/activate',
       '/activate/:token',

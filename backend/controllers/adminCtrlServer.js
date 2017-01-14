@@ -48,3 +48,61 @@ exports.removePendingUser = function(db) {
     })
   }
 };
+
+exports.getNurseries = function(db) {
+  return function (req, res) {
+    db.collection('nurseries').find({}).toArray(function(err, doc) {
+      if (err) {
+        throw err;
+      }
+
+      if (doc) {
+        res.send(doc);
+      }
+    });
+  }
+};
+
+exports.createNursery = function(db) {
+  return function(req, res) {
+    var nursery = req.body;
+
+    if (!nursery.name) {
+      return res.status(400).send({message: 'NURSERY_NAME_REQUIRED'});
+    }
+    if (!nursery.city) {
+      return res.status(400).send({message: 'NURSERY_CITY_REQUIRED'});
+    }
+
+    var newNursery = {
+      name: nursery.name,
+      city: nursery.city,
+      pendings: []
+    };
+    db.collection('nurseries').save(newNursery, function(err, _nursery) {
+      if (err) {
+        throw err;
+      }
+
+      return res.send(_nursery);
+    });
+  }
+};
+
+exports.removeNursery = function(db) {
+  return function(req, res) {
+    var nurseryId = req.params.id;
+
+    db.collection('nurseries').remove({
+      _id: new ObjectID(nurseryId)
+    }, {
+      justOne: true
+    }, function(err, result) {
+      if (err) {
+        throw err;
+      }
+
+      res.sendStatus(200);
+    });
+  }
+};

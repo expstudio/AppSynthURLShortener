@@ -10,7 +10,7 @@ exports.createStudents = function(db) {
       //students[i].groupID = groupID;
       students[i].groupID = req.body.groupID;
       students[i].hasInfo = "false";
-      students[i].status = new Array('outcare');
+      students[i].status = ['checked-out'];
     }
     db.collection('students').insert(students, function (err, newStudents) {
       if (err)
