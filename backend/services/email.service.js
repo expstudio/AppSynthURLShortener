@@ -94,7 +94,7 @@ function sendWelcome(user) {
     if (err) {
       return console.error(err);
     }
-    console.log('Group Code Email sent to ', user.local.email);
+    console.log('Welcome Email sent to ', user.local.email);
   });
 
   return Promise.resolve();
