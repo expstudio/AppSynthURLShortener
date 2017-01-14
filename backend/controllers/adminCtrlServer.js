@@ -93,6 +93,11 @@ exports.removeNursery = function(db) {
   return function(req, res) {
     var nurseryId = req.params.id;
 
+    //DISABLE this feature, remove this block to enable
+    if (true) {
+      return res.sendStatus(400);
+    }
+
     db.collection('nurseries').remove({
       _id: new ObjectID(nurseryId)
     }, {
