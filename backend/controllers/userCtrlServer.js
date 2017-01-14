@@ -22,6 +22,8 @@ var jwt = require('jsonwebtoken');
 var Notification = require('../services/pushNotification');
 var Auth = require('../servers/authServer.js');
 
+var EmailSvc = require('../services/email.service');
+
 AWS.config.loadFromPath(rootPath + 'aws.json');
 var secret = "op89uvzx348zxvbhlqw";
 
@@ -80,6 +82,7 @@ exports.activateUser = function (db) {
               return res.status(400).send({message: 'SAVING_USER_FAILED'});
             }
 
+            EmailSvc.sendWelcome(user);
             return res.redirect(frontendAddress + '/login');
           });
         } else {
@@ -112,6 +115,9 @@ exports.activateUser = function (db) {
               if (!nModified) {
                 return res.status(400).send({message: 'SAVING_USER_FAILED'});
               }
+
+              EmailSvc.sendWelcome(user);
+
               db.collection('nurseries').save(nursery, function(err, nModified) {
 
                 if (err) {

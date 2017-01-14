@@ -6,7 +6,8 @@ var i18n = require('i18n');
 
 module.exports = {
   sendActivationEmail: sendActivationEmail,
-  sendGroupCode: sendGroupCode
+  sendGroupCode: sendGroupCode,
+  sendWelcome: sendWelcome
 };
 
 function sendActivationEmail(user) {
@@ -47,7 +48,7 @@ function sendActivationEmail(user) {
 }
 
 function sendGroupCode(user, group) {
-  //TODO: add group name
+
   i18n.setLocale(user.lang || 'fi');
   var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
   + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
@@ -55,6 +56,32 @@ function sendGroupCode(user, group) {
   +   '<div>Group name: ' + group.name + '</div>'
   +   '<div>Group code: ' + group.code + '</div>'
   + '</div>'
+
+  var email = new sendgrid.Email({
+    from: 'tinyapp@noreply.fi',
+    subject: i18n.__('Tiny group code'),
+    html: body
+  });
+  email.addTo(user.local.email);
+
+  sendgrid.send(email, function (err, json) {
+    if (err) {
+      return console.error(err);
+    }
+    console.log('Group Code Email sent to ', user.local.email);
+  });
+
+  return Promise.resolve();
+}
+
+function sendWelcome(user) {
+  i18n.setLocale(user.lang || 'fi');
+  var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: user.username}) + '</h3>'
+    + '<h4>' + i18n.__("Your account is activated and you can now login to our service. You will find FAQ and more help in the app. If you have any further questions please contact us by email hello@tinyapp.biz.") + '</h4>'
+    + '<p>' + i18n.__("Thank you for joining in the family of TinyApp.") + '</p>'
+    + '<br/> <br/>'
+    + '<p>' + i18n.__("Kind regards,") + '</p>'
+    + '<p>' + i18n.__("TinyApp Team") + '</p>';
 
   var email = new sendgrid.Email({
     from: 'tinyapp@noreply.fi',
