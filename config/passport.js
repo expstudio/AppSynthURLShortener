@@ -42,18 +42,19 @@ module.exports = function (db, passport) {
       if (username)
         username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
       process.nextTick(function () {
-        db.collection('users').findOne({$or: [{'local.username': username}, {'username': username}, {'local.email': username}],
-          'verification': null
+        db.collection('users').findOne({
+          'local.username': username
         }, function (err, user) {
           if (err)
             return done(err);
           if (!user) {
-            var error = new Error('User not found').toString();
-            return done(error);
+            return done('INVALID_CREDENTIALS');
+          }
+          if (user.verification) {
+            return done('USER_NOT_VERIFIED');
           }
           if (user.local.hashedPassword != encrypt.hashPwd(user.local.salt, password)) {
-            var error = new Error('Wrong password').toString();
-            return done(error);
+            return done('INVALID_CREDENTIALS');
           } else if (user) {
               /*
                code to check if account is activated
