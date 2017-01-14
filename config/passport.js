@@ -28,8 +28,8 @@ module.exports = function (db, passport) {
   passport.deserializeUser(function (id, done) {
     //TODO: never gets here
     try {
-      var mongoId = require('mongodb').ObjectID.createFromHexString(id);
-      db.collection('users').findOne({_id: mongoId}, function (err, user) {
+      var userId = new ObjectID(id);
+      db.collection('users').findOne({_id: userId}, function (err, user) {
         done(err, user);
       });
     } catch (e) {
@@ -38,12 +38,7 @@ module.exports = function (db, passport) {
     }
   });
 
-  passport.use(new LocalStrategy({
-      usernameField: 'username',
-      passwordField: 'password',
-      passReqToCallback: true // allows us to pass in the req from our route (lets us check if a user is logged in or not)
-    },
-    function (req, username, password, done) {
+  passport.use(new LocalStrategy(function (username, password, done) {
       if (username)
         username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
       process.nextTick(function () {

@@ -1,6 +1,7 @@
 var ObjectID 	= require('mongodb').ObjectID;
 var encrypt = require('../services/encrypt');
 var async = require('async');
+var EmailSvc = require('../services/email.service');
 
 exports.createStudents = function(db) {
   return function (req, res) {
@@ -144,10 +145,13 @@ exports.createGroup = function(db) {
       students: [],
       staffs: []
     };
+
     db.collection('groups').save(newGroup, function (err, _group) {
       if (err) {
         throw err;
       }
+
+      EmailSvc.sendGroupCode(user, _group);
       res.send(_group);
     })
   }
@@ -155,62 +159,69 @@ exports.createGroup = function(db) {
 
 exports.joinGroup = function(db) {
   return function(req, res) {
-    var user = req.user;
     var groupId = req.params.id;
 
-    if (!user) {
+    if (!req.user) {
       return res.status(400).send({message: 'Authentication failed.'});
     }
     if (!groupId) {
       return res.status(400).send({message: 'GroupId is required'});
     }
-    if (user.groupID.indexOf(groupId) > -1) {
-      return res.status(400).send({message: 'Already joined this group'});
-    }
 
-    db.collection('groups').update({
-      _id: new ObjectID(groupId)
-    }, {
-      $addToSet: {'teachers': user._id.toString()}
-    }, function(err, nModified) {
-      if (err) {
-        throw err;
-      }
-
-      if (!nModified) {
-        return res.status(400).send({message: 'Action failed 1'});
+    /**
+     * have to fetch user because Passport doesn't update req.user object, if user changes group
+     * and changes back, it won't work by using passport req.user
+     */
+    db.collection('users').findOne({_id: new ObjectID(req.user._id)}, function(err, user) {
+      if (user.groupID.indexOf(groupId) > -1) {
+        return res.status(400).send({message: 'Already joined this group'});
       }
 
       db.collection('groups').update({
-        _id: new ObjectID(user.groupID[0])
+        _id: new ObjectID(groupId)
       }, {
-        $pull: { 'teachers': user._id.toString()}
+        $addToSet: {'teachers': user._id.toString()}
       }, function(err, nModified) {
         if (err) {
           throw err;
         }
 
-        if (user.groupID[0] && !nModified) {
-          return res.status(400).send({message: 'Action failed 2'});
+        if (!nModified) {
+          return res.status(400).send({message: 'Action failed 1'});
         }
 
-        db.collection('users').findAndModify(
-          { _id: new ObjectID(user._id.toString())},
-          [],
-          { $set: {groupID: [groupId]} },
-          { new: true },
-          function(err, _user) {
-            if (err) {
-              throw err;
-            }
+        db.collection('groups').update({
+          _id: new ObjectID(user.groupID[0])
+        }, {
+          $pull: { 'teachers': user._id.toString()}
+        }, function(err, nModified) {
+          if (err) {
+            throw err;
+          }
 
-            req.login(_user, function(err) {
+          if (user.groupID[0] && !nModified) {
+            return res.status(400).send({message: 'Action failed 2'});
+          }
+
+          db.collection('users').findAndModify(
+            { _id: new ObjectID(user._id.toString())},
+            [],
+            { $set: {groupID: [groupId]} },
+            { new: true },
+            function(err, _user) {
               if (err) {
                 throw err;
               }
-              return res.sendStatus(200);
+
+              console.log('updated', _user)
+              req.login(_user, function(err) {
+                if (err) {
+                  throw err;
+                }
+                return res.sendStatus(200);
+              });
             });
-          });
+        });
       });
     });
   }

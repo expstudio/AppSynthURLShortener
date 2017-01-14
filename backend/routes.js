@@ -77,7 +77,7 @@ module.exports = function(app, passport, db) {
 
   app.get('/activate/:userId/:token', userCtrl.activateUser(db));
 
-  app.post('/login', userCtrl.loginUser(db));
+  app.post('/login', passport.authenticate('local'), userCtrl.loginUser(db));
   app.post('/logout', userCtrl.logout);
   app.post('/signup', userCtrl.signupUser);
   app.post('/attachment/upload', userCtrl.uploadAttachment(db));

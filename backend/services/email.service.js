@@ -85,7 +85,7 @@ function sendWelcome(user) {
 
   var email = new sendgrid.Email({
     from: 'tinyapp@noreply.fi',
-    subject: i18n.__('Tiny group code'),
+    subject: i18n.__('TinyApp warm welcome'),
     html: body
   });
   email.addTo(user.local.email);

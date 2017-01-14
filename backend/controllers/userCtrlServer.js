@@ -143,7 +143,30 @@ exports.activateUser = function (db) {
   }
 };
 
-exports.loginUser = function (db) {
+exports.loginUser = function(db) {
+  return function(req, res) {
+
+    var user = req.user;
+    var redirect = '/home';
+    if (user.roles.indexOf('parent') > -1) {
+      redirect = '/calendar-events';
+    }
+
+    if (req.user && !req.user.myChildren) {
+      req.user.myChildren = [];
+    }
+
+    var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+
+    res.send({
+      redirect: redirect,
+      user: req.user,
+      token: token
+    });
+  }
+};
+
+exports.loginUserOld = function (db) {
   return function(req, res, next) {
     passport.authenticate('local', function (err, user, info) {
       if (err) {
@@ -394,7 +417,7 @@ exports.getChatMessages = function (db) {
     //req.user._id.toHexString() => need to use toHexString because save as toHexString in parentCtrServer
     //db.collection('messages').find({ $or: [ {receivers: {$in: req.user.roles}}, {receivers: {$in: req.user.myChildren}},
     //{receivers: req.user._id.toHexString()}]})
-    var myChildren = new Array();
+    var myChildren = [];
     if (!!req.user.myChildren) {
       myChildren = req.user.myChildren;
     }
@@ -2079,12 +2102,11 @@ exports.resetPassword = function (db) {
         if (err) {
           throw err;
         }
-        ;
         req.login(user, function (err) {
           if (err) {
             res.send({success: false, error: err.message.toString()});
           }
-          ;
+
           res.send({
             redirect: frontendAddress + '/home',
             success: true
