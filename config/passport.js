@@ -5,7 +5,9 @@ var sendgrid = require('sendgrid')('SG.xp3DFTNvQ1O1Kodo1P_Oyw.8Gkl69s3TZGQBgcIW-
 var encrypt = require('../backend/services/encrypt.js');
 var crypto = require('crypto');
 var i18n = require("i18n");
+var ObjectID = require('mongodb').ObjectID;
 var EmailSvc = require('../backend/services/email.service.js');
+var Promise = require('bluebird');
 
 module.exports = function (db, passport) {
   var saveUser = function (req, userObj, done) {
@@ -84,6 +86,11 @@ module.exports = function (db, passport) {
               var exist_err = new Error('Username or email is in use');
               return done(exist_err.toString());
             } else { /* user doesn't exist, create new user*/
+
+              if (['teacher', 'parent'].indexOf(req.body.role) === -1) {
+                return done('Role is not allowed');
+              }
+
               var userObj = {local: {}};
               userObj.roles = new Array(req.body.role);
               userObj.fullName = req.body.fullName;
@@ -92,7 +99,7 @@ module.exports = function (db, passport) {
               userObj.local.salt = encrypt.createSalt();
               userObj.local.hashedPassword = encrypt.hashPwd(userObj.local.salt, password);
               userObj.lang = req.body.lang;
-              userObj.kindergarten = req.body.kindergarten;
+              userObj.created = new Date();
               userObj.verification = {
                 token: encrypt.generateToken(16),
                 expireDate: new Date(new Date().getTime() + (7 * 24 * 60 * 60 * 1000)),
@@ -100,10 +107,48 @@ module.exports = function (db, passport) {
               };
 
                 /*if groupcode is not entered => create new group*/
-              if (req.body.groupCode === undefined || req.body.groupCode === '') {
+              if (req.body.role === 'teacher') {
                 userObj.groupID = [];
-                saveUser(req, userObj, done);
+
+                db.collection('nurseries').findOne({_id: new ObjectID(req.body.nursery._id)}, function(err, nursery) {
+                  if (err) {
+                    return done(err);
+                  }
+
+                  if (!nursery) {
+                    return done('Nursery not found');
+                  }
+
+                  saveUser(req, userObj, function(err, savedUser) {
+                    if (err) {
+                      return done(err);
+                    }
+                    if (!nursery.pendings) {
+                      nursery.pendings = [savedUser._id];
+                    } else {
+                      nursery.pendings.push(savedUser._id);
+                    }
+
+                    db.collection('nurseries').save(nursery, function(err, nModified) {
+                      if (err) {
+                        throw err;
+                      }
+                      if (!nModified) {
+                        return done('ADD_PENDING_USERS_FAILED');
+                      }
+
+                      done(null, savedUser);
+                    });
+
+                  });
+
+                });
+
               } else { /* if groupcode is entered => join existing group */
+                if (!req.body.groupCode) {
+                  return done('GROUP_CODE_REQUIRED');
+                }
+
                 db.collection('groups').findOne({
                   'code': req.body.groupCode,
                   'verification.token': null
@@ -111,8 +156,7 @@ module.exports = function (db, passport) {
                   if (err)
                     return done(err);
                   if (!savedGroup) {
-                    err = new Error('Group not found');
-                    return done(err.toString());
+                    return done('GROUP_CODE_NOT_FOUND');
                   } else {
                     userObj.groupID = new Array(savedGroup._id.toString());
 

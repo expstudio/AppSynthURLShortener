@@ -15,6 +15,10 @@ module.exports = function(app, passport, db) {
   app.get('/api/group/:id/members', authServer.requiresApiLogin, authServer.requiresRole('teacher'), teacherCtrl.getGroupMembers(db));
   app.put('/api/student/:id/status', authServer.requiresApiLogin, userCtrl.updateChildStatus(db));
   app.put('/api/teacher/:id/status', authServer.requiresApiLogin, authServer.requiresRole('teacher'), teacherCtrl.updateTeacherStatus(db));
+
+  app.get('/api/nursery/requests', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.getNurseryPendingRequests(db));
+  app.patch('/api/nursery/accept/:userId', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.acceptPendingRequest(db));
+  app.patch('/api/nursery/reject/:userId', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.rejectPendingRequest(db));
   /*------------*/
   app.get('/api/users', userCtrl.getUsers(db));
   app.post('/api/users', userCtrl.updateUser(db));
@@ -97,7 +101,7 @@ module.exports = function(app, passport, db) {
   app.post('/updateEvent', userCtrl.updateEvent(db));
   app.post('/updateInvitation', userCtrl.updateInvitation(db));
   app.post('/acceptEvent', userCtrl.acceptEvent(db));
-  app.post('/saveEventInvitation', userCtrl.saveEventInvitation(db));
+  app.post('/saveEventInvitation/:groupID', userCtrl.saveEventInvitation(db));
   app.post('/deleteEvent', userCtrl.deleteEvent(db));
   app.post('/deleteInvitation', userCtrl.deleteInvitation(db));
   app.post('/declineInvitation', userCtrl.declineInvitation(db));
@@ -110,7 +114,7 @@ module.exports = function(app, passport, db) {
   app.post('/joinGroup', parentCtrl.joinGroup(db));
   app.post('/api/feedback', userCtrl.sendFeedback(db));
 
-  app.get('/api/daycares', dataCtrl.getDaycareCenters(db));
+  app.get('/api/nursery', dataCtrl.getDaycareCenters(db));
 
   //admin
   app.get('/api/pendingUsers', authServer.requiresRole('admin'), adminCtrl.getPendingUsers(db));

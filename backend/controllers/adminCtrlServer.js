@@ -10,12 +10,15 @@ exports.getPendingUsers = function (db) {
 			res.send(doc);
 		})
 	}
-}
+};
 
 exports.getRecentUsers = function(db) {
   return function (req, res) {
     var date = new Date();
-    db.collection('users').find({'created': {$gt: new Date(date.getTime() - (7 * 24 * 60 * 60 * 1000))}})
+    db.collection('users').find({
+      'created': {$gt: new Date(date.getTime() - (7 * 24 * 60 * 60 * 1000))},
+      'verification.token': {$exists: false}
+    })
     .toArray(function(err, users) {
       if (err) {
         throw err;
@@ -24,7 +27,7 @@ exports.getRecentUsers = function(db) {
       res.send(users);
     });
   }
-}
+};
 
 exports.removePendingUser = function(db) {
   return function(req, res) {
@@ -44,4 +47,4 @@ exports.removePendingUser = function(db) {
       
     })
   }
-}
+};

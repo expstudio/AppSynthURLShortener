@@ -12,13 +12,13 @@ exports.createStudents = function(db) {
       students[i].hasInfo = "false";
       students[i].status = new Array('outcare');
     }
-    db.collection('students').insert(students, function (err, doc) {
+    db.collection('students').insert(students, function (err, newStudents) {
       if (err)
         throw err;
 
-      if (doc) {
+      if (newStudents) {
         var idArray = [];
-        doc.forEach(function (item) {
+        newStudents.forEach(function (item) {
           //idArray.push(item._id);
           idArray.push(item._id.toHexString());
         });
@@ -29,11 +29,10 @@ exports.createStudents = function(db) {
 
         });
 
-        return res.json({success:true, amount: doc.length});
+        return res.json(newStudents);
       } else {
-        return res.json({success:false});
+        return res.sendStatus(400);
       }
-
     })
   }
 };
@@ -110,13 +109,13 @@ exports.getStatusReport = function (db) {
 exports.getGroups = function(db) {
   return function(req, res) {
     var user = req.user;
-    var kindergartenId = user.kindergarten._id;
+    var nurseryID = user.nursery;
 
-    if (!kindergartenId) {
-      return res.status(400).send(new Error('Kindergarten id not found'));
+    if (!nurseryID) {
+      return res.status(400).send({message: new Error('Nursery not found')});
     }
 
-    db.collection('groups').find({'kindergarten._id': kindergartenId}).toArray(function(err, docs) {
+    db.collection('groups').find({'nursery': nurseryID}).toArray(function(err, docs) {
       if (err) {
         throw err;
       }
@@ -139,7 +138,7 @@ exports.createGroup = function(db) {
 
     var newGroup = {
       name: group.name,
-      kindergarten: user.kindergarten,
+      nursery: user.nursery,
       code: encrypt.generateToken(8),
       teachers: [],
       students: [],
@@ -201,17 +200,17 @@ exports.joinGroup = function(db) {
           { $set: {groupID: [groupId]} },
           { new: true },
           function(err, _user) {
-          if (err) {
-            throw err;
-          }
-
-          req.login(_user, function(err) {
             if (err) {
               throw err;
             }
-            return res.sendStatus(200);
+
+            req.login(_user, function(err) {
+              if (err) {
+                throw err;
+              }
+              return res.sendStatus(200);
+            });
           });
-        });
       });
     });
   }
@@ -291,7 +290,127 @@ exports.updateTeacherStatus = function(db) {
   }
 };
 
+exports.getNurseryPendingRequests = function(db) {
+  return function (req, res) {
+    var user = req.user;
+    var nurseryID = req.user.nursery;
 
+    db.collection('nurseries').aggregate([
+      { "$unwind": "$pendings" },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'pendings',
+          foreignField: '_id',
+          as: 'pendings'
+        }
+      },
+      { "$unwind": "$pendings" },
+      {
+        "$group": {
+          "_id": "$_id",
+          "name": {"$first": "$name"},
+          "pendings": { "$push": "$pendings" }
+        }
+      },
+      {
+        $match: {
+          _id: new ObjectID(nurseryID)
+        }
+      },
+      {
+        "$project": {
+          "name": 1,
+          "pendings._id": 1,
+          "pendings.fullName": 1,
+          "pendings.local.email": 1
+        }
+      }
+    ], function(err, docs) {
+      if (err) {
+        throw err;
+      }
+
+      res.send(docs[0]);
+    });
+  }
+};
+
+exports.acceptPendingRequest = function(db) {
+  return function(req, res) {
+    var user = req.user;
+    var userId = req.params.userId;
+    var nurseryID = req.user.nursery;
+
+    if (!userId) {
+      console.error('userId required for accepting request');
+      return res.status(400).send({messgae: 'USERID_REQUIRED'})
+    }
+
+    if (!user.isNurseryAdmin) {
+      return res.status(403).send({message: 'NOT_AUTHORIZED'});
+    }
+
+    db.collection('nurseries').update({
+      _id: new ObjectID(nurseryID)
+    }, {
+      $pull: {pendings: new ObjectID(userId)}
+    }, function(err, nModified) {
+      if (err) {
+        throw err;
+      }
+
+      if (!nModified) {
+        return res.status(400).send({message: 'ACTION_FAILED'});
+      }
+
+      db.collection('users').update({
+        _id: new ObjectID(userId)
+      }, {
+        $set: {nursery: nurseryID}
+      }, function(err, nModified) {
+        if (err) {
+          throw err;
+        }
+
+        if (!nModified) {
+          return res.status(400).send({message: 'ACTION_FAILED'});
+        }
+
+        return res.sendStatus(200);
+      });
+    });
+  }
+};
+
+
+exports.rejectPendingRequest = function(db) {
+  return function(req, res) {
+    var user = req.user;
+    var userId = req.params.userId;
+    var nurseryID = req.user.nursery;
+
+    if (!user.isNurseryAdmin) {
+      return res.status(403).send({message: 'NOT_AUTHORIZED'});
+    }
+
+    db.collection('nurseries').update({
+      _id: new ObjectID(nurseryID)
+    }, {
+      $pull: {pendings: new ObjectID(userId)}
+    }, function(err, nModified) {
+      if (err) {
+        throw err;
+      }
+
+      if (!nModified) {
+        return res.status(400).send({message: 'ACTION_FAILED'});
+      }
+
+      return res.sendStatus(200);
+    });
+  }
+};
 /////Helpers
 
 function validateData(item) {

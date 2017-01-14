@@ -55,38 +55,85 @@ var contentTypeSupported = [
 
 exports.activateUser = function (db) {
   return function (req, res) {
-    var objID = new ObjectID(req.params.userId.toString());
+    var userId = new ObjectID(req.params.userId);
     var token = req.params.token;
 
-    db.collection('users').findOne({_id: objID, 'verification.token': token}, function (err, user) {
-      if (err) throw err;
+    db.collection('users').findOne({_id: userId, 'verification.token': token}, function (err, user) {
+      if (err) {
+        throw err;
+      }
 
       if (!user || !user.verification) {
         console.log('Activation failed!', user);
-        res.send(404);
+        return res.send(404);
       } else {
-        db.collection('users').update({
-          _id: objID
-        }, {
-          $set: {
-            'verification': null,
-            created: new Date()
-          }
-        }, function (err, updated) {
-          if (err) {
-            throw err;
-          }
 
-          console.log('Activation successful!');
+        if (user.roles.indexOf('parent') > -1) {
+          user.verification = undefined;
 
-          if (req.user && Auth.isAdmin(req.user)) {
-            return res.send(user);
-          } else {
+          db.collection('users').save(user, function(err, nModified) {
+
+            if (err) {
+              throw err;
+            }
+            if (!nModified) {
+              return res.status(400).send({message: 'SAVING_USER_FAILED'});
+            }
+
             return res.redirect(frontendAddress + '/login');
-          }
-        });
+          });
+        } else {
+          db.collection('nurseries').findOne({
+            pendings: userId
+          }, function(err, nursery) {
+            if (err) {
+              throw err;
+            }
+
+            if (!nursery) {
+              return res.status(404).send({message: 'NURSERY_NOT_FOUND'});
+            }
+
+            if (!nursery.admin) {
+              user.isNurseryAdmin = true;
+              user.nursery = nursery._id;
+              nursery.admin = user._id;
+              nursery.pendings = nursery.pendings.filter(function(_user) {
+                return _user.toString() !== user._id.toString();
+              });
+            }
+
+            user.verification = undefined;
+            db.collection('users').save(user, function(err, nModified) {
+
+              if (err) {
+                throw err;
+              }
+              if (!nModified) {
+                return res.status(400).send({message: 'SAVING_USER_FAILED'});
+              }
+              db.collection('nurseries').save(nursery, function(err, nModified) {
+
+                if (err) {
+                  throw err;
+                }
+                if (!nModified) {
+                  return res.status(400).send({message: 'SAVING_NURSERY_FAILED'});
+                }
+
+                console.log('Activation successful!');
+
+                if (req.user && Auth.isAdmin(req.user)) {
+                  return res.send(user);
+                } else {
+                  return res.redirect(frontendAddress + '/login');
+                }
+              });
+            });
+          });
+        }
       }
-    })
+    });
   }
 };
 
@@ -187,16 +234,10 @@ exports.getGroups = function (db) {
       query._id = new ObjectID(req.user.groupID[0]);
     }
 
-    db.collection('groups').find(query).toArray(function (err, collection) {
+    db.collection('groups').find(query)
+    .toArray(function (err, collection) {
       res.send(collection);
-      /*if (req.user.roles.indexOf('teacher') > -1 && collection.length > 0) {
-       db.collection('groups').find({'kindergarten._id': collection[0].kindergarten._id}).toArray(function (err, docs) {
-       res.send(docs);
-       })
-       } else {
-       res.send(collection);
-       }*/
-    })
+    });
   }
 };
 
@@ -817,7 +858,6 @@ exports.sendReplyMessage = function (db) {
           if (count == 0) {
             console.log('update conversation ID is not successful');
           }
-          ;
         });
 
         db.collection('messages').insert(message, function (err, doc) {
@@ -1269,8 +1309,17 @@ exports.getInvitations = function (db) {
 
     if (req.user.roles.indexOf('parent') > -1) {
       query = {$or: [
-        { invitees: { $elemMatch: { parent_id: req.user._id.toString() } } },
-        { selectAllStudent: true, groupID: req.user.groupID[0] }
+        {
+          invitees: {
+            $elemMatch:
+              {
+                parent_id: req.user._id.toString()
+              }
+          }
+        },
+        {
+          selectAllStudent: true, groupID: req.user.groupID[0]
+        }
       ]};
     } else {
       // query = { 'user._id': userid };
@@ -1534,10 +1583,11 @@ exports.saveEvent = function (db) {
 exports.saveEventInvitation = function (db) {
   return function (req, res) {
     var invitation = req.body.data;
+    var groupID = req.params.groupID;
 
     /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
-    invitation.groupID = req.user.groupID[0];
+    invitation.groupID = groupID;
 
     var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
 
