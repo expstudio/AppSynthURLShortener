@@ -20,7 +20,7 @@ function sendActivationEmail(user) {
   if (user.roles.indexOf('teacher') > -1) {
     notice = '<p>' + i18n.__("Please note that you will receive a separate email including your group code. With that group code parents are able to join to the group you just created.") + '</p>';
   }
-  var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: user.username}) + '</h3>'
+  var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: user.local.username}) + '</h3>'
   + '<h4>' + i18n.__("Welcome to the family of Tiny. Please click here to activate your account.") + '</h4>'
   + '<a href="' + url + '">' + url + '</a>'
   + notice;
