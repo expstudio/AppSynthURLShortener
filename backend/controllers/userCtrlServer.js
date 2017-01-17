@@ -2389,8 +2389,18 @@ exports.updateInvitation = function (db) {
     invitation.user = {_id: userid, name: req.user.fullName, email: req.user.local.email};
 
     db.collection('invitations').findOne({_id: invitation._id}, function (err, originalInvitation) {
-      invitation.invitees = originalInvitation.invitees;
+      // invitation.invitees = originalInvitation.invitees;
 
+      _.each(invitation.invitees, function(invitee) {
+        _.each(originalInvitation.invitees, function(oInvitee) {
+          if (invitee._id == oInvitee._id)
+          {
+            invitee.meetingAt = oInvitee.meetingAt;
+            return;
+          }
+        });
+      });
+      
       console.log(invitation);
 
       db.collection('invitations').update({_id: invitation._id}, invitation, function (err, count) {
