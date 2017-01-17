@@ -2338,7 +2338,7 @@ exports.updateEvent = function (db) {
 
       _.each(event.invitees, function(invitee) {
         _.each(originalEvent.invitees, function(oInvitee) {
-          if (invitee._id == oInvitee._id)
+          if (!invitee.meetingAt && invitee._id == oInvitee._id)
           {
             invitee.meetingAt = oInvitee.meetingAt;
             return;
@@ -2375,7 +2375,7 @@ exports.updateInvitation = function (db) {
 
       _.each(invitation.invitees, function(invitee) {
         _.each(originalInvitation.invitees, function(oInvitee) {
-          if (invitee._id == oInvitee._id)
+          if (!invitee.meetingAt && invitee._id == oInvitee._id)
           {
             invitee.meetingAt = oInvitee.meetingAt;
             return;
