@@ -2334,12 +2334,25 @@ exports.updateEvent = function (db) {
       delete event.color;
     }
 
-    db.collection('events').update({_id: event._id}, event, function (err, event) {
-      if (err)
-        throw err;
+    db.collection('events').findOne({_id: event._id}, function (err, originalEvent) {
 
-      res.json({success: true, event: event});
-    })
+      _.each(event.invitees, function(invitee) {
+        _.each(originalEvent.invitees, function(oInvitee) {
+          if (invitee._id == oInvitee._id)
+          {
+            invitee.meetingAt = oInvitee.meetingAt;
+            return;
+          }
+        });
+      });
+
+      db.collection('events').update({_id: event._id}, event, function (err, event) {
+        if (err)
+          throw err;
+
+        res.json({success: true, event: event});
+      });
+    });
 
   }
 };
