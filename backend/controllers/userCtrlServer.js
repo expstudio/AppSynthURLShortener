@@ -1211,7 +1211,7 @@ exports.updateGroupMessage = function (db) {
         if (err)
           throw err;
 
-        var last_group_message_id = group_message.messages ? group_message.messages[group_message.messages.length - 1]._id : null;
+        var last_group_message_id = group_message.messages && group_message.messages.length > 0 ? group_message.messages[group_message.messages.length - 1]._id : null;
 
         var seenBy = { userID: updateID, last_group_message_id: last_group_message_id};
 
