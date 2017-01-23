@@ -23,6 +23,7 @@ function sendActivationEmail(user) {
   var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: user.local.username}) + '</h3>'
   + '<h4>' + i18n.__("Welcome to the family of Tiny. Please click here to activate your account.") + '</h4>'
   + '<a href="' + url + '">' + url + '</a>'
+  + '<p>' + i18n.__("You will find FAQ and more help in the app. If you have any further questions please contact us by email hello@tinyapp.biz.") + '</p>'
   + notice;
 
   var email = new sendgrid.Email({
@@ -53,8 +54,8 @@ function sendGroupCode(user, group) {
   var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
   + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
   + '<div style="font-size: 18px; color: #00ACAE;">'
-  +   '<div>Group name: ' + group.name + '</div>'
-  +   '<div>Group code: ' + group.code + '</div>'
+  +   '<div>' + i18n.__("Group name: ") + group.name + '</div>'
+  +   '<div>' + i18n.__("Group code: ") + group.code + '</div>'
   + '</div>'
 
   var email = new sendgrid.Email({
@@ -85,7 +86,7 @@ function sendWelcome(user) {
 
   var email = new sendgrid.Email({
     from: 'tinyapp@noreply.fi',
-    subject: i18n.__('TinyApp warm welcome'),
+    subject: i18n.__('A warm welcome to TinyApp'),
     html: body
   });
   email.addTo(user.local.email);
