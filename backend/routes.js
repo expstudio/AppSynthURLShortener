@@ -25,7 +25,9 @@ module.exports = function(app, passport, db) {
   app.put('/api/student/:id/status', authServer.requiresApiLogin, userCtrl.updateChildStatus(db));
   app.put('/api/teacher/:id/status', authServer.requiresApiLogin, authServer.requiresRole('teacher'), teacherCtrl.updateTeacherStatus(db));
 
+  app.get('/api/nursery/my', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.getMyNursery(db));
   app.get('/api/nursery/requests', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.getNurseryPendingRequests(db));
+  app.get('/api/nursery/teachers', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.getTeachers(db));
   app.patch('/api/nursery/accept/:userId', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.acceptPendingRequest(db));
   app.patch('/api/nursery/reject/:userId', authServer.requiresApiLogin, authServer.isNurseryAdmin, teacherCtrl.rejectPendingRequest(db));
   /*------------*/
@@ -131,5 +133,5 @@ module.exports = function(app, passport, db) {
 
   app.get('/*', function(req, res) { /*enable express to work with html5Mode*/
     res.render('index.ejs', {currentUser: req.user});
-  })
+  });
 };

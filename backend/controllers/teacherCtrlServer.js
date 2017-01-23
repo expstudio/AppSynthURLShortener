@@ -227,6 +227,19 @@ exports.joinGroup = function(db) {
   }
 };
 
+exports.getMyNursery = function(db) {
+  return function(req, res) {
+    var user = req.user;
+
+    db.collection('nurseries').findOne({_id: new ObjectID(user.nursery)}, function(err, nursery) {
+      if (err) {
+        throw err;
+      }
+
+      return res.send(nursery);
+    });
+  }
+};
 
 exports.getGroupMembers = function(db) {
   return function(req, res) {
@@ -346,6 +359,28 @@ exports.getNurseryPendingRequests = function(db) {
     });
   }
 };
+
+exports.getTeachers = function(db) {
+  return function(req, res) {
+    var user = req.user;
+    var nurseryID = req.user.nursery;
+
+    db.collection('users').find({
+      nursery: new ObjectID(nurseryID), 
+      roles: 'teacher'
+    }, {
+      'fullName': 1,
+      'local.email': 1
+    })
+    .toArray(function(err, teachers) {
+      if (err) {
+        throw err;
+      }
+
+      return res.send(teachers);
+    });
+  }
+}
 
 exports.acceptPendingRequest = function(db) {
   return function(req, res) {
