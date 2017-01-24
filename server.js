@@ -40,8 +40,12 @@ var passport        = require('passport'),
         socket.join(data.id);
       });
 
+      socket.on('leaveRoom', function(data) {
+        console.log('leave room', data.id);
+        socket.leave(data.id);
+      });
+
       socket.on('newMessage', function(listeners) {
-        console.log(listeners);
         _.each(listeners, function (listener) {
           io.to(listener).emit('newMessage', {message: "New message received"});
         });
