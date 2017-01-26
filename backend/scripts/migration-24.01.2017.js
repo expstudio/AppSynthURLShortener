@@ -147,7 +147,7 @@ function migrateGroups(db, callback) {
         groups.forEach(function(group) {
           delete group.city;
           delete group.groups;
-          var nursery = nurseries.find(function(nursery) {
+          var nursery = nurseries.filter(function(nursery) {
             return nursery.name === group.kindergarten;
           });
           if (nursery) {
@@ -188,7 +188,7 @@ function migrateUsers(db, callback) {
       users.forEach(function(user) {
         if (user.roles.indexOf('teacher') > -1) {
           user.lang = user.lang ? user.lang : 'en';
-          var group = groups.find(function(group) {
+          var group = groups.filter(function(group) {
             return group._id.toString() === user.groupID[0];
           });
           if (group) {
