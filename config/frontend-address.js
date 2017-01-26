@@ -6,6 +6,6 @@ module.exports = {
     address: 'https://tinyapp-backend.herokuapp.com/#'
   },
   production: {
-    address: 'https://tinyapp-backend.herokuapp.com/#'
+    address: 'https://api.tinyapp.biz/#'
   }
 }
