@@ -84,7 +84,7 @@ function migrateEvents(db, callback) {
         }
 
         console.log('Migrate event ok');
-        // db.dropCollection('events_old');
+        db.dropCollection('events_old');
         callback(null, newEvents);
       });
     });
@@ -122,7 +122,7 @@ function migrateStatusReport(db, callback) {
         }
 
         console.log('Migrate history records ok');
-        // db.dropCollection('historyRecords_old');
+        db.dropCollection('historyRecords_old');
         callback(null, newRecords);
       });
     });
@@ -165,7 +165,7 @@ function migrateGroups(db, callback) {
           }
 
           console.log('Migrate groups ok');
-          // db.dropCollection('groups_old');
+          db.dropCollection('groups_old');
           callback(null, newGroups);
         });
       });
