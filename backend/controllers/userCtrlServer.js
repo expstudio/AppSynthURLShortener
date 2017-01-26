@@ -166,49 +166,6 @@ exports.loginUser = function(db) {
   }
 };
 
-exports.loginUserOld = function (db) {
-  return function(req, res, next) {
-    passport.authenticate('local', function (err, user, info) {
-      if (err) {
-        console.log("error", err);
-        return res.status(500).json(err);
-      }
-
-      if (!user) {
-        return res.status(401).json("Error: User not found");
-      }
-
-      req.login(user, function (err) {
-        if (err) {
-          return next(err);
-        }
-        var redirect = '/home';
-        if (user.roles.indexOf('parent') > -1) {
-          redirect = '/calendar-events';
-        }
-
-        if (req.user && !req.user.myChildren) {
-          req.user.myChildren = [];
-        }
-
-        var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
-
-        var groupIds = _.map(req.user.groupID, function(grp) { return new ObjectID('' + grp); });
-
-        db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, collection) {
-          req.user.groups = collection;
-
-          res.send({
-            redirect: redirect,
-            user: req.user,
-            token: token
-          });
-        });
-      });
-    })(req, res, next);
-  };
-};
-
 exports.logout = function(db) {
   return function(req, res) {
     var updateData = req.body;

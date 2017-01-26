@@ -39,31 +39,28 @@ module.exports = function (db, passport) {
   });
 
   passport.use(new LocalStrategy(function (username, password, done) {
-      if (username)
-        username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
-      process.nextTick(function () {
-        db.collection('users').findOne({
-          'local.username': username
-        }, function (err, user) {
-          if (err)
-            return done(err);
-          if (!user) {
-            return done('INVALID_CREDENTIALS');
-          }
-          if (user.verification) {
-            return done('USER_NOT_VERIFIED');
-          }
-          if (user.local.hashedPassword != encrypt.hashPwd(user.local.salt, password)) {
-            return done('INVALID_CREDENTIALS');
-          } else if (user) {
-              /*
-               code to check if account is activated
-               */
-            return done(null, user);
-          }
-        });
+    if (username)
+      username = username.toLowerCase(); // Use lower-case e-mails to avoid case-sensitive e-mail matching
+    process.nextTick(function () {
+      db.collection('users').findOne({
+        'local.username': username
+      }, function (err, user) {
+        if (err)
+          return done(err);
+        if (!user) {
+          return done('INVALID_CREDENTIALS');
+        }
+        if (user.verification) {
+          return done('USER_NOT_VERIFIED');
+        }
+        if (user.local.hashedPassword != encrypt.hashPwd(user.local.salt, password)) {
+          return done('INVALID_CREDENTIALS');
+        } else if (user) {
+          return done(null, user);
+        }
       });
-    }));
+    });
+  }));
 
   passport.use('local-signup', new LocalStrategy({
       usernameField: 'username',

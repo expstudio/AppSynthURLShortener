@@ -1,26 +1,26 @@
-var passport        = require('passport'),
-  path            = require('path'),
-  express         = require('express'),
-  http            = require('http'),
-  _               = require('underscore'),
-  dbConf          = require('./config/db')['development'];
-  port            = dbConf.port,
-  bodyParser      = require('body-parser'),
-  methodOverride  = require('method-override'),
-  cookieParser    = require ('cookie-parser'),
-  session         = require('express-session'),
-  app             = express(),
-  server          = http.Server(app),
-  flash           = require('connect-flash'),
-  io              = require('socket.io')(server),
-  i18n            = require('i18n'),
-  favicon         = require('serve-favicon'),
+var passport        = require('passport');
+var path            = require('path');
+var express         = require('express');
+var http            = require('http');
+var _               = require('underscore');
+var config          = require('./backend/env');
+var port            = config.PORT;
+var bodyParser      = require('body-parser');
+var methodOverride  = require('method-override');
+var cookieParser    = require ('cookie-parser');
+var session         = require('express-session');
+var app             = express();
+var server          = http.Server(app);
+var flash           = require('connect-flash');
+var io              = require('socket.io')(server);
+var i18n            = require('i18n');
+var favicon         = require('serve-favicon');
 
-  expressJwt = require('express-jwt'),
-  jwt = require('jsonwebtoken'),
-  ObjectID = require('mongodb').ObjectID,
+var expressJwt      = require('express-jwt');
+var jwt             = require('jsonwebtoken');
+var ObjectID = require('mongodb').ObjectID;
 
-  allowCrossDomain = function(req, res, next) {
+var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'POST, GET, PUT, PATCH, DELETE, OPTIONS');
     res.header("Access-Control-Allow-Headers", "X-Requested-With");
@@ -28,8 +28,9 @@ var passport        = require('passport'),
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, my-header');
 
     next();
-  },
-  mongoServer = require('./backend/servers/mongodb')(function(db) {
+  };
+
+var mongoServer = require('./backend/servers/mongodb')(function(db) {
     require('./config/passport')(db,passport);
     /*** socket io***/
     io.on('connection', function (socket) {
