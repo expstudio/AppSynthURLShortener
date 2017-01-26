@@ -132,15 +132,18 @@ function migrateStatusReport(db, callback) {
 function migrateGroups(db, callback) {
   db.collection('groups').rename('groups_old', function(err, result) {
     if (err) {
+      console.log("group error");
       throw err;
     }
 
     db.collection('nurseries').find().toArray(function(err, nurseries) {
       if (err) {
+        console.log("nurseries error");
         throw err;
       }
       db.collection('groups_old').find().toArray(function(err, groups) {
         if (err) {
+          console.log("group_old error");
           throw err;
         }
 
