@@ -55,7 +55,7 @@ module.exports = function(app, passport, db) {
 
   app.get('/api/students', userCtrl.getStudents(db));
   app.put('/api/students', parentCtrl.updateChildProfile(db));
-  app.delete('/api/students', userCtrl.deleteChildProfile(db));
+  app.delete('/api/students/:id/:groupID', userCtrl.deleteChildProfile(db));
 
   app.get('/api/parents', userCtrl.getParents(db));
 
