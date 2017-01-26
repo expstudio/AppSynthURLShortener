@@ -153,8 +153,8 @@ function migrateGroups(db, callback) {
           var nursery = nurseries.filter(function(nursery) {
             return nursery.name === group.kindergarten;
           });
-          if (nursery) {
-            group.nursery = nursery._id.toString();
+          if (nursery && nursery.length > 0) {
+            group.nursery = nursery[0]._id.toString();
             delete group.kindergarten;
           } else {
             console.log('Cannot find nursery for group with id ', group._id);
@@ -194,8 +194,8 @@ function migrateUsers(db, callback) {
           var group = groups.filter(function(group) {
             return group._id.toString() === user.groupID[0];
           });
-          if (group) {
-            user.nursery = new ObjectID(group.nursery);
+          if (group && group.length > 0) {
+            user.nursery = new ObjectID(group[0].nursery);
           } else {
             console.error('Cannot find group for user with id ', user._id);
           }
