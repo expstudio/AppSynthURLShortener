@@ -1,5 +1,4 @@
 var async = require('async');
-var helper = require('../helpers');
 var validator = require('validator');
 var ObjectID = require('mongodb').ObjectID;
 var passport = require('passport');
@@ -7,12 +6,7 @@ var _ = require('underscore');
 var mv = require('mv');
 var sendgrid = require('sendgrid')('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');
 var multiparty = require('multiparty');
-var http = require('http');
 var util = require('util');
-var fs = require('fs');
-var GridStore = require('mongodb').GridStore;
-var Grid = require('mongodb').Grid;
-var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
 var rootPath = path.normalize(__dirname + '/../../config/');
@@ -20,17 +14,15 @@ var uuid = require('node-uuid');
 var encrypt = require('../services/encrypt.js');
 var crypto = require('crypto');
 var lwip = require('lwip');
-var lwipJpegAutorotate = require('lwip-jpeg-autorotate');
 var AWS = require('aws-sdk');
 var config = require(rootPath + 'aws.json');
 var zlib = require('zlib');
 var i18n = require('i18n');
-var expressJwt = require('express-jwt');
 var jwt = require('jsonwebtoken');
-var http = require('https');
 var Notification = require('../services/pushNotification');
 var Auth = require('../servers/authServer.js');
-//sendMail = require('../../backend/services/sendMail.js');
+
+var EmailSvc = require('../services/email.service');
 
 AWS.config.loadFromPath(rootPath + 'aws.json');
 var secret = "op89uvzx348zxvbhlqw";
@@ -43,9 +35,9 @@ function validateEmail(email) {
 }
 
 var contentTypeSupported = [
-  'image/png', 
-  'image/jpeg', 
-  'image/gif', 
+  'image/png',
+  'image/jpeg',
+  'image/gif',
   'image/jpg',
   'application/pdf',
   'text/plain',
@@ -65,166 +57,131 @@ var contentTypeSupported = [
 
 exports.activateUser = function (db) {
   return function (req, res) {
-    var objID = new ObjectID(req.params.userId.toString());
+    var userId = new ObjectID(req.params.userId);
     var token = req.params.token;
 
-    db.collection('user').findOne({_id: objID, 'verification.token': token}, function (err, user) {
-      if (err) throw err;
+    db.collection('users').findOne({_id: userId, 'verification.token': token}, function (err, user) {
+      if (err) {
+        throw err;
+      }
 
       if (!user || !user.verification) {
         console.log('Activation failed!', user);
-        res.send(404);
+        return res.send(404);
       } else {
-        db.collection('user').update({
-          _id: objID
-        }, {
-          $set: {
-            'verification': null, 
-            created: new Date()
-          }
-        }, function (err, updated) {
-          if (err) {
-            throw err;
-          }
 
-          console.log('Activation successful!');
-          /*if the group is not activated, activate it then*/
-          var groupID = new ObjectID(user.groupID[0]);
-          db.collection('groups').findAndModify(
-            {_id: groupID, 'verification.token': {$ne: null}},
-            [],
-            {
-              $set: {
-                'verification': null,
-                'created': new Date()
-              }, 
-              $push: {
-                teachers: user._id.toString()
-              }
-            }, function (err, doc) {
-              if (err) {
-                console.warn(err.message);  // returns error if no matching object found
-              }
+        if (user.roles.indexOf('parent') > -1) {
+          user.verification = undefined;
 
-              if (doc) {
-                i18n.setLocale(user.lang || 'fi');
-                /* send email */
-                var body = '<h3>' + i18n.__("You have created a new group to TinyApp.") + '</h3>'
-                  + '<h4>' + i18n.__("Below is the group code. Please share the code with the relevant parents to join the group.") + '</h4>'
-                  + '<span style="color: blue; font-size: 20pt">' + doc.code + '</span>';
+          db.collection('users').save(user, function(err, nModified) {
 
-                var email = new sendgrid.Email({
-                  from: 'tinyapp@noreply.fi',
-                  subject: i18n.__('Tiny group code'),
-                  html: body
-                });
-                email.addTo(user.local.email.toString());
+            if (err) {
+              throw err;
+            }
+            if (!nModified) {
+              return res.status(400).send({message: 'SAVING_USER_FAILED'});
+            }
 
-                sendgrid.send(email, function (err, json) {
-                  if (err) {
-                    return console.error(err);
-                  }
-                  console.log(json);
-                });
-                
-                db.collection('daycares').find(
-                  { name: doc.kindergarten }).toArray(function (err, collection) {                    
-                    if (collection && collection.length > 0) {
-                      console.log(collection);
-                    } else {
-                       db.collection('daycares').insert({name: doc.kindergarten, city: doc.city}, function (err, doc) {
-                        if (err)
-                          throw err;
+            EmailSvc.sendWelcome(user);
+            return res.redirect(frontendAddress + '/login');
+          });
+        } else {
+          db.collection('nurseries').findOne({
+            pendings: userId
+          }, function(err, nursery) {
+            if (err) {
+              throw err;
+            }
 
-                        return;                        
-                      });
-                    }
-                  }
-                );
+            if (!nursery) {
+              return res.status(404).send({message: 'NURSERY_NOT_FOUND'});
+            }
 
-              }
-            });
+            if (!nursery.admin) {
+              user.isNurseryAdmin = true;
+              user.nursery = nursery._id;
+              nursery.admin = user._id;
+              nursery.pendings = nursery.pendings.filter(function(_user) {
+                return _user.toString() !== user._id.toString();
+              });
+            }
 
+            user.verification = undefined;
+            db.collection('users').save(user, function(err, nModified) {
 
-          if (req.user && Auth.isAdmin(req.user)) {
-            return res.send(user);
-          } else {
-            req.logIn(user, function (err) {
               if (err) {
                 throw err;
               }
-              //return res.send({redirect: '/'});
-              return res.redirect(frontendAddress + '/login');
-              // return res.status(200).json(user);
-              //logged in the same user even activate different users
+              if (!nModified) {
+                return res.status(400).send({message: 'SAVING_USER_FAILED'});
+              }
+
+              EmailSvc.sendWelcome(user);
+
+              db.collection('nurseries').save(nursery, function(err, nModified) {
+
+                if (err) {
+                  throw err;
+                }
+                if (!nModified) {
+                  return res.status(400).send({message: 'SAVING_NURSERY_FAILED'});
+                }
+
+                console.log('Activation successful!');
+
+                if (req.user && Auth.isAdmin(req.user)) {
+                  return res.send(user);
+                } else {
+                  return res.redirect(frontendAddress + '/login');
+                }
+              });
             });
-          }
-        });
+          });
+        }
       }
-    })
+    });
   }
 };
 
-exports.loginUser = function (db) {
-  return function(req, res, next) {
-    passport.authenticate('local-login', function (err, user, info) {
-      if (err) {
-        console.log("error", err);
-        return res.status(500).json(err);
-      }
-      
-      if (!user) {
-        return res.status(401).json("Error: User not found");
-      }
+exports.loginUser = function(db) {
+  return function(req, res) {
 
-      req.logIn(user, function (err) {
-        if (err) {
-          return next(err);
-        }
-        var redirect = '/home';
-        if (user.roles.indexOf('parent') > -1) {
-          redirect = '/calendar-events';
-        }
+    var user = req.user;
+    var redirect = '/home';
+    if (user.roles.indexOf('parent') > -1) {
+      redirect = '/calendar-events';
+    }
 
-        if (req.user && !req.user.myChildren) {
-          req.user.myChildren = [];
-        }
+    if (req.user && !req.user.myChildren) {
+      req.user.myChildren = [];
+    }
 
-        var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+    var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
 
-        var groupIds = _.map(req.user.groupID, function(grp) { return new ObjectID('' + grp); });
-
-        db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, collection) {
-          console.log(groupIds, collection);
-          req.user.groups = collection;
-
-          res.send({
-            redirect: redirect,
-            user: req.user,
-            token: token
-          });
-        });
-      });
-    })(req, res, next);
-  };
+    res.send({
+      redirect: redirect,
+      user: req.user,
+      token: token
+    });
+  }
 };
 
 exports.logout = function(db) {
   return function(req, res) {
-      var updateData = req.body;
-      updateData._id = new ObjectID(req.user._id);
+    var updateData = req.body;
+    updateData._id = new ObjectID(req.user._id);
 
-      db.collection('user').findAndModify(
-        {_id: updateData._id},
-        [],
-        {$unset: {deviceToken: "", deviceRegistered: ""}},
-        {new: true},
-        function (err, doc) {
-          if (err) throw err;
-        });
-      req.logout();
-      return res.status(200).json({success:true});
-    };
+    db.collection('users').findAndModify(
+      {_id: updateData._id},
+      [],
+      {$unset: {deviceToken: "", deviceRegistered: ""}},
+      {new: true},
+      function (err, doc) {
+        if (err) throw err;
+      });
+    req.logout();
+    return res.status(200).json({success:true});
+  };
 };
 
 exports.signupUser = function (req, res, next) {
@@ -247,7 +204,7 @@ exports.signupUser = function (req, res, next) {
 
 exports.getUsers = function (db) {
   return function (req, res) {
-    db.collection('user').find({}, {"local.hashedPassword": 0, "local.salt": 0}).toArray(function (err, collection) {
+    db.collection('users').find({}, {"local.hashedPassword": 0, "local.salt": 0}).toArray(function (err, collection) {
       res.send(collection);
     })
   }
@@ -263,15 +220,10 @@ exports.getGroups = function (db) {
       query._id = new ObjectID(req.user.groupID[0]);
     }
 
-    db.collection('groups').find(query).toArray(function (err, collection) {
-      if (req.user.roles.indexOf('teacher') > -1 && collection.length > 0) {
-        db.collection('groups').find({kindergarten: collection[0].kindergarten}).toArray(function (err, docs) {
-          res.send(docs);
-        })
-      } else {
-        res.send(collection);
-      }
-    })
+    db.collection('groups').find(query)
+    .toArray(function (err, collection) {
+      res.send(collection);
+    });
   }
 };
 
@@ -337,18 +289,14 @@ exports.getStudents = function (db) {
 exports.getParents = function (db) {
 
   return function (req, res) {
-    var query = {};
-    var parents = new Array();
-
     query = {$and: [
       {groupID: {$elemMatch: {$in: req.user.groupID}}},
       {roles: {$elemMatch: {$in: [req.query.role]}}}
-      ]};
+    ]};
 
-    db.collection('user').find(query, {_id: 1, fullName: 1, profilePicture: 1}).toArray(function (err, collection) {
+    db.collection('users').find(query, {_id: 1, fullName: 1, profilePicture: 1}).toArray(function (err, collection) {
       if (err) throw err;
       if (collection) {
-        console.log(collection);
         res.send(collection);
       }
     });
@@ -369,7 +317,6 @@ exports.getMessages = function (db) {
     }
 
     if (req.user.roles.indexOf('teacher') > -1) {
-      console.log(req.user.groupID);
       query = {
         $or: [
           //{receivers: {$in: req.user.roles}, toGroup: req.user.groupID.toHexString()},
@@ -390,32 +337,32 @@ exports.getMessages = function (db) {
     }
 
     db.collection('messages').find(query)
-      .toArray(function (err, collection) {
-        if (err) throw err;
-        if (collection) {
+    .toArray(function (err, collection) {
+      if (err) throw err;
+      if (collection) {
 
-          async.each(collection, function (obj, done) {
-            var objID = new ObjectID(obj.sender);
-            var index = collection.indexOf(obj);
-            db.collection('user').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
-              if (err) {
-                done(err);
-              }
-              obj.senderDetails = doc;
-              collection[index].senderDetails = doc[0];
-              done(); //important: have to call the callback function done() [or callback()] when
-            })
-          }, function (err) {
+        async.each(collection, function (obj, done) {
+          var objID = new ObjectID(obj.sender);
+          var index = collection.indexOf(obj);
+          db.collection('users').find({_id: objID}, {fullName: 1}).toArray(function (err, doc) {
             if (err) {
-              throw err;
+              done(err);
             }
-            res.send(collection);
-          });
-        } else {
+            obj.senderDetails = doc;
+            collection[index].senderDetails = doc[0];
+            done(); //important: have to call the callback function done() [or callback()] when
+          })
+        }, function (err) {
+          if (err) {
+            throw err;
+          }
           res.send(collection);
-        }
-        //res.send(collection);
-      });
+        });
+      } else {
+        res.send(collection);
+      }
+      //res.send(collection);
+    });
 
   }
 };
@@ -427,7 +374,7 @@ exports.getChatMessages = function (db) {
     //req.user._id.toHexString() => need to use toHexString because save as toHexString in parentCtrServer
     //db.collection('messages').find({ $or: [ {receivers: {$in: req.user.roles}}, {receivers: {$in: req.user.myChildren}},
     //{receivers: req.user._id.toHexString()}]})
-    var myChildren = new Array();
+    var myChildren = [];
     if (!!req.user.myChildren) {
       myChildren = req.user.myChildren;
     }
@@ -455,123 +402,123 @@ exports.getChatMessages = function (db) {
       };
     }
     db.collection('messages').find(query)
-      .toArray(function (err, collection) {
-        if (err) throw err;
+    .toArray(function (err, collection) {
+      if (err) throw err;
 
-        if (collection) {
-          async.each(collection, function (obj, done) {
-            var objID = new ObjectID(obj.sender);
-            var index = collection.indexOf(obj);
-            var error = null;
+      if (collection) {
+        async.each(collection, function (obj, done) {
+          var objID = new ObjectID(obj.sender);
+          var index = collection.indexOf(obj);
+          var error = null;
 
-            db.collection('user').find({_id: objID}, {fullName: 1, roles: 1}).toArray(function (err, doc) {
-              if (err){
-                done(err);
+          db.collection('users').find({_id: objID}, {fullName: 1, roles: 1}).toArray(function (err, doc) {
+            if (err){
+              done(err);
+            }
+
+            obj.senderDetails = doc;
+            collection[index].senderDetails = doc[0];
+
+            if (!obj.contactDetails || !obj.contactDetails.name || typeof(obj.contactDetails) == 'undefined') {
+              if (!obj.contactDetails) {
+                obj.contactDetails = {};
               }
 
-              obj.senderDetails = doc;
-              collection[index].senderDetails = doc[0];   
-              
-              if (!obj.contactDetails || !obj.contactDetails.name || typeof(obj.contactDetails) == 'undefined') {    
-                if (!obj.contactDetails) {
-                  obj.contactDetails = {};
-                }    
+              if ("" + obj.sender == "" + req.user._id) {
+                if (obj.toGroup && obj.toGroup.length > 0) {
+                  obj.contactDetails.id = obj.toGroup[0];
+                  obj.contactDetails.type = "group";
+                  var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
 
-                if ("" + obj.sender == "" + req.user._id) {
-                  if (obj.toGroup && obj.toGroup.length > 0) {
-                    obj.contactDetails.id = obj.toGroup[0];
-                    obj.contactDetails.type = "group";
-                    var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
+                  db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
+                    if (err){
+                      done(err);
+                    }
 
-                    db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
-                      if (err){
-                        done(err);
-                      }
+                    if (groups) {
+                      obj.contactDetails.name = _.pluck(groups, 'name').join(', ');
+                      collection[index].contactDetails = obj.contactDetails;
+                    }
 
-                      if (groups) {
-                        obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
-                        collection[index].contactDetails = obj.contactDetails;   
-                      }
-
-                      done();   
-                    });
-
-                  } else {
-                    obj.contactDetails.id = obj.receivers[0];
-                    obj.contactDetails.type = "receiver";
-                    var receiverID = new ObjectID(obj.receivers[0]);
-                    db.collection('user').findOne({_id: receiverID}, function (err, usr) {
-                      if (err || usr == null){
-
-                        done(err);
-                      } else {
-
-                         obj.contactDetails.name = usr.fullName;
-                        collection[index].contactDetails = obj.contactDetails;   
-                        done();
-
-                      }
-                    });
-                  }
-                } else {
-                  if (obj.toGroup && obj.toGroup.length > 0) {
-                    obj.contactDetails.id = obj.toGroup[0];
-                    obj.contactDetails.type = "group";
-                    var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
-
-                    db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
-                      if (err){
-                        done(err);
-                      }
-
-                      if (groups) {
-                        obj.contactDetails.name = _.pluck(groups, 'name').join(', ');                      
-                        collection[index].contactDetails = obj.contactDetails;   
-                      }
-
-                      done();   
-                    });
-
-                  } else {
-                    obj.contactDetails.id = obj.sender;
-                    obj.contactDetails.type = "sender";
-                    obj.contactDetails.name = obj.senderDetails.fullName;
-                    collection[index].contactDetails = obj.contactDetails;      
                     done();
-                  }
+                  });
+
+                } else {
+                  obj.contactDetails.id = obj.receivers[0];
+                  obj.contactDetails.type = "receiver";
+                  var receiverID = new ObjectID(obj.receivers[0]);
+                  db.collection('users').findOne({_id: receiverID}, function (err, usr) {
+                    if (err || usr == null){
+
+                      done(err);
+                    } else {
+
+                      obj.contactDetails.name = usr.fullName;
+                      collection[index].contactDetails = obj.contactDetails;
+                      done();
+
+                    }
+                  });
                 }
               } else {
-                if (obj.contactDetails.id == req.user._id && obj.senderDetails) {
-                  obj.contactDetails = { id: obj.sender, name: obj.senderDetails.fullName, type: 'sender' };
-                  collection[index].contactDetails = obj.contactDetails;   
-                } else if (!obj.senderDetails) {
-                  collection[index] = null;
+                if (obj.toGroup && obj.toGroup.length > 0) {
+                  obj.contactDetails.id = obj.toGroup[0];
+                  obj.contactDetails.type = "group";
+                  var groupIds = _.map(obj.toGroup, function(grp) { return new ObjectID('' + grp); });
+
+                  db.collection('groups').find({_id: {$in: groupIds}}).toArray(function (err, groups) {
+                    if (err){
+                      done(err);
+                    }
+
+                    if (groups) {
+                      obj.contactDetails.name = _.pluck(groups, 'name').join(', ');
+                      collection[index].contactDetails = obj.contactDetails;
+                    }
+
+                    done();
+                  });
+
+                } else {
+                  obj.contactDetails.id = obj.sender;
+                  obj.contactDetails.type = "sender";
+                  obj.contactDetails.name = obj.senderDetails.fullName;
+                  collection[index].contactDetails = obj.contactDetails;
+                  done();
                 }
-
-                done();
               }
-            })
-          }, function (err) {
-            if (err) {
-              throw err;
-            }
-            if (req.user.roles.indexOf('parent') > -1) {
-              collection = collection.filter(function(item) {
-                return item && item.senderDetails && item.senderDetails != null && (item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString());
-              });
             } else {
-              collection = collection.filter(function(item) {
-                return item && item.senderDetails && item.senderDetails != null;
-              });
-            }
+              if (obj.contactDetails.id == req.user._id && obj.senderDetails) {
+                obj.contactDetails = { id: obj.sender, name: obj.senderDetails.fullName, type: 'sender' };
+                collection[index].contactDetails = obj.contactDetails;
+              } else if (!obj.senderDetails) {
+                collection[index] = null;
+              }
 
-            res.send(collection);
-          });
-        } else {
+              done();
+            }
+          })
+        }, function (err) {
+          if (err) {
+            throw err;
+          }
+          if (req.user.roles.indexOf('parent') > -1) {
+            collection = collection.filter(function(item) {
+              return item && item.senderDetails && item.senderDetails != null && (item.senderDetails.roles.indexOf('teacher') > -1 || item.senderDetails._id == req.user._id.toString());
+            });
+          } else {
+            collection = collection.filter(function(item) {
+              return item && item.senderDetails && item.senderDetails != null;
+            });
+          }
+
           res.send(collection);
-        }
-        //res.send(collection);
-      });
+        });
+      } else {
+        res.send(collection);
+      }
+      //res.send(collection);
+    });
 
   }
 };
@@ -601,7 +548,8 @@ exports.getSentMessages = function (db) {
 
 exports.getGroupMessage = function (db) {
   return function (req, res) {
-    var groupID = new ObjectID(req.user.groupID.toString());
+    // var groupID = new ObjectID(req.user.groupID.toString());
+    var groupID = new ObjectID(req.params.id.toString());
 
     db.collection('group_messages').findOne({_id: groupID}, function (err, groupMessage) {
       if (err) {
@@ -621,18 +569,18 @@ exports.getGroupMessage = function (db) {
       db.collection('group_messages').insert(groupMessage, function (err, groupMessage) {
         if (err)
           throw err;
-        
-        return res.send(groupMessage);     
+
+        return res.send(groupMessage);
       });
     });
   };
 };
 
 var sendGroupNotification = function(groupID, message, db, req, res) {
-  db.collection('user').find({groupID: groupID.toString(), roles: ['parent']}).toArray(function(err, users) {  
+  db.collection('users').find({groupID: groupID.toString(), roles: ['parent']}).toArray(function(err, users) {
     if(err) {
       return res.send(500, err);
-    } 
+    }
 
     var deviceTokenArr = _.map(users, function (user) {
       return user.deviceToken;
@@ -644,8 +592,6 @@ var sendGroupNotification = function(groupID, message, db, req, res) {
       "sound": "default"
     };
 
-    console.log("Group", notiOptions);
-
     Notification.send(deviceTokenArr, notiOptions);
 
     return res.json(message);
@@ -655,8 +601,8 @@ var sendGroupNotification = function(groupID, message, db, req, res) {
 
 exports.sendGroupMessage = function (db) {
   return function (req, res) {
-    var groupID = new ObjectID(req.user.groupID.toString());
 
+    var groupID = new ObjectID(req.body.groupID);
     var message = req.body.message;
     message._id = new ObjectID();
 
@@ -678,7 +624,7 @@ exports.getChatRooms = function (db) {
     var student_ids = new Array();
 
     if (_.isArray(req.query._id)) {
-      
+
       _.each(req.query._id, function (id) {
         if(id != "null")
           student_ids.push(new ObjectID(id));
@@ -695,13 +641,13 @@ exports.getChatRooms = function (db) {
         .findOne({_id: studentId}, function(err, student) {
           var profilePicture = student.personalInfo && student.personalInfo.profilePicture ?  student.personalInfo.profilePicture.thumb : null;
           room.child.name = student.name,
-          room.child.profilePicture = profilePicture;
+            room.child.profilePicture = profilePicture;
           done(err, room);
         })
       } else {
         done('Room with ID ' + room._id + ' does not have child ID', null);
       }
-      
+
     }
     async.waterfall([
       function(callback) {
@@ -710,7 +656,7 @@ exports.getChatRooms = function (db) {
         .sort({'child.name': 1})
         .toArray(function (err, rooms) {
           callback(null, rooms);
-        });    
+        });
       },
       function(rooms, callback) {
         async.map(rooms, appendChildInfo, function(err, _rooms) {
@@ -749,10 +695,9 @@ exports.getChatRoom = function(db) {
       var message = {};
       message._id = childId;
       message.messages = [];
-      
+
       db.collection('students').findOne({_id: childId}, function (err, child) {
         if (!child) {
-          console.log(childId);
           return res.send({success: false});
         }
 
@@ -768,16 +713,16 @@ exports.getChatRoom = function(db) {
         db.collection('messages').insert(message, function (err, chatRoom) {
           if (err)
             throw err;
-          
-          return res.send(chatRoom[0]);     
+
+          return res.send(chatRoom[0]);
         });
       });
     });
   }
-}
+};
 
 // var sendCalendarNotification = function(teacherId, parentName, message, db, res) {
-//   db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+//   db.collection('users').find({_id: {$in: userIds}}).toArray(function(err, users) {
 //     if(err) {
 //       return res.send(500, err);
 //     } 
@@ -804,10 +749,10 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
     return new ObjectID(id);
   });
 
-  db.collection('user').find({_id: {$in: userIds}}).toArray(function(err, users) {  
+  db.collection('users').find({_id: {$in: userIds}}).toArray(function(err, users) {
     if(err) {
       return res.send(500, err);
-    } 
+    }
 
     var deviceTokenArr = _.map(users, function (user) {
       return user.deviceToken;
@@ -819,8 +764,6 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
       "sound": "default"
     };
 
-    console.log(message, notiOptions);
-
     Notification.send(deviceTokenArr, notiOptions);
 
     return res.json(message);
@@ -829,7 +772,6 @@ var sendNotification = function(userIds, receiverName, message, db, res, badge) 
 }
 
 var sendPushNotification = function(message, db, req, res) {
-  console.log('message');
   if(req.user.roles.indexOf('teacher') > -1) {
 
     db.collection('messages').findOne({_id: new ObjectID(req.body._id)}, function (err, m) {
@@ -851,7 +793,7 @@ var sendPushNotification = function(message, db, req, res) {
             sendNotification(userIds, req.user.fullName, message, db, res, m.unseenByTeacher);
           }
         });
-        
+
       }
     })
   }
@@ -863,7 +805,17 @@ exports.sendMessage = function (db) {
     var message = req.body.message;
     message._id = new ObjectID();
 
-    db.collection('messages').update({_id: new ObjectID(req.body._id)}, {$addToSet: {messages: message}, $inc: {unseenByParent: req.body.unseenByParent, unseenByTeacher: req.body.unseenByTeacher}}, function (err, count) {
+    db.collection('messages').update({
+      _id: new ObjectID(req.body._id)
+    }, {
+      $addToSet: {
+        messages: message
+      },
+      $inc: {
+        unseenByParent: req.body.unseenByParent,
+        unseenByTeacher: req.body.unseenByTeacher
+      }
+    }, function (err, count) {
       if (err) {
         throw err;
       }
@@ -892,7 +844,6 @@ exports.sendReplyMessage = function (db) {
           if (count == 0) {
             console.log('update conversation ID is not successful');
           }
-          ;
         });
 
         db.collection('messages').insert(message, function (err, doc) {
@@ -919,7 +870,6 @@ exports.saveMessageTemplate = function (db) {
     var message = req.body;
     delete message.receivers;
     delete message.seenBy;
-    console.log(req.body);
     message.owner = req.user._id.toString();
     if (req.user.roles.indexOf('teacher') > -1) {
       message.groupID = req.user.groupID[0];
@@ -968,15 +918,15 @@ exports.deleteMessage = function (db) {
     message._id = new ObjectID(message._id);
 
     db.collection('messages').findOne({'_id': chatId}, function (err, chatRoom) {
-      if(message && chatRoom) {    
+      if(message && chatRoom) {
         if(message.attachment) {
           var fileKey = message.attachment.split('attachmentFiles').pop();
           var params = {
             Bucket: config.bucket,
             Delete: {
               Objects: [{
-                        Key: 'attachmentFiles' +fileKey
-                      }]
+                Key: 'attachmentFiles' +fileKey
+              }]
             }
           };
 
@@ -990,12 +940,8 @@ exports.deleteMessage = function (db) {
 
           s3.deleteObjects(params, function(err, data) {
             if (err) return console.log(err);
-
-            console.log(data.Deleted.length);
           });
         }
-
-        console.log(chatId,message);
 
         db.collection('messages').update({_id: chatId}, {$pull: {messages: message}}, function (err, result) {
           if (err) {
@@ -1006,7 +952,7 @@ exports.deleteMessage = function (db) {
           return res.send(200);
         });
       } else {
-        console.log("error delete " + message);     
+        console.log("error delete " + message);
         return res.send(500, err);
       }
     });
@@ -1018,17 +964,17 @@ exports.deleteGroupMessage = function (db) {
     var chatId = req.body.chatId  ? new ObjectID(req.body.chatId) : new ObjectID(req.query.chatId);
     var message = req.body.message;
     message._id = new ObjectID(message._id);
-    
+
     db.collection('group_messages').findOne({'_id': chatId}, function (err, chatRoom) {
-      if(message && chatRoom) {    
+      if(message && chatRoom) {
         if(message.attachment) {
           var fileKey = message.attachment.split('attachmentFiles').pop();
           var params = {
             Bucket: config.bucket,
             Delete: {
               Objects: [{
-                        Key: 'attachmentFiles' +fileKey
-                      }]
+                Key: 'attachmentFiles' +fileKey
+              }]
             }
           };
 
@@ -1042,12 +988,8 @@ exports.deleteGroupMessage = function (db) {
 
           s3.deleteObjects(params, function(err, data) {
             if (err) return console.log(err);
-
-            console.log(data.Deleted.length);
           });
         }
-
-        console.log(chatId,message);
 
         db.collection('group_messages').update({_id: chatId}, {$pull: {messages: message}}, function (err, result) {
           if (err) {
@@ -1058,7 +1000,7 @@ exports.deleteGroupMessage = function (db) {
           return res.send(200);
         });
       } else {
-        console.log("error delete " + message);     
+        console.log("error delete " + message);
         return res.send(500, err);
       }
     });
@@ -1070,13 +1012,13 @@ exports.deleteGroupConversation = function (db) {
     if (req.user.roles.indexOf('parent') > -1) {
       return res.send(500, "parent not allow to delete");
     }
-      
+
     var chatRoomId = new ObjectID(req.body._id.toString());
 
     db.collection('group_messages').findOne({_id: chatRoomId}, function (err, chatRoom) {
-      if(chatRoom && chatRoom.messages) {    
+      if(chatRoom && chatRoom.messages) {
         var success = true;
-        _.forEach(chatRoom.messages, function(message) {  
+        _.forEach(chatRoom.messages, function(message) {
           var messageID = message._id;
 
           if(message.attachment) {
@@ -1085,8 +1027,8 @@ exports.deleteGroupConversation = function (db) {
               Bucket: config.bucket,
               Delete: {
                 Objects: [{
-                          Key: 'attachmentFiles' +fileKey
-                        }]
+                  Key: 'attachmentFiles' +fileKey
+                }]
               }
             };
 
@@ -1119,7 +1061,7 @@ exports.deleteGroupConversation = function (db) {
           res.send(500, {success: false});
         }
       } else {
-        console.log("error delete converstaion with + " + chatRoomId);     
+        console.log("error delete converstaion with + " + chatRoomId);
         res.send(500, err);
       }
     });
@@ -1130,13 +1072,13 @@ exports.deleteConversation = function (db) {
     if (req.user.roles.indexOf('parent') > -1) {
       return res.send(500, "parent not allow to delete");
     }
-      
+
     var chatRoomId = new ObjectID(req.body._id.toString());
 
     db.collection('messages').findOne({_id: chatRoomId}, function (err, chatRoom) {
-      if(chatRoom && chatRoom.messages) {    
+      if(chatRoom && chatRoom.messages) {
         var success = true;
-        _.forEach(chatRoom.messages, function(message) {  
+        _.forEach(chatRoom.messages, function(message) {
           var messageID = message._id;
 
           if(message.attachment) {
@@ -1145,8 +1087,8 @@ exports.deleteConversation = function (db) {
               Bucket: config.bucket,
               Delete: {
                 Objects: [{
-                          Key: 'attachmentFiles' +fileKey
-                        }]
+                  Key: 'attachmentFiles' +fileKey
+                }]
               }
             };
 
@@ -1179,7 +1121,7 @@ exports.deleteConversation = function (db) {
           res.send(500, {success: false});
         }
       } else {
-        console.log("error delete converstaion with + " + chatRoomId);     
+        console.log("error delete converstaion with + " + chatRoomId);
         res.send(500, err);
       }
     });
@@ -1220,13 +1162,13 @@ exports.updateGroupMessage = function (db) {
 
     if (req.user.roles.indexOf('parent') > -1) {
       updateID = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
-    
+
 
       db.collection('group_messages').findOne({_id: objID}, function (err, group_message) {
         if (err)
-            throw err;
+          throw err;
 
-        var last_group_message_id = group_message.messages ? group_message.messages[group_message.messages.length - 1]._id : null;
+        var last_group_message_id = group_message.messages && group_message.messages.length > 0 ? group_message.messages[group_message.messages.length - 1]._id : null;
 
         var seenBy = { userID: updateID, last_group_message_id: last_group_message_id};
 
@@ -1244,7 +1186,7 @@ exports.updateGroupMessage = function (db) {
           criteria = {_id: objID};
           updateCondition = {$addToSet: {seenBy: seenBy}};
         }
-          
+
         db.collection('group_messages').update(criteria, updateCondition, function (err, numOfDoc) {
           if (err)
             return res.send(err.toString());
@@ -1265,7 +1207,9 @@ exports.updateGroupMessage = function (db) {
 
 exports.getEvents = function (db) {
   return function (req, res) {
-    var condition = [{groupID: {$in: req.user.groupID}}];
+    //TODO: security: teacher can fetch event of other groups if she knows the group id
+    var groupID = req.params.groupID;
+    var condition = [{groupID: groupID}];
     var parentId = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
     var requirePublished = false;
     if (req.user.roles.indexOf('parent') > -1) {
@@ -1284,9 +1228,6 @@ exports.getEvents = function (db) {
     db.collection('events').find(query).toArray(function (err, collection) {
       if (err)
         throw err;
-
-      // console.log(query);
-      // console.log(collection);
 
       collection = _.reject(collection, function (event) {
         if(event.endAt && new Date(event.endAt) < new Date()){
@@ -1317,7 +1258,7 @@ exports.getEvents = function (db) {
 
               isDecline = true;
               return
-            }      
+            }
           }
         });
 
@@ -1326,9 +1267,13 @@ exports.getEvents = function (db) {
         }
 
         if (req.user.roles.indexOf('teacher') > -1) isInvitee = true;
-        
+
         if (req.user.roles.indexOf('parent') > -1) {
-          if (event.isPublished && !event.selectAllStudent && (event.invitees == null || event.invitees.length == 0) && (req.user.myChildren == null || req.user.myChildren.length == 0)) {
+          if (event.isPublished &&
+            !event.selectAllStudent &&
+            (event.invitees == null || event.invitees.length == 0) &&
+            (req.user.myChildren == null || req.user.myChildren.length == 0)
+          ) {
             return true;
           }
         }
@@ -1336,7 +1281,6 @@ exports.getEvents = function (db) {
         return isDecline || (!isInvitee && (event.isPublished && !event.selectAllStudent));
       });
 
-      // console.log(collection);
       res.send(collection);
     })
   }
@@ -1345,16 +1289,27 @@ exports.getEvents = function (db) {
 exports.getInvitations = function (db) {
   return function (req, res) {
     var query = {};
+    var groupID = req.params.groupID;
 
-    var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
+    // var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
 
     if (req.user.roles.indexOf('parent') > -1) {
       query = {$or: [
-                    { invitees: { $elemMatch: { parent_id: req.user._id.toString() } } },
-                    { selectAllStudent: true, groupID: req.user.groupID[0] }
-                  ]};
+        {
+          invitees: {
+            $elemMatch:
+              {
+                parent_id: req.user._id.toString()
+              }
+          }
+        },
+        {
+          selectAllStudent: true, groupID: req.user.groupID[0]
+        }
+      ]};
     } else {
-      query = { 'user._id': userid };
+      // query = { 'user._id': userid };
+      query = {'groupID': groupID}
     }
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
@@ -1362,7 +1317,7 @@ exports.getInvitations = function (db) {
         throw err;
 
       res.send(collection);
-    })
+    });
   }
 };
 
@@ -1374,7 +1329,7 @@ exports.acceptEvent = function(db) {
 
     db.collection('events').findOne({_id: eventid}, function (err, event) {
       if (err)
-          throw err;
+        throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(event.invitees, function(invitee) {
         if(invitee.parent_id == req.user._id) {
@@ -1383,7 +1338,7 @@ exports.acceptEvent = function(db) {
             result.error = "already accepted invitation.";
           }
 
-          invitee.meetingAt = event.start;          
+          invitee.meetingAt = event.start;
         }
       });
 
@@ -1398,7 +1353,7 @@ exports.acceptEvent = function(db) {
 
         return res.json({success: true});
       })
-      
+
     });
   }
 
@@ -1423,14 +1378,14 @@ exports.declineInvitation = function(db) {
 
     db.collection('invitations').findOne({_id: invitationid}, function (err, invitation) {
       if (err)
-          throw err;
+        throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(invitation.invitees, function(invitee) {
         if(invitee.parent_id == req.user._id) {
           invitee.parent_name = req.user.fullName;
           invitee.email = req.user.local.email;
           invitee.decline = new Date();
-          delete invitee.meetingAt;          
+          delete invitee.meetingAt;
         }
       });
 
@@ -1453,14 +1408,14 @@ exports.declineEvent = function(db) {
 
     db.collection('events').findOne({_id: eventid}, function (err, event) {
       if (err)
-          throw err;
+        throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(event.invitees, function(invitee) {
         if(invitee.parent_id == req.user._id.toString()) {
           invitee.acceptedBy = req.user.fullName;
           invitee.email = req.user.local.email;
           invitee.decline = new Date();
-          delete invitee.meetingAt;          
+          delete invitee.meetingAt;
         }
       });
 
@@ -1484,7 +1439,7 @@ exports.acceptEventInvitation = function(db) {
 
     db.collection('invitations').findOne({_id: invitationid}, function (err, invitation) {
       if (err)
-          throw err;
+        throw err;
       // TO-DO update invitation invitees and available time
       _.forEach(invitation.invitees, function(invitee) {
         if(invitee.parent_id == req.user._id.toString()) {
@@ -1493,7 +1448,7 @@ exports.acceptEventInvitation = function(db) {
             result.error = "already accepted invitation.";
           }
 
-          invitee.meetingAt = req.body.data.meetingAt;          
+          invitee.meetingAt = req.body.data.meetingAt;
         }
       });
 
@@ -1510,7 +1465,7 @@ exports.acceptEventInvitation = function(db) {
             result.error = "time not available.";
           }
 
-          available.available = false;  
+          available.available = false;
         }
       });
 
@@ -1528,12 +1483,12 @@ exports.acceptEventInvitation = function(db) {
             if(item.parent_id == req.user._id.toString()) {
               item.meetingAt = req.body.data.meetingAt;
               return true;
-            } 
+            }
 
             return false;
           });
 
-          var event = {} 
+          var event = {}
           event.groupID = invitation.groupID;
           event.title = invitation.title;
           event.start = new Date(req.body.data.meetingAt);
@@ -1572,10 +1527,9 @@ exports.acceptEventInvitation = function(db) {
 exports.saveEvent = function (db) {
   return function (req, res) {
     var event = req.body.data;
-    
-    /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
-     * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
-    event.groupID = req.user.groupID[0];
+    var groupID = req.params.groupID;
+
+    event.groupID = groupID;
     delete event.startDate;
     delete event.startTime;
     delete event.endDate;
@@ -1602,7 +1556,7 @@ exports.saveEvent = function (db) {
 
       if (event.invitees && event.invitees.length > 0) {
         _.forEach(event.invitees, function(invite) {
-          
+
         });
       }
 
@@ -1615,10 +1569,11 @@ exports.saveEvent = function (db) {
 exports.saveEventInvitation = function (db) {
   return function (req, res) {
     var invitation = req.body.data;
-    
+    var groupID = req.params.groupID;
+
     /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
-    invitation.groupID = req.user.groupID[0];
+    invitation.groupID = groupID;
 
     var userid = req.user._id instanceof ObjectID ? req.user._id : new ObjectID(req.user._id);
 
@@ -1651,14 +1606,13 @@ exports.uploadFile = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      var grid = new Grid(db, 'fs');
       if(!files.myFile) {
-        return res.status(400).send('No file uploaded.'); 
+        return res.status(400).send('No file uploaded.');
       }
 
       var file = files.myFile[0];
 
-       /*****************/
+      /*****************/
       /* using file system */
       var contentType = file.headers['content-type'];
       var tmpPath = file.path;
@@ -1668,13 +1622,11 @@ exports.uploadFile = function (db) {
       var fileName = uuid.v4() + extension;
       var destPath = rootPath + 'images/' + fileName;
       var thumbnailPath = rootPath + 'images/' + 'thumb-' + fileName;
-      // console.log(destPath, thumbnailPath, contentType);
       // Server side file type checker.
       if (contentType !== 'image/png' && contentType !== 'image/jpeg' && contentType !== 'image/png|jpeg') {
         fs.unlink(tmpPath);
         return res.status(400).send('Unsupported file type.');
-      }
-      ;
+      };
 
       var folder = uuid.v4();
       var s3 = new AWS.S3({
@@ -1710,42 +1662,42 @@ exports.uploadFile = function (db) {
 
         function uploadToS3() {
 
-          
+
           image.scale(ratio, ratio, function (err, newImage) {
 
             newImage.toBuffer('jpg', function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
-                .on('httpUploadProgress', function (evt) {
-                  console.log(evt);
-                })
-                .send(function (err, data) {
-                  console.log(err, data);
-                  var originImg = data.Location;
-                  newImage.batch()
-                    .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
-                    .resize(150, 150)
-                    .toBuffer('jpg', function (err, buffer) {
-                      params.Key = 'profilePic/' + folder + '/' + 'thumb-' + fileName;
-                      params.Body = buffer;
-                      s3.upload(params)
-                        .on('httpUploadProgress', function (evt) {
-                          console.log(evt);
-                        })
-                        .send(function (err, data) {
-                          console.log(err, data);
-                          var objID = new ObjectID(dataFields.profileOwner);
-                          var newPic = {thumb: data.Location, original: originImg};
-                          db.collection('students').update({_id: objID}, {$set: {'personalInfo.profilePicture': newPic}}, function (err, count) {
-                            if (err) {
-                              throw err;
-                            }
-                            ;
-                            return res.json(newPic);
-                          })
-                        });
-                    });
+              .on('httpUploadProgress', function (evt) {
+                console.log(evt);
+              })
+              .send(function (err, data) {
+                console.log(err, data);
+                var originImg = data.Location;
+                newImage.batch()
+                .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
+                .resize(150, 150)
+                .toBuffer('jpg', function (err, buffer) {
+                  params.Key = 'profilePic/' + folder + '/' + 'thumb-' + fileName;
+                  params.Body = buffer;
+                  s3.upload(params)
+                  .on('httpUploadProgress', function (evt) {
+                    console.log(evt);
+                  })
+                  .send(function (err, data) {
+                    console.log(err, data);
+                    var objID = new ObjectID(dataFields.profileOwner);
+                    var newPic = {thumb: data.Location, original: originImg};
+                    db.collection('students').update({_id: objID}, {$set: {'personalInfo.profilePicture': newPic}}, function (err, count) {
+                      if (err) {
+                        throw err;
+                      }
+                      ;
+                      return res.json(newPic);
+                    })
+                  });
                 });
+              });
             });
           })
         }
@@ -1768,7 +1720,6 @@ exports.uploadFile = function (db) {
 
 
 function sendAttachmentMessage(db, req, res, data) {
-  console.log(data);
 
   var message = data;
   var chatId = data._id;
@@ -1779,19 +1730,19 @@ function sendAttachmentMessage(db, req, res, data) {
   delete message.unseenByParent;
   delete message.unseenByTeacher;
 
-  db.collection('messages').update({_id: new ObjectID(chatId)}, 
-    { $addToSet: {messages: data}, 
-      $set: {unseenByParent: unseenByParent, unseenByTeacher: unseenByTeacher}}, 
+  db.collection('messages').update({_id: new ObjectID(chatId)},
+    { $addToSet: {messages: data},
+      $set: {unseenByParent: unseenByParent, unseenByTeacher: unseenByTeacher}},
     function (err, count) {
-    if (err) {
-      throw err;
-    }
-    if (count == 0) {
-      return res.json({success: false});
-    } else {
-      sendPushNotification(message, db, req, res);
-    }
-  });
+      if (err) {
+        throw err;
+      }
+      if (count == 0) {
+        return res.json({success: false});
+      } else {
+        sendPushNotification(message, db, req, res);
+      }
+    });
 }
 
 exports.uploadAttachment = function (db) {
@@ -1799,7 +1750,6 @@ exports.uploadAttachment = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      var grid = new Grid(db, 'fs');
       var file = files.attachmentFile[0];
       /* using file system */
       var contentType = file.headers['content-type'];
@@ -1844,21 +1794,21 @@ exports.uploadAttachment = function (db) {
           if (imgWidth > biggestWidth) {
             ratio = biggestWidth / imgWidth;
           }
-          
+
           image.scale(ratio, ratio, function (err, newImage) {
 
             newImage.toBuffer('jpg', function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
-                .on('httpUploadProgress', function (evt) {
-                  // console.log(evt);
-                })
-                .send(function (err, data) {
-                  var attachmentLocation = data.Location;
-                  dataFields.attachment = attachmentLocation;
-                  dataFields.attachment_type = "image";
-                  sendAttachmentMessage(db, req, res, dataFields);
-                });
+              .on('httpUploadProgress', function (evt) {
+                // console.log(evt);
+              })
+              .send(function (err, data) {
+                var attachmentLocation = data.Location;
+                dataFields.attachment = attachmentLocation;
+                dataFields.attachment_type = "image";
+                sendAttachmentMessage(db, req, res, dataFields);
+              });
             });
           })
         });
@@ -1866,20 +1816,20 @@ exports.uploadAttachment = function (db) {
         fs.readFile(file.path, function (err, data) {
           console.log(err);
           if (err) throw err; // Something went wrong!
-          
+
           var dataFields = JSON.parse(fields.data[0]);
           params.Body = data;
           s3.upload(params)
-            .on('httpUploadProgress', function (evt) {
-              console.log(evt);
-            })
-            .send(function (err, data) {
-              console.log(err, data);
-              var attachmentLocation = data.Location;
-              dataFields.attachment = attachmentLocation;
-              dataFields.attachment_type = "file";
-              sendAttachmentMessage(db, req, res, dataFields);
-            });
+          .on('httpUploadProgress', function (evt) {
+            console.log(evt);
+          })
+          .send(function (err, data) {
+            console.log(err, data);
+            var attachmentLocation = data.Location;
+            dataFields.attachment = attachmentLocation;
+            dataFields.attachment_type = "file";
+            sendAttachmentMessage(db, req, res, dataFields);
+          });
         });
       }
     });
@@ -1889,26 +1839,25 @@ exports.uploadAttachment = function (db) {
 
 
 function sendGroupAttachmentMessage(db, req, res, data) {
-  console.log(data);
 
   var message = data;
   var chatId = data._id;
   message._id = new ObjectID();
   req.body._id = data._id;
 
-  db.collection('group_messages').update({_id: new ObjectID(chatId)}, 
-    { $addToSet: {messages: data}, 
-      $set: {seenBy: []}}, 
+  db.collection('group_messages').update({_id: new ObjectID(chatId)},
+    { $addToSet: {messages: data},
+      $set: {seenBy: []}},
     function (err, count) {
-    if (err) {
-      throw err;
-    }
-    if (count == 0) {
-      return res.json({success: false});
-    } else {
-      sendGroupNotification(chatId, message, db, req, res);
-    }
-  });
+      if (err) {
+        throw err;
+      }
+      if (count == 0) {
+        return res.json({success: false});
+      } else {
+        sendGroupNotification(chatId, message, db, req, res);
+      }
+    });
 }
 
 exports.uploadGroupAttachment = function (db) {
@@ -1916,7 +1865,6 @@ exports.uploadGroupAttachment = function (db) {
     var form = new multiparty.Form();
     form.parse(req, function (err, fields, files) {
 
-      var grid = new Grid(db, 'fs');
       var file = files.attachmentFile[0];
       /* using file system */
       var contentType = file.headers['content-type'];
@@ -1961,21 +1909,21 @@ exports.uploadGroupAttachment = function (db) {
           if (imgWidth > biggestWidth) {
             ratio = biggestWidth / imgWidth;
           }
-          
+
           image.scale(ratio, ratio, function (err, newImage) {
 
             newImage.toBuffer('jpg', function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
-                .on('httpUploadProgress', function (evt) {
-                  // console.log(evt);
-                })
-                .send(function (err, data) {
-                  var attachmentLocation = data.Location;
-                  dataFields.attachment = attachmentLocation;
-                  dataFields.attachment_type = "image";
-                  sendGroupAttachmentMessage(db, req, res, dataFields);
-                });
+              .on('httpUploadProgress', function (evt) {
+                // console.log(evt);
+              })
+              .send(function (err, data) {
+                var attachmentLocation = data.Location;
+                dataFields.attachment = attachmentLocation;
+                dataFields.attachment_type = "image";
+                sendGroupAttachmentMessage(db, req, res, dataFields);
+              });
             });
           })
         });
@@ -1983,20 +1931,20 @@ exports.uploadGroupAttachment = function (db) {
         fs.readFile(file.path, function (err, data) {
           console.log(err);
           if (err) throw err; // Something went wrong!
-          
+
           var dataFields = JSON.parse(fields.data[0]);
           params.Body = data;
           s3.upload(params)
-            .on('httpUploadProgress', function (evt) {
-              console.log(evt);
-            })
-            .send(function (err, data) {
-              console.log(err, data);
-              var attachmentLocation = data.Location;
-              dataFields.attachment = attachmentLocation;
-              dataFields.attachment_type = "file";
-              sendGroupAttachmentMessage(db, req, res, dataFields);
-            });
+          .on('httpUploadProgress', function (evt) {
+            console.log(evt);
+          })
+          .send(function (err, data) {
+            console.log(err, data);
+            var attachmentLocation = data.Location;
+            dataFields.attachment = attachmentLocation;
+            dataFields.attachment_type = "file";
+            sendGroupAttachmentMessage(db, req, res, dataFields);
+          });
         });
       }
     });
@@ -2040,10 +1988,10 @@ exports.retrievePassword = function (db) {
     var retrieveEmail = req.body.data;
     crypto.randomBytes(12, function (ex, buf) {
       var randomToken = buf.toString('hex');
-      db.collection('user').findAndModify(
-        {'local.email': retrieveEmail}, 
-        [], 
-        {$set: {resetPasswordToken: randomToken}}, 
+      db.collection('users').findAndModify(
+        {'local.email': retrieveEmail},
+        [],
+        {$set: {resetPasswordToken: randomToken}},
         {new: true},
         function (err, user) {
           if (err) {
@@ -2065,7 +2013,6 @@ exports.retrievePassword = function (db) {
 
             if (user.roles.indexOf('teacher') > -1) {
               db.collection('groups').findOne({_id: new ObjectID(user.groupID[0])}, function(err, group) {
-                console.log(group);
                 if(group.staffs && group.staffs.length > 0) {
                   email.addTo(group.staffs[0].email);
                 } else {
@@ -2076,7 +2023,6 @@ exports.retrievePassword = function (db) {
                   if (err) {
                     return console.error(err);
                   }
-                  console.log(json);
                 });
 
                 res.json({success: true});
@@ -2088,13 +2034,12 @@ exports.retrievePassword = function (db) {
                 if (err) {
                   return console.error(err);
                 }
-                console.log(json);
               });
 
               res.json({success: true});
             }
           }
-      });
+        });
     });
   }
 };
@@ -2105,7 +2050,7 @@ exports.resetPassword = function (db) {
     var token = req.body.token;
     var salt = encrypt.createSalt();
     var hashedPwd = encrypt.hashPwd(salt, newPassword);
-    db.collection('user').findAndModify(
+    db.collection('users').findAndModify(
       {resetPasswordToken: token},
       [],
       {$unset: {resetPasswordToken: 1}, $set: {'local.salt': salt, 'local.hashedPassword': hashedPwd}},
@@ -2114,12 +2059,11 @@ exports.resetPassword = function (db) {
         if (err) {
           throw err;
         }
-        ;
         req.login(user, function (err) {
           if (err) {
             res.send({success: false, error: err.message.toString()});
           }
-          ;
+
           res.send({
             redirect: frontendAddress + '/home',
             success: true
@@ -2141,7 +2085,6 @@ exports.deleteChildProfile = function (db) {
 
     db.collection('students').remove({_id: childID, 'hasInfo': {$exists: true}}, function (err, numOfDocs) {
       if (err) throw err;
-      console.log('alright', numOfDocs, childID);
       if (numOfDocs > 0) {
         res.json({success: true});
       } else {
@@ -2153,7 +2096,6 @@ exports.deleteChildProfile = function (db) {
 
 exports.updateUser = function (db) {
   return function (req, res) {
-    console.log(req.body);
     var updateData = req.body;
     updateData._id = new ObjectID(req.user._id);
 
@@ -2163,7 +2105,7 @@ exports.updateUser = function (db) {
     }
     ;
 
-    db.collection('user').findAndModify(
+    db.collection('users').findAndModify(
       {_id: updateData._id},
       [],
       {$set: updateData},
@@ -2197,7 +2139,6 @@ exports.sendFeedback = function (db) {
         return res.json({success: false, reason: err.toString()});
       }
       ;
-      console.log(json);
       res.json({success: true})
     });
   }
@@ -2207,7 +2148,7 @@ exports.removeUser = function (db) {
   return function (req, res) {
     var id = req.params.id.toString();
 
-    db.collection('user').findOne({_id: new ObjectID(id)}, function (err, user) {
+    db.collection('users').findOne({_id: new ObjectID(id)}, function (err, user) {
       if (user.roles.indexOf('teacher') > -1) {
         var groupID = user.groupID;
         _.each(groupID, function (group_id) {
@@ -2233,7 +2174,7 @@ exports.removeUser = function (db) {
       }
       ;
 
-      db.collection('user').remove({_id: new ObjectID(id)}, function (err, doc) {
+      db.collection('users').remove({_id: new ObjectID(id)}, function (err, doc) {
         if (err) throw err;
         res.json({success: true});
       });
@@ -2245,9 +2186,8 @@ exports.registerDevice = function (db) {
   return function (req, res) {
     var user = req.body.user;
     var token = req.body.token;
-    console.log(req.body);
-    db.collection('user').findAndModify(
-      {_id: new ObjectID(user._id)}, 
+    db.collection('users').findAndModify(
+      {_id: new ObjectID(user._id)},
       [],
       {
         $set: {
@@ -2273,14 +2213,13 @@ exports.addStaff = function (db) {
     staff.groupID = groupID;
 
     db.collection('groups').findAndModify(
-      {_id: new ObjectID(groupID)}, 
+      {_id: new ObjectID(groupID)},
       [],
       {
         $push: {staffs: staff}
       },
-      {new: true}, 
+      {new: true},
       function (err, user) {
-        console.log(user);
         if (err || !user) {
           return res.json({error: err});
         }
@@ -2297,12 +2236,12 @@ exports.removeStaff = function (db) {
     var staff = req.body.staff;
     staff.groupID = groupID;
     db.collection('groups').findAndModify(
-      {_id: new ObjectID(groupID)}, 
+      {_id: new ObjectID(groupID)},
       [],
       {
         $pull: {staffs: staff}
       },
-      {new: true}, 
+      {new: true},
       function (err, user) {
         if (err || !user) {
           return res.json({error: err});
@@ -2318,12 +2257,12 @@ exports.removeAllStaff = function (db) {
     var user = req.user;
     var groupID = req.body.groupID;
     db.collection('groups').findAndModify(
-      {_id: new ObjectID(groupID)}, 
+      {_id: new ObjectID(groupID)},
       [],
       {
         $unset: {staffs: 1}
       },
-      {new: true}, 
+      {new: true},
       function (err, user) {
         if (err || !user) {
           return res.json({error: err});
@@ -2379,7 +2318,7 @@ exports.updateInvitation = function (db) {
   return function (req, res) {
     var invitation = req.body.data;
     invitation._id = new ObjectID(invitation._id);
-    
+
     /*DO NOT save only req.user.groupID, for some reasons, query {groupID: req.user.groupID}
      * doesn't return anything, so save req.user.groupID.toString() and query {groupID: req.user.groupID.toString()}*/
     invitation.groupID = req.user.groupID[0];
@@ -2415,6 +2354,38 @@ exports.updateInvitation = function (db) {
         });
       });
 
+    });
+  }
+};
+
+exports.updateChildStatus = function(db) {
+  return function(req, res) {
+    var user = req.user;
+    var studentId = req.params.id;
+    var status = req.body.status;
+    var date = req.body.date;
+
+    var update = {
+      $set: {status: [status]}
+    };
+
+    if (status === 'checked-in') {
+      update.$set.checkedInAt = date || new Date();
+    } else if  (status === 'checked-out') {
+      update.$set.checkedOutAt = date || new Date();
+    }
+    db.collection('students').update({
+      _id: new ObjectID(studentId)
+    }, update, function(err, nModifed) {
+      if (err) {
+        throw err;
+      }
+
+      if (!nModifed) {
+        return res.sendStatus(400);
+      }
+
+      return res.sendStatus(200);
     });
   }
 };

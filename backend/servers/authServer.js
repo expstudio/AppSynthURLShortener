@@ -1,48 +1,33 @@
-var passport = require('passport');
-
-exports.authenticate = function(req, res, next) {
-	// req.body.username = req.body.username.toLowerCase();
-	console.log(req.body);
-	var auth = passport.authenticate('local', function(err, user) {
-		if (err) {
-			return next(err);
-		};
-
-		if (!user) {
-			res.send({success: false});
-		}
-
-		req.logIn(user, function(err) {
-			if (err)
-				return next(err);
-			res.send({success: true, user: user});
-		})
-	})
-
-	auth(req, res, next);
-};
 
 exports.requiresApiLogin = function(req, res, next) {
-	console.log(req);
-	if (!req.isAuthenticated()) {
-		res.status(403);
-		res.end();
-	} else {
-		next(); 
-	}
+  if (!req.user) {
+    res.status(403);
+    res.end();
+  } else {
+    next();
+  }
 };
 
 exports.requiresRole = function(role) {
-	return function(req, res, next) {
-		if (!req.isAuthenticated() || req.user.roles.indexOf(role) === -1) {
-			res.status(403);
-			res.end();
-		} else {
-			next();
-		}
-	}
-}
+  return function(req, res, next) {
+    if (!req.user || req.user.roles.indexOf(role) === -1) {
+      res.status(403);
+      res.end();
+    } else {
+      next();
+    }
+  }
+};
+
+exports.isNurseryAdmin = function(req, res, next) {
+  if (!req.user && !req.user.isNurseryAdmin) {
+    res.status(403);
+    res.end();
+  }
+
+  next();
+};
 
 exports.isAdmin = function(user) {
-	return user.roles.indexOf('admin') > -1;
+  return user.roles.indexOf('admin') > -1;
 }
