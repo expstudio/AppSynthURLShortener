@@ -2076,8 +2076,8 @@ exports.resetPassword = function (db) {
 
 exports.deleteChildProfile = function (db) {
   return function (req, res) {
-    var childID = new ObjectID(req.query._id);
-    var groupID = new ObjectID(req.query.groupID);
+    var childID = new ObjectID(req.params.id);
+    var groupID = new ObjectID(req.params.groupID);
 
     db.collection('groups').update({_id: groupID}, {$pull: {students: req.query._id}}, function (err, numOfDocs) {
       if (err) throw err;

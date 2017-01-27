@@ -17,14 +17,13 @@ function sendActivationEmail(user) {
   var lang = user.lang || 'fi';
   i18n.setLocale(lang);
 
-  if (user.roles.indexOf('teacher') > -1) {
-    notice = '<p>' + i18n.__("Please note that you will receive a separate email including your group code. With that group code parents are able to join to the group you just created.") + '</p>';
-  }
   var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: user.local.username}) + '</h3>'
   + '<h4>' + i18n.__("Welcome to the family of Tiny. Please click here to activate your account.") + '</h4>'
   + '<a href="' + url + '">' + url + '</a>'
   + '<p>' + i18n.__("You will find FAQ and more help in the app. If you have any further questions please contact us by email hello@tinyapp.biz.") + '</p>'
-  + notice;
+  + '<br/>'
+  + '<p>' + i18n.__("Kind regards,") + '</p>'
+  + '<p>' + i18n.__("TinyApp Team") + '</p>';
 
   var email = new sendgrid.Email({
     from: 'tinyapp@noreply.fi',
@@ -57,6 +56,8 @@ function sendGroupCode(user, group) {
   +   '<div>' + i18n.__("Group name: ") + group.name + '</div>'
   +   '<div>' + i18n.__("Group code: ") + group.code + '</div>'
   + '</div>'
+  + '<p>' + i18n.__("Kind regards,") + '</p>'
+  + '<p>' + i18n.__("TinyApp Team") + '</p>';
 
   var email = new sendgrid.Email({
     from: 'tinyapp@noreply.fi',
@@ -80,7 +81,7 @@ function sendWelcome(user) {
   var body = '<h3>' + i18n.__("Welcome, {{name}}", {name: user.username}) + '</h3>'
     + '<h4>' + i18n.__("Your account is activated and you can now login to our service. You will find FAQ and more help in the app. If you have any further questions please contact us by email hello@tinyapp.biz.") + '</h4>'
     + '<p>' + i18n.__("Thank you for joining in the family of TinyApp.") + '</p>'
-    + '<br/> <br/>'
+    + '<br/>'
     + '<p>' + i18n.__("Kind regards,") + '</p>'
     + '<p>' + i18n.__("TinyApp Team") + '</p>';
 
