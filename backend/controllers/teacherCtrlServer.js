@@ -231,7 +231,9 @@ exports.getMyNursery = function(db) {
   return function(req, res) {
     var user = req.user;
 
-    db.collection('nurseries').findOne({_id: new ObjectID(user.nursery)}, function(err, nursery) {
+    db.collection('nurseries').findOne(
+      {_id: new ObjectID(user.nursery)}, 
+      function(err, nursery) {
       if (err) {
         throw err;
       }
@@ -394,7 +396,7 @@ exports.acceptPendingRequest = function(db) {
     }
 
     if (!user.isNurseryAdmin) {
-      return res.status(403).send({message: 'NOT_AUTHORIZED'});
+      return res.status(401).send({message: 'NOT_AUTHORIZED'});
     }
 
     db.collection('nurseries').update({
@@ -413,7 +415,7 @@ exports.acceptPendingRequest = function(db) {
       db.collection('users').update({
         _id: new ObjectID(userId)
       }, {
-        $set: {nursery: nurseryID}
+        $set: {nursery: new ObjectID(nurseryID)}
       }, function(err, nModified) {
         if (err) {
           throw err;
