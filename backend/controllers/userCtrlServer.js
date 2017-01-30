@@ -60,7 +60,9 @@ exports.activateUser = function (db) {
     var userId = new ObjectID(req.params.userId);
     var token = req.params.token;
 
-    db.collection('users').findOne({_id: userId, 'verification.token': token}, function (err, user) {
+    db.collection('users').findOne(
+      {_id: userId, 'verification.token': token},
+      function (err, user) {
       if (err) {
         throw err;
       }
@@ -86,9 +88,17 @@ exports.activateUser = function (db) {
             return res.redirect(frontendAddress + '/login');
           });
         } else {
-          db.collection('nurseries').findOne({
-            pendings: userId
-          }, function(err, nursery) {
+          var query;
+          if (!user.nursery) {
+            query = {
+              pendings: userId
+            };
+          } else {
+            query = {
+              _id: user.nursery
+            };
+          }
+          db.collection('nurseries').findOne(query, function(err, nursery) {
             if (err) {
               throw err;
             }
