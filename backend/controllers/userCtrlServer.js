@@ -2075,7 +2075,7 @@ exports.resetPassword = function (db) {
           }
 
           res.send({
-            redirect: frontendAddress + '/home',
+            redirect: frontendAddress + '/welcome',
             success: true
           });
         })
