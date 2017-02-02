@@ -2071,10 +2071,10 @@ exports.resetPassword = function (db) {
         }
         req.login(user, function (err) {
           if (err) {
-            res.send({success: false, error: err.message.toString()});
+            return res.send({success: false, error: err.message.toString()});
           }
 
-          res.send({
+          return res.send({
             redirect: frontendAddress + '/welcome',
             success: true
           });
