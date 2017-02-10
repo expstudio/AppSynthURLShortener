@@ -77,7 +77,7 @@ module.exports = function (db, passport) {
               return done(err);
             if (user) { /* if user exists => username is in use*/
               var exist_err = new Error('Username or email is in use');
-              return done(exist_err.toString());
+              return done(exist_err);
             } else { /* user doesn't exist, create new user*/
 
               if (['teacher', 'parent'].indexOf(req.body.role) === -1) {
