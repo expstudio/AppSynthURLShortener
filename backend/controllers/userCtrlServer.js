@@ -13,7 +13,7 @@ var rootPath = path.normalize(__dirname + '/../../config/');
 var uuid = require('node-uuid');
 var encrypt = require('../services/encrypt.js');
 var crypto = require('crypto');
-var lwip = require('lwip');
+var Jimp = require('jimp');
 var AWS = require('aws-sdk');
 var config = require(rootPath + 'aws.json');
 var zlib = require('zlib');
@@ -1655,7 +1655,7 @@ exports.uploadFile = function (db) {
       var body = fs.createReadStream(tmpPath);
       var outputpath = tmpPath.replace('.', '.rotated.');
 
-      lwip.open(tmpPath, function (err, image) {
+      Jimp.read(tmpPath, function (err, image) {
         console.log(err);
         if(!image) {
           return res.json(err);
@@ -1665,17 +1665,15 @@ exports.uploadFile = function (db) {
         var coords = dataFields.cropCoords;
         var ratio = 1;
         var biggestWidth = 500;
-        var imgWidth = image.width();
+        var imgWidth = image.bitmap.width;
         if (imgWidth > biggestWidth) {
           ratio = biggestWidth / imgWidth;
         }
 
         function uploadToS3() {
+          image.scale(ratio, function (err, newImage) {
 
-
-          image.scale(ratio, ratio, function (err, newImage) {
-
-            newImage.toBuffer('jpg', function (err, buffer) {
+            newImage.getBuffer(Jimp.MIME_JPEG, function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
               .on('httpUploadProgress', function (evt) {
@@ -1684,10 +1682,10 @@ exports.uploadFile = function (db) {
               .send(function (err, data) {
                 console.log(err, data);
                 var originImg = data.Location;
-                newImage.batch()
+                newImage
                 .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
                 .resize(150, 150)
-                .toBuffer('jpg', function (err, buffer) {
+                .getBuffer(Jimp.MIME_JPEG, function (err, buffer) {
                   params.Key = 'profilePic/' + folder + '/' + 'thumb-' + fileName;
                   params.Body = buffer;
                   s3.upload(params)
@@ -1702,7 +1700,7 @@ exports.uploadFile = function (db) {
                       if (err) {
                         throw err;
                       }
-                      ;
+
                       return res.json(newPic);
                     })
                   });
@@ -1794,20 +1792,20 @@ exports.uploadAttachment = function (db) {
       var body = fs.createReadStream(tmpPath);
 
       if (contentType == 'image/png' || contentType == 'image/jpeg' || contentType == 'image/gif' ||  contentType == 'image/jpg') {
-        lwip.open(tmpPath, function (err, image) {
+        Jimp.read(tmpPath, function (err, image) {
 
           var dataFields = JSON.parse(fields.data[0]);
           var coords = dataFields.cropCoords;
           var ratio = 1;
           var biggestWidth = 500;
-          var imgWidth = image.width();
+          var imgWidth = image.bitmap.width;
           if (imgWidth > biggestWidth) {
             ratio = biggestWidth / imgWidth;
           }
 
-          image.scale(ratio, ratio, function (err, newImage) {
+          image.scale(ratio, function (err, newImage) {
 
-            newImage.toBuffer('jpg', function (err, buffer) {
+            newImage.getBuffer(Jimp.AUTO, function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
               .on('httpUploadProgress', function (evt) {
@@ -1909,20 +1907,20 @@ exports.uploadGroupAttachment = function (db) {
       var body = fs.createReadStream(tmpPath);
 
       if (contentType == 'image/png' || contentType == 'image/jpeg' || contentType == 'image/gif' ||  contentType == 'image/jpg') {
-        lwip.open(tmpPath, function (err, image) {
+        Jimp.read(tmpPath, function (err, image) {
 
           var dataFields = JSON.parse(fields.data[0]);
           var coords = dataFields.cropCoords;
           var ratio = 1;
           var biggestWidth = 500;
-          var imgWidth = image.width();
+          var imgWidth = image.bitmap.width;
           if (imgWidth > biggestWidth) {
             ratio = biggestWidth / imgWidth;
           }
 
-          image.scale(ratio, ratio, function (err, newImage) {
+          image.scale(ratio, function (err, newImage) {
 
-            newImage.toBuffer('jpg', function (err, buffer) {
+            newImage.getBuffer(Jimp.AUTO, function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
               .on('httpUploadProgress', function (evt) {
