@@ -4,7 +4,7 @@ var ObjectID = require('mongodb').ObjectID;
 var passport = require('passport');
 var _ = require('underscore');
 var mv = require('mv');
-var sendgrid = require('sendgrid')('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');
+var sendgrid = require('sendgrid')(require('../env').SENDGRID);
 var multiparty = require('multiparty');
 var util = require('util');
 var fs = require('fs');
@@ -1980,20 +1980,7 @@ exports.subscribe = function (db) {
       db.collection('subscription').update({email: req.body.data}, {$set: {email: req.body.data}}, {upsert: true}, function (err, count, status) {
         if (err) throw err;
         if (!status.updatedExisting) {
-          var body = '<h4>You have new subscriber </h4>'
-            + '<p>Email: ' + req.body.data + '</p>';
-          var email = new sendgrid.Email({
-            from: 'tinyapp@noreply.fi',
-            subject: 'New subscriber',
-            html: body
-          });
-          email.addTo('hello@tinyapp.biz');
-
-          sendgrid.send(email, function (err, json) {
-            if (err) {
-              return console.error(err);
-            }
-          });
+          EmailSvc.sendNewSubscriber(req.body.data);
           res.json({success: true});
         } else {
           res.json({success: false, error: 'You are already a subscriber.'})

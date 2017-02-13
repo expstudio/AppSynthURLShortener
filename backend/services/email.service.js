@@ -1,6 +1,7 @@
 var Promise = require('bluebird');
-var sendgrid = require('sendgrid')('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');
+// var sendgrid = require('sendgrid')('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');
 var config = require('../env');
+var sendgrid = require('sendgrid')(config.SENDGRID);
 var i18n = require('i18n');
 
 

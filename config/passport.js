@@ -1,7 +1,6 @@
 // local authentication
 // For more details go to https://github.com/jaredhanson/passport-local
 var LocalStrategy = require('passport-local').Strategy;
-var sendgrid = require('sendgrid')('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');
 var encrypt = require('../backend/services/encrypt.js');
 var crypto = require('crypto');
 var i18n = require("i18n");
