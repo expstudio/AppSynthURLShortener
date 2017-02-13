@@ -154,25 +154,39 @@ exports.activateUser = function (db) {
 };
 
 exports.loginUser = function(db) {
-  return function(req, res) {
+  return function(req, res, next) {
+    passport.authenticate('local', function(err, _user, info) {
 
-    var user = req.user;
-    var redirect = '/home';
-    if (user.roles.indexOf('parent') > -1) {
-      redirect = '/calendar-events';
-    }
+      if (err) {
+        return next(err);
+      }
+      if (!_user) {
+        return res.status(401).json(info);
+      }
 
-    if (req.user && !req.user.myChildren) {
-      req.user.myChildren = [];
-    }
+      req.logIn(_user, function(err) {
+        if (err) {
+          return next(err);
+        }
 
-    var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+        var redirect = '/home';
+        if (req.user.roles.indexOf('parent') > -1) {
+          redirect = '/calendar-events';
+        }
 
-    res.send({
-      redirect: redirect,
-      user: req.user,
-      token: token
-    });
+        if (req.user && !req.user.myChildren) {
+          req.user.myChildren = [];
+        }
+
+        var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+
+        return res.send({
+          redirect: redirect,
+          user: req.user,
+          token: token
+        });
+      });
+    })(req, res, next);
   }
 };
 

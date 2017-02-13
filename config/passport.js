@@ -48,13 +48,13 @@ module.exports = function (db, passport) {
         if (err)
           return done(err);
         if (!user) {
-          return done('INVALID_CREDENTIALS');
+          return done(null, false, { message: 'INVALID_CREDENTIALS' });
         }
         if (user.verification) {
-          return done('USER_NOT_VERIFIED');
+          return done(null, false, { message: 'USER_NOT_VERIFIED' });
         }
         if (user.local.hashedPassword != encrypt.hashPwd(user.local.salt, password)) {
-          return done('INVALID_CREDENTIALS');
+          return done(null, false, { message: 'INVALID_CREDENTIALS' });
         } else if (user) {
           return done(null, user);
         }
