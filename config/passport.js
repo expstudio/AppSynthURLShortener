@@ -76,11 +76,11 @@ module.exports = function (db, passport) {
               return done(err);
             if (user) { /* if user exists => username is in use*/
               var exist_err = new Error('Username or email is in use');
-              return done(exist_err);
+              return done(null, false, { message: 'USERNAME_EMAIL_IN_USE' });
             } else { /* user doesn't exist, create new user*/
 
               if (['teacher', 'parent'].indexOf(req.body.role) === -1) {
-                return done('Role is not allowed');
+                return done(null, false, { message: 'INVALID_ROLE' });
               }
 
               var userObj = {local: {}};
@@ -108,7 +108,7 @@ module.exports = function (db, passport) {
                   }
 
                   if (!nursery) {
-                    return done('Nursery not found');
+                    return done(null, false, { message: 'NURSERY_NOT_FOUND' });
                   }
 
                   saveUser(req, userObj, function(err, savedUser) {
@@ -126,7 +126,7 @@ module.exports = function (db, passport) {
                         throw err;
                       }
                       if (!nModified) {
-                        return done('ADD_PENDING_USERS_FAILED');
+                        return done(null, false, { message: 'ADD_PENDING_USERS_FAILED' });
                       }
 
                       done(null, savedUser);
@@ -138,7 +138,7 @@ module.exports = function (db, passport) {
 
               } else { /* if groupcode is entered => join existing group */
                 if (!req.body.groupCode) {
-                  return done('GROUP_CODE_REQUIRED');
+                  return done(null, false, { message: 'GROUP_CODE_REQUIRED' });
                 }
 
                 db.collection('groups').findOne({
@@ -148,11 +148,10 @@ module.exports = function (db, passport) {
                   if (err)
                     return done(err);
                   if (!savedGroup) {
-                    return done('GROUP_CODE_NOT_FOUND');
+                    return done(null, false, { message: 'GROUP_CODE_NOT_FOUND' });
                   } else {
                     userObj.groupID = new Array(savedGroup._id.toString());
-
-                    saveUser(req, userObj, done);
+                    return saveUser(req, userObj, done);
                   }
                 })
               }

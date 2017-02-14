@@ -219,7 +219,7 @@ exports.signupUser = function (req, res, next) {
     }
 
     if (!user) {
-      return res.status(400).json({success: false});
+      return res.status(400).json(info);
     }
     return res.send({user: user, redirect: '/inform'});
 
