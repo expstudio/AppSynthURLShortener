@@ -4,7 +4,7 @@ var ObjectID = require('mongodb').ObjectID;
 var passport = require('passport');
 var _ = require('underscore');
 var mv = require('mv');
-var sendgrid = require('sendgrid')('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');
+var sendgrid = require('sendgrid')(require('../env').SENDGRID);
 var multiparty = require('multiparty');
 var util = require('util');
 var fs = require('fs');
@@ -13,7 +13,7 @@ var rootPath = path.normalize(__dirname + '/../../config/');
 var uuid = require('node-uuid');
 var encrypt = require('../services/encrypt.js');
 var crypto = require('crypto');
-var lwip = require('lwip');
+var Jimp = require('jimp');
 var AWS = require('aws-sdk');
 var config = require(rootPath + 'aws.json');
 var zlib = require('zlib');
@@ -154,25 +154,39 @@ exports.activateUser = function (db) {
 };
 
 exports.loginUser = function(db) {
-  return function(req, res) {
+  return function(req, res, next) {
+    passport.authenticate('local', function(err, _user, info) {
 
-    var user = req.user;
-    var redirect = '/home';
-    if (user.roles.indexOf('parent') > -1) {
-      redirect = '/calendar-events';
-    }
+      if (err) {
+        return next(err);
+      }
+      if (!_user) {
+        return res.status(401).json(info);
+      }
 
-    if (req.user && !req.user.myChildren) {
-      req.user.myChildren = [];
-    }
+      req.logIn(_user, function(err) {
+        if (err) {
+          return next(err);
+        }
 
-    var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+        var redirect = '/home';
+        if (req.user.roles.indexOf('parent') > -1) {
+          redirect = '/calendar-events';
+        }
 
-    res.send({
-      redirect: redirect,
-      user: req.user,
-      token: token
-    });
+        if (req.user && !req.user.myChildren) {
+          req.user.myChildren = [];
+        }
+
+        var token = jwt.sign(req.user, secret, { expiresIn: 60*60*24*30 });
+
+        return res.send({
+          redirect: redirect,
+          user: req.user,
+          token: token
+        });
+      });
+    })(req, res, next);
   }
 };
 
@@ -205,7 +219,7 @@ exports.signupUser = function (req, res, next) {
     }
 
     if (!user) {
-      return res.status(400).json({success: false});
+      return res.status(400).json(info);
     }
     return res.send({user: user, redirect: '/inform'});
 
@@ -1655,7 +1669,7 @@ exports.uploadFile = function (db) {
       var body = fs.createReadStream(tmpPath);
       var outputpath = tmpPath.replace('.', '.rotated.');
 
-      lwip.open(tmpPath, function (err, image) {
+      Jimp.read(tmpPath, function (err, image) {
         console.log(err);
         if(!image) {
           return res.json(err);
@@ -1665,17 +1679,15 @@ exports.uploadFile = function (db) {
         var coords = dataFields.cropCoords;
         var ratio = 1;
         var biggestWidth = 500;
-        var imgWidth = image.width();
+        var imgWidth = image.bitmap.width;
         if (imgWidth > biggestWidth) {
           ratio = biggestWidth / imgWidth;
         }
 
         function uploadToS3() {
+          image.scale(ratio, function (err, newImage) {
 
-
-          image.scale(ratio, ratio, function (err, newImage) {
-
-            newImage.toBuffer('jpg', function (err, buffer) {
+            newImage.getBuffer(Jimp.MIME_JPEG, function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
               .on('httpUploadProgress', function (evt) {
@@ -1684,10 +1696,10 @@ exports.uploadFile = function (db) {
               .send(function (err, data) {
                 console.log(err, data);
                 var originImg = data.Location;
-                newImage.batch()
+                newImage
                 .crop(coords.x * ratio, coords.y * ratio, coords.x2 * ratio, coords.y2 * ratio)
                 .resize(150, 150)
-                .toBuffer('jpg', function (err, buffer) {
+                .getBuffer(Jimp.MIME_JPEG, function (err, buffer) {
                   params.Key = 'profilePic/' + folder + '/' + 'thumb-' + fileName;
                   params.Body = buffer;
                   s3.upload(params)
@@ -1702,7 +1714,7 @@ exports.uploadFile = function (db) {
                       if (err) {
                         throw err;
                       }
-                      ;
+
                       return res.json(newPic);
                     })
                   });
@@ -1794,20 +1806,20 @@ exports.uploadAttachment = function (db) {
       var body = fs.createReadStream(tmpPath);
 
       if (contentType == 'image/png' || contentType == 'image/jpeg' || contentType == 'image/gif' ||  contentType == 'image/jpg') {
-        lwip.open(tmpPath, function (err, image) {
+        Jimp.read(tmpPath, function (err, image) {
 
           var dataFields = JSON.parse(fields.data[0]);
           var coords = dataFields.cropCoords;
           var ratio = 1;
           var biggestWidth = 500;
-          var imgWidth = image.width();
+          var imgWidth = image.bitmap.width;
           if (imgWidth > biggestWidth) {
             ratio = biggestWidth / imgWidth;
           }
 
-          image.scale(ratio, ratio, function (err, newImage) {
+          image.scale(ratio, function (err, newImage) {
 
-            newImage.toBuffer('jpg', function (err, buffer) {
+            newImage.getBuffer(Jimp.AUTO, function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
               .on('httpUploadProgress', function (evt) {
@@ -1909,20 +1921,20 @@ exports.uploadGroupAttachment = function (db) {
       var body = fs.createReadStream(tmpPath);
 
       if (contentType == 'image/png' || contentType == 'image/jpeg' || contentType == 'image/gif' ||  contentType == 'image/jpg') {
-        lwip.open(tmpPath, function (err, image) {
+        Jimp.read(tmpPath, function (err, image) {
 
           var dataFields = JSON.parse(fields.data[0]);
           var coords = dataFields.cropCoords;
           var ratio = 1;
           var biggestWidth = 500;
-          var imgWidth = image.width();
+          var imgWidth = image.bitmap.width;
           if (imgWidth > biggestWidth) {
             ratio = biggestWidth / imgWidth;
           }
 
-          image.scale(ratio, ratio, function (err, newImage) {
+          image.scale(ratio, function (err, newImage) {
 
-            newImage.toBuffer('jpg', function (err, buffer) {
+            newImage.getBuffer(Jimp.AUTO, function (err, buffer) {
               params.Body = buffer;
               s3.upload(params)
               .on('httpUploadProgress', function (evt) {
@@ -1968,20 +1980,7 @@ exports.subscribe = function (db) {
       db.collection('subscription').update({email: req.body.data}, {$set: {email: req.body.data}}, {upsert: true}, function (err, count, status) {
         if (err) throw err;
         if (!status.updatedExisting) {
-          var body = '<h4>You have new subscriber </h4>'
-            + '<p>Email: ' + req.body.data + '</p>';
-          var email = new sendgrid.Email({
-            from: 'tinyapp@noreply.fi',
-            subject: 'New subscriber',
-            html: body
-          });
-          email.addTo('hello@tinyapp.biz');
-
-          sendgrid.send(email, function (err, json) {
-            if (err) {
-              return console.error(err);
-            }
-          });
+          EmailSvc.sendNewSubscriber(req.body.data);
           res.json({success: true});
         } else {
           res.json({success: false, error: 'You are already a subscriber.'})
