@@ -58,11 +58,15 @@ var mongoServer = require('./backend/servers/mongodb')(function(db) {
             parents = parents.concat(student.parents);
           });
 
-          listeners = listeners.concat(parents);
+          if (listeners) {
+            listeners = listeners.concat(parents);
 
-          _.each(listeners, function (listener) {
-            io.to(listener).emit('newMessage', {message: "New message received"});
-          });
+            _.each(listeners, function (listener) {
+              io.to(listener).emit('newMessage', {message: "New message received"});
+            });
+          } else {
+            console.log("No listeners")
+          }
         });
       });
 
@@ -74,11 +78,15 @@ var mongoServer = require('./backend/servers/mongodb')(function(db) {
             parents = parents.concat(student.parents);
           });
 
-          listeners = listeners.concat(parents);
+          if (listeners) {
+            listeners = listeners.concat(parents);
 
-          _.each(listeners, function (listener) {
-            io.to(listener).emit('responseInvitation', {message: "Invitation has been responded"});
-          });
+            _.each(listeners, function (listener) {
+              io.to(listener).emit('responseInvitation', {message: "Invitation has been responded"});
+            });
+          } else {
+            console.log("No listeners")
+          }
         });
       });
     });
