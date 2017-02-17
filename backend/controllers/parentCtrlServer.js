@@ -92,7 +92,7 @@ exports.updateProfile = function(db) {
                 callback(null);
             });
         }, function (callback) {
-            db.collection('users').update({_id: userID}, {$push: {myChildren: data._id.toString()}}, function(err, response) {
+            db.collection('users').update({_id: userID}, {$addToSet: {myChildren: data._id.toString()}}, function(err, response) {
                 if (err)
                     return res.json({success: false, err: err.toString()});
                 return res.json({success: true, listeners: sentTo});
