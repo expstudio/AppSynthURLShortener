@@ -2092,7 +2092,7 @@ exports.deleteChildProfile = function (db) {
       if (err) throw err;
     });
 
-    db.collection('students').remove({_id: childID, 'hasInfo': {$exists: true}}, function (err, numOfDocs) {
+    db.collection('students').remove({_id: childID}, function (err, numOfDocs) {
       if (err) throw err;
       if (numOfDocs > 0) {
         res.json({success: true});
