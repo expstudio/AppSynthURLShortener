@@ -1323,18 +1323,29 @@ exports.getInvitations = function (db) {
           invitees: {
             $elemMatch:
               {
-                parent_id: req.user._id.toString()
+                parent_id: req.user._id.toString(),
+                meetingAt: {"$exists": false}
               }
           }
         },
         {
-          selectAllStudent: true, groupID: req.user.groupID[0]
+          selectAllStudent: true, 
+          groupID: req.user.groupID[0],
+          invitees: {
+            $elemMatch:
+              {
+                parent_id: "587c3cbb07bf58bff86276dd",
+                meetingAt: {"$exists": false}
+              }
+          }
         }
       ]};
     } else {
       // query = { 'user._id': userid };
       query = {'groupID': groupID}
     }
+
+    console.log(query, req.user._id);
 
     db.collection('invitations').find(query).toArray(function (err, collection) {
       if (err)
