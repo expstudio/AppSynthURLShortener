@@ -114,7 +114,7 @@ exports.removeNursery = function(db) {
 
 exports.findUser = function(db) {
   return function (req, res) {
-    var email = req.query.email;
+    var email = req.params.email;
     db.collection('users').find({
       "local.email": email
     })
