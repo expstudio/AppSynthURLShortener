@@ -19,4 +19,12 @@ Then node server.js
     * https://gitlab.iwa.fi/tinyapp/tinyapp-browser
     * Copy all files from ~/tinyapp-browser/www/ to ~/tinyapp-browser
     * To restart server using ‘sudo service nginx restart’
+    
+
+### Database manipulation
+
+- Use ssh to connect to server
+- `mongo tiny-app` to connect mongodb server
+- Available collections
+    * users
     * 
