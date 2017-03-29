@@ -17,6 +17,7 @@ module.exports = function(app, passport, db) {
   app.get('/api/nursery', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.getNurseries(db));
   app.post('/api/nursery', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.createNursery(db));
   app.delete('/api/nursery/:id', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.removeNursery(db));
+  app.get('/api/user/:email', authServer.requiresApiLogin, authServer.requiresRole('admin'), adminCtrl.findUser(db));
 
   app.get('/api/group', authServer.requiresApiLogin, teacherCtrl.getGroups(db));
   app.post('/api/group', authServer.requiresApiLogin, authServer.requiresRole('teacher'), teacherCtrl.createGroup(db));

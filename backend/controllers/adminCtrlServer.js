@@ -111,3 +111,19 @@ exports.removeNursery = function(db) {
     });
   }
 };
+
+exports.findUser = function(db) {
+  return function (req, res) {
+    var email = req.query.email;
+    db.collection('users').find({
+      "local.email": email
+    })
+    .toArray(function(err, users) {
+      if (err) {
+        throw err;
+      }
+
+      res.send(users);
+    });
+  }
+};
