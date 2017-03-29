@@ -27,4 +27,14 @@ Then node server.js
 - `mongo tiny-app` to connect mongodb server
 - Available collections
     * users
-    * 
+    * events
+    * groups
+    * messages
+    * group_messages
+    * invitations
+    * nurseries
+    * students
+    * sessions
+    * historyRecords
+- `db.users.find({})` to show all records in `users` collection
+- 
