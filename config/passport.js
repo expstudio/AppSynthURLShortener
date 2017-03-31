@@ -5,7 +5,6 @@ var encrypt = require('../backend/services/encrypt.js');
 var crypto = require('crypto');
 var i18n = require("i18n");
 var ObjectID = require('mongodb').ObjectID;
-var EmailSvc = require('../backend/services/email.service.js');
 var Promise = require('bluebird');
 
 module.exports = function (db, passport) {
@@ -14,8 +13,7 @@ module.exports = function (db, passport) {
       if (err) {
         return done(err);
       }
-
-      EmailSvc.sendActivationEmail(savedUser);
+      
       return done(null, savedUser);
     });
   };

@@ -1,3 +1,0 @@
-APP.factory('messagingService', function () {
-
-})
