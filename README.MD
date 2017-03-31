@@ -13,6 +13,7 @@ Then `node server.js`
 - Flooding, DDOS, CSRF
 - Sanitize and validate url input
 - Redirect loop because of friendly alias url.
+- Sequence guessing
 - Javascript content in url
     - javascript:(function()xxxx
 
